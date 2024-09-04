@@ -1,0 +1,4 @@
+(executable
+ (public_name computer_gfx)
+ (name main)
+ (libraries computer_gfx))
