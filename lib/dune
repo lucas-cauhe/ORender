@@ -1,2 +1,3 @@
 (library
- (name computer_gfx))
+ (name computer_gfx)
+ (public_name computer_gfx))
