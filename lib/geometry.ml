@@ -1,14 +1,28 @@
+(** Geometry module contains basic mathematical utilities for the project *)
+
+(** Associate functions to work with points *)
 module type PointType = sig
+  (** Point internal type *)
   type t
+
+  (** Sum of two points *)
   val sum : t -> t -> t
+
+  (** Subtraction of two points *)
   val sub : t -> t -> t
+
+  (** Product between point and scalar value *)
   val prod : t -> float -> t
+  
+  (** Division between point and scalar value.
+   Returns [None] if [num] is 0 *)
   val div : t -> float -> t option
   val from_coords : float -> float -> float -> t
   val string_of_point : t -> string
   val eq : t -> t -> bool
 end 
 
+(** Implementation of the [PoinType] functions *)
 module Point : PointType = struct
   type t = {
     x: float;
