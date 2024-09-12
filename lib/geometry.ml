@@ -1,71 +1,73 @@
-type point = {
-  x: float;
-  y: float;
-  z: float;
-}
+module type PointType = sig
+  type t
+  val sum : t -> t -> t
+  val sub : t -> t -> t
+  val prod : t -> float -> t
+  val div : t -> float -> t option
+  val from_coords : float -> float -> float -> t
+  val string_of_point : t -> string
+  val eq : t -> t -> bool
+end 
 
+module Point : PointType = struct
+  type t = {
+    x: float;
+    y: float;
+    z: float;
+  }
+  let sum p1 p2 = {x = p1.x +. p2.x; y = p1.y +. p2.y; z = p1.z +. p2.z}
 
-type direction = {
-  x: float;
-  y: float;
-  z: float;
-}
+  let sub p1 p2 =  {x = p1.x -. p2.x; y = p1.y -. p2.y; z = p1.z -. p2.z}
 
-type vector = 
-  | Point of point
-  | Direction of direction
+  let prod p num = {x = p.x *. num; y = p.y *. num; z = p.z *. num}
 
-let equal_vector (v1: vector) (v2: vector) : bool = 
-  match v1, v2 with
-  | Point p1, Point p2 -> p1.x = p2.x && p1.y = p2.y && p1.z = p2.z
-  | Direction d1, Direction d2 -> d1.x = d2.x && d1.y = d2.y && d1.z = d2.z
-  | _ -> false
+  let div p = function 0. -> None 
+  | num -> Some({x = p.x /. num; y = p.y /. num; z = p.z /. num})
 
-let to_string_vector (v: vector) : string =
-  match v with
-  | Point p -> Printf.sprintf "Point {x = %f; y = %f; z = %f}" p.x p.y p.z
-  | Direction d -> Printf.sprintf "Direction {x = %f; y = %f; z = %f}" d.x d.y d.z
+  let from_coords x y z = { x; y; z }
+  let string_of_point p = Printf.sprintf "Point {x = %f; y = %f; z = %f}" p.x p.y p.z
+  let eq p1 p2 = p1.x = p2.x && p1.y = p2.y && p1.z = p2.z
+end
 
-let sum (v1 : vector) (v2 : vector) : vector option = 
-  match v1, v2 with
-  | Point p1, Point p2 -> Some(Point {x = p1.x +. p2.x; y = p1.y +. p2.y; z = p1.z +. p2.z})
-  | Direction d1, Direction d2 -> Some(Direction {x = d1.x +. d2.x; y = d1.y +. d2.y; z = d1.z +. d2.z})
-  | _ -> None
+module type DirectionType = sig
+  type t
+  val sum : t -> t -> t
+  val sub : t -> t -> t
+  val prod : t -> float -> t
+  val div : t -> float -> t option
+  val dot : t -> t -> float
+  val modulus : t -> float
+  val normalize : t -> t option
+  val cross_product : t -> t -> t
+  val from_coords : float -> float -> float -> t
+  val string_of_direction : t -> string
+  val eq : t -> t -> bool
+end 
 
-let sub (v1: vector) (v2: vector) : vector option = 
-  match v1, v2 with
-  | Point p1, Point p2 -> Some(Point {x = p1.x -. p2.x; y = p1.y -. p2.y; z = p1.z -. p2.z})
-  | Direction d1, Direction d2 -> Some(Direction {x = d1.x -. d2.x; y = d1.y -. d2.y; z = d1.z -. d2.z})
-  | _ -> None
+module Direction : DirectionType = struct
+  type t = {
+    x: float;
+    y: float;
+    z: float;
+  }
+  let sum d1 d2 = {x = d1.x +. d2.x; y = d1.y +. d2.y; z = d1.z +. d2.z}
 
-let prod (v: vector) num : vector = 
-  match v with
-  | Point p -> Point {x = p.x *. num; y = p.y *. num; z = p.z *. num}
-  | Direction d -> Direction {x = d.x *. num; y = d.y *. num; z = d.z *. num}
+  let sub d1 d2 =  {x = d1.x -. d2.x; y = d1.y -. d2.y; z = d1.z -. d2.z}
 
-let div (v: vector) num =
-  match v, num with
-  | _, 0. -> None
-  | Point p, num -> Some ( Point {x = p.x /. num; y = p.y /. num; z = p.z /. num} )
-  | Direction d, num -> Some ( Direction {x = d.x /. num; y = d.y /. num; z = d.z /. num} )
+  let prod d num = {x = d.x *. num; y = d.y *. num; z = d.z *. num}
 
-let dot (v1: vector) (v2: vector) : float option = 
-  match v1, v2 with
-  | Direction { x = dx1; y = dy1; z = dz1 }, Direction { x = dx2; y = dy2; z = dz2 } -> Some (dx1 *. dx2 +. dy1 *. dy2 +. dz1 *. dz2)
-  | _, _ -> None
+  let div d = function 0. -> None 
+  | num -> Some({x = d.x /. num; y = d.y /. num; z = d.z /. num})
 
-let cross_product (v1: vector) (v2: vector) : vector option = 
-  match v1, v2 with
-  | Direction { x = dx1; y = dy1; z = dz1 }, Direction { x = dx2; y = dy2; z = dz2 } -> Some (Direction { x = dy1 *. dz2 -. dz1 *. dy2; y = dz1 *. dx2 -. dx1 *. dz2; z = dx1 *. dy2 -. dy1 *. dx2 })
-  | _, _ -> None
+  let dot d1 d2 = d1.x *. d2.x +. d1.y *. d2.y +. d1.z *. d2.z
+  let modulus d = sqrt (d.x *. d.x +. d.y *. d.y +. d.z *. d.z)
 
-let modulus (v: vector) : float option = 
-  match v with
-  | Direction d -> Some (sqrt (d.x *. d.x +. d.y *. d.y +. d.z *. d.z))
-  | _ -> None
+  let normalize d = modulus d |> div d
 
-let normalize (v: vector) : vector option = 
-  match v with
-  | Direction d -> Option.bind (modulus v) (fun modv -> Some (Direction {x = d.x /. modv; y = d.y /. modv; z = d.z /. modv}))
-  | _ -> None
+  let cross_product d1 d2 = { x = d1.y *. d2.z -. d1.z *. d2.y; y = d1.z *. d2.x -. d1.x *. d2.z; z = d1.x *. d2.y -. d1.y *. d2.x }
+
+  let from_coords x y z = { x; y; z }
+  let string_of_direction d = Printf.sprintf "Direction {x = %f; y = %f; z = %f}" d.x d.y d.z
+  let eq d1 d2 = d1.x = d2.x && d1.y = d2.y && d1.z = d2.z
+end
 
