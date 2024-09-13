@@ -1,4 +1,5 @@
 (** Geometry module contains basic mathematical utilities for the project *)
+open Array
 
 (** Associate functions to work with points *)
 module type PointType = sig
@@ -85,3 +86,112 @@ module Direction : DirectionType = struct
   let eq d1 d2 = d1.x = d2.x && d1.y = d2.y && d1.z = d2.z
 end
 
+module type MatrixType = sig
+  type m
+  val identity : m
+  val transpose : m -> m
+  val translate : m -> Point.t -> m
+  val scale : m -> Point.t -> m
+  val rotate : m -> Direction.t -> float -> m
+  val multiply : m -> m -> m
+  val from_coords : float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> m
+  val string_of_matrix : m -> string
+end
+
+
+open Point 
+
+(** Matrix struct implementation*)
+(** TODO:
+* Correct the point and direction refs
+*)
+module Matrix: MatrixType = struct
+  type m = float array array
+
+  let identity = [|
+    [|1.0; 0.0; 0.0; 0.0|];
+    [|0.0; 1.0; 0.0; 0.0|];
+    [|0.0; 0.0; 1.0; 0.0|];
+    [|0.0; 0.0; 0.0; 1.0|];
+  |]
+
+  let transpose m = 
+    let n = Array.length m in
+    let m' = Array.make_matrix n n 0.0 in
+    for i = 0 to n - 1 do
+      for j = 0 to n - 1 do
+        m'.(i).(j) <- m.(j).(i)
+      done
+    done;
+    m'
+  (**Trying to fix this error
+    File "lib/geometry.ml", line 126, characters 33-34:
+    126 |     m'.(0).(3) <- m.(0).(3) +. p.x;
+                                       ^
+    Error: Unbound record field x
+  *)
+  let translate m (p: Point.t) =
+    let m' = Array.copy m in
+    m'.(0).(3) <- m.(0).(3) +. p.x;
+    m'.(1).(3) <- m.(1).(3) +. p.y;
+    m'.(2).(3) <- m.(2).(3) +. p.z;
+    m'
+  
+  let scale m p =
+    let m' = Array.copy m in
+    m'.(0).(0) <- m.(0).(0) *. p.x;
+    m'.(1).(1) <- m.(1).(1) *. p.y;
+    m'.(2).(2) <- m.(2).(2) *. p.z;
+    m'
+
+  let rotate m d angle =
+    let c = cos angle in
+    let s = sin angle in
+    let t = 1.0 -. c in
+    let x = d.x in
+    let y = d.y in
+    let z = d.z in
+    let m' = Array.copy m in
+    m'.(0).(0) <- t *. x *. x +. c;
+    m'.(0).(1) <- t *. x *. y -. s *. z;
+    m'.(0).(2) <- t *. x *. z +. s *. y;
+    m'.(1).(0) <- t *. x *. y +. s *. z;
+    m'.(1).(1) <- t *. y *. y +. c;
+    m'.(1).(2) <- t *. y *. z -. s *. x;
+    m'.(2).(0) <- t *. x *. z -. s *. y;
+    m'.(2).(1) <- t *. y *. z +. s *. x;
+    m'.(2).(2) <- t *. z *. z +. c;
+    m'
+
+  let multiply m1 m2 =
+    let m' = Array.make_matrix 4 4 0.0 in
+    for i = 0 to 3 do
+      for j = 0 to 3 do
+        for k = 0 to 3 do
+          m'.(i).(j) <- m'.(i).(j) +. m1.(i).(k) *. m2.(k).(j)
+        done
+      done
+    done;
+    m'
+
+
+  let from_coords a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44 = [|
+    [|a11; a12; a13; a14|];
+    [|a21; a22; a23; a24|];
+    [|a31; a32; a33; a34|];
+    [|a41; a42; a43; a44|];
+  |]
+
+  let string_of_matrix m = 
+    let s = ref "" in
+    for i = 0 to 3 do
+      for j = 0 to 3 do
+        s := !s ^ (Printf.sprintf "%f " m.(i).(j))
+      done;
+      s := !s ^ "\n"
+    done;
+    !s
+
+
+
+end
