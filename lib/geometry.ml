@@ -107,7 +107,7 @@ module type MatrixType = sig
   val identity : int -> t
   val transpose : t -> t
   val get_element : t -> int -> int -> float
-  val multiply : t -> t -> t
+  val multiply : t -> t -> t option
   val from_array_matrix : float array array -> t
   val string_of_matrix : t -> string
   
@@ -134,25 +134,24 @@ module Matrix: MatrixType = struct
     let dimx = Array.length mat.(0) in
     Array.init_matrix dimy dimx (fun i j -> mat.(i).(j))
 
-  let string_of_matrix m = 
-    let s = ref "" in
-    for i = 0 to 3 do
-      for j = 0 to 3 do
-        s := !s ^ (Printf.sprintf "%f " m.(i).(j))
-      done;
-      s := !s ^ "\n"
-    done;
-    !s
+  let string_of_row = Array.fold_left (fun acc el -> acc ^ (Printf.sprintf "%f " el ) ) ""
+  
+  let string_of_matrix = 
+    Array.fold_left (fun result nextRow -> result ^ "| " ^ (string_of_row nextRow) ^ "|\n") ""
+
   let multiply m1 m2 =
-    let m' = Array.make_matrix 4 4 0.0 in
-    for i = 0 to 3 do
-      for j = 0 to 3 do
-        for k = 0 to 3 do
-          m'.(i).(j) <- m'.(i).(j) +. m1.(i).(k) *. m2.(k).(j)
+    if (Array.length m1.(0)) <> (Array.length m2) then
+      None
+    else
+      let m' = Array.make_matrix (Array.length m1) (Array.length m2.(0)) 0.0 in
+      for i = 0 to 3 do
+        for j = 0 to 3 do
+          for k = 0 to 3 do
+            m'.(i).(j) <- m'.(i).(j) +. m1.(i).(k) *. m2.(k).(j)
+          done
         done
-      done
-    done;
-    m'
+      done;
+      Some(m')
 end
 
 type axis = X | Y | Z
