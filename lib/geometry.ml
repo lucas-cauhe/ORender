@@ -79,13 +79,15 @@ module Matrix = struct
     Array.fold_left (fun result nextRow -> result ^ "| " ^ (string_of_row nextRow) ^ "|\n") ""
 
   let multiply m1 m2 =
-    if (Array.length m1.(0)) <> (Array.length m2) then
+    let x0 = Array.length m1 and y0 = Array.length m2 and
+      x1 = Array.length m1.(0) and y1 = Array.length m2.(0) in
+    if x1 <> y0 then
       None
     else
       let m' = Array.make_matrix (Array.length m1) (Array.length m2.(0)) 0.0 in
-      for i = 0 to 3 do
-        for j = 0 to 3 do
-          for k = 0 to 3 do
+      for i = 0 to x0 - 1 do
+        for j = 0 to y1 - 1 do
+          for k = 0 to x1 - 1 do
             m'.(i).(j) <- m'.(i).(j) +. m1.(i).(k) *. m2.(k).(j)
           done
         done
@@ -127,6 +129,11 @@ module Transformations = struct
     let sy = Matrix.get_element mat 1 1 in
     let sz = Matrix.get_element mat 2 2 in
     prod homCoord [ sx; sy; sz ]
+
+  let rotation_transformation_of_axis ~angle = function
+  X -> Matrix.from_array_matrix [| [| 1.; 0.; 0.; 0.; |]; [| 0.; cos angle; -.sin angle; 0. |]; [| 0.; sin angle; cos angle; 0. |]; [| 0.; 0.; 0.; 1. |] |]
+  | Y -> Matrix.from_array_matrix [| [| cos angle; 0.; sin angle; 0. |]; [| 0.; 1.; 0.; 0. |]; [| -.sin angle; 0.; cos angle; 0. |]; [| 0.; 0.; 0.; 1. |] |]
+  | Z -> Matrix.from_array_matrix [| [| cos angle; -.sin angle; 0.; 0. |]; [| sin angle; cos angle; 0.; 0. |]; [| 0.; 0.; 1.; 0. |]; [| 0.; 0.; 0.; 1. |] |]
   let rotate mat axis homCoord = match axis, homCoord with
     | X, Point(p) -> 
       let rotatedY = (Point.z p) *. (Matrix.get_element mat 1 2) |> (-.) ((Point.y p) *. (Matrix.get_element mat 1 1)) in 

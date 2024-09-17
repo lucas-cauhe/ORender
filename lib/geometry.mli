@@ -67,5 +67,6 @@ module Transformations : sig
     (** Returns [None] if homogenous coordinate was a [Direction] one *)
     val translate : Matrix.t -> hc -> hc option
     val scale : Matrix.t -> hc -> hc
+    val rotation_transformation_of_axis : float -> axis -> Matrix.t
     val rotate : Matrix.t -> axis -> hc -> hc
 end
