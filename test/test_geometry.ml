@@ -28,6 +28,14 @@ let testable_float =
   end in
   (module M : Alcotest.TESTABLE with type t = M.t)
 
+let testable_matrix =
+  let module M = struct
+    type t = Matrix.t
+    let pp fmt m = Format.fprintf fmt "%s" (Matrix.string_of_matrix m)
+    let equal = (=)
+  end in
+  (module M : Alcotest.TESTABLE with type t = M.t)
+
 (** Tests for Point and Direction operations*)
 let test_sum_p _ =
   let p1: Point.t = Point.from_coords 1.0 2.0 3.0 in
@@ -118,6 +126,28 @@ let test_cross_product _ =
   let expected: Direction.t = Direction.from_coords (-3.0) 6.0 (-3.0) in
   check testable_direction "cross_product" expected result
 
+let test_multiply_matrix _ =
+  let matrix1 = Matrix.from_array_matrix [|[|1.0; 2.0; 3.0|]; [|4.0; 5.0; 6.0|]; [|7.0; 8.0; 9.0|]|] in
+  let matrix2 = Matrix.from_array_matrix [|[|1.0; 2.0; 3.0|]; [|4.0; 5.0; 6.0|]; [|7.0; 8.0; 9.0|]|] in
+  let result = Matrix.multiply matrix1 matrix2 in
+  match result with
+  | Some r -> let expected = Matrix.from_array_matrix [|[|30.0; 36.0; 42.0|]; [|66.0; 81.0; 96.0|]; [|102.0; 126.0; 150.0|]|] in 
+    check testable_matrix "multiply_matrix" expected r
+  | None -> failwith "Fail"
+
+let test_inverse_matrix _ = 
+  let matrix = Matrix.from_array_matrix [|[|1.0; -2.0; 2.0; 2.0|]; [|0.0; 4.0; -2.0; 1.0|]; [|1.0; -2.0; 4.0; 0.0|]; [| 1.0; -1.0; 2.0; 2.0 |] |] in
+  let inv_matrix = Matrix.inverse matrix in 
+  match inv_matrix with
+  | Some inv -> begin
+    let result = Matrix.multiply matrix inv in
+    match result with
+    | Some res -> check testable_matrix "inverse_matrix" (Matrix.identity 4) res
+    | None -> raise Test_error
+    end
+  | None -> raise Test_error
+  
+
 let test_sum =
   [
     "test_sum_p", `Quick, test_sum_p;
@@ -163,5 +193,20 @@ let test_cross_product =
     "test_cross_product", `Quick, test_cross_product;
   ]
 
+let test_matrix =
+  [
+    "test_multiply_matrix", `Quick, test_multiply_matrix;
+    "test_inverse_matrix", `Quick, test_inverse_matrix;
+  ]
+
 let () =
-  Alcotest.run "Geometry" [ "Sum", test_sum; "Sub", test_sub; "Prod", test_prod; "Div", test_div; "Dot", test_dot; "Modulus", test_modulus; "Normalize", test_normalize; "Cross Product", test_cross_product ]
+  Alcotest.run "Geometry" [ "Sum", test_sum; 
+                            "Sub", test_sub; 
+                            "Prod", test_prod; 
+                            "Div", test_div; 
+                            "Dot", test_dot; 
+                            "Modulus", test_modulus; 
+                            "Normalize", test_normalize; 
+                            "Cross Product", test_cross_product; 
+                            "Matrix", test_matrix;
+                          ]

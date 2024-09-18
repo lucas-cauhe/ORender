@@ -55,12 +55,14 @@ module Matrix : sig
     val multiply : t -> t -> t option
     val from_array_matrix : float array array -> t
     val string_of_matrix : t -> string
+    val inverse : t -> t option
     
 end 
 
 (** Transformations module assumes matrix arguments are 4x4 matrices *)
 module Transformations : sig
     type hc
+    exception Change_basis_error
     val hc_of_point : Point.t -> hc
     val hc_of_direction : Direction.t -> hc
 
@@ -69,4 +71,7 @@ module Transformations : sig
     val scale : Matrix.t -> hc -> hc
     val rotation_transformation_of_axis : angle:float -> axis -> Matrix.t
     val rotate : Matrix.t -> axis -> hc -> hc
+    val change_basis : Matrix.t -> hc -> hc
+    val cb_transformation_of_base : Direction.t -> Direction.t -> Direction.t -> Point.t -> Matrix.t
+    val combine_transformations : hc -> (hc -> hc) list -> hc
 end

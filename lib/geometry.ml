@@ -93,12 +93,63 @@ module Matrix = struct
         done
       done;
       Some(m')
+
+    (* Function to get the submatrix by removing a specific row and column *)
+    let submatrix mat row col =
+      let n = Array.length mat in
+      Array.init (n - 1) (fun i ->
+        Array.init (n - 1) (fun j ->
+          mat.(if i < row then i else i + 1).(if j < col then j else j + 1)
+        )
+      )
+
+    (* Recursive function to calculate the determinant of an NxN matrix *)
+    let rec determinant mat =
+      let n = Array.length mat in
+      if n = 1 then mat.(0).(0)
+      else if n = 2 then mat.(0).(0) *. mat.(1).(1) -. mat.(0).(1) *. mat.(1).(0)
+      else
+        let rec aux acc i =
+          if i >= n then acc
+          else
+            let sign = if i mod 2 = 0 then 1.0 else -1.0 in
+            let subm = submatrix mat 0 i in
+            aux (acc +. sign *. mat.(0).(i) *. determinant subm) (i + 1)
+        in
+        aux 0.0 0
+
+    (* Function to calculate the cofactor matrix *)
+    let cofactor_matrix mat =
+      let n = Array.length mat in
+      Array.init n (fun i ->
+        Array.init n (fun j ->
+          let sign = if (i + j) mod 2 = 0 then 1.0 else -1.0 in
+          sign *. determinant (submatrix mat i j)
+        )
+      )
+
+    (* Function to calculate the inverse of a 4x4 matrix *)
+    let inverse mat =
+      let det = determinant mat in
+      if det = 0.0 then
+        let _ = print_endline "Matrix has det 0" in
+        None
+      else
+        let cofactor_mat = cofactor_matrix mat in
+        let adjugate = transpose cofactor_mat in
+        let n = Array.length mat in
+        Some (Array.init n (fun i ->
+          Array.init n (fun j ->
+            adjugate.(i).(j) /. det
+          )
+        ))
 end
 
 
   
 module Transformations = struct
   type hc = Point of Point.t | Direction of Direction.t
+  exception Change_basis_error
 
   let prod (homCoord : hc) = function
   [ x; y; z ] -> begin
@@ -165,6 +216,34 @@ module Transformations = struct
       let rotatedY = (Direction.y d) *. (Matrix.get_element mat 1 1) |> (+.) ((Direction.x d) *. (Matrix.get_element mat 1 0)) in
       let rotatedDirection = Direction.from_coords rotatedX rotatedY (Direction.z d) in
       Direction(rotatedDirection)
+
+    let change_basis mat = function
+      Point(p) -> begin
+        let homCoordMatrix = Matrix.from_array_matrix [| [|Point.x p|]; [|Point.y p|]; [|Point.z p|]; [|1.|]|] in
+        let mresult = Matrix.multiply mat homCoordMatrix in
+        match mresult with
+        | Some res -> Point(Point.from_coords (Matrix.get_element res 0 0) (Matrix.get_element res 1 0) (Matrix.get_element res 2 0))
+        | None -> raise Change_basis_error
+      end
+      | Direction(d) -> begin
+        let homCoordMatrix = Matrix.from_array_matrix [| [|Direction.x d|]; [|Direction.y d|]; [|Direction.z d|]; [|0.|] |] in
+        let mresult = Matrix.multiply mat homCoordMatrix in
+        match mresult with
+        | Some res -> Direction(Direction.from_coords (Matrix.get_element res 0 0) (Matrix.get_element res 1 0) (Matrix.get_element res 2 0))
+        | None -> raise Change_basis_error
+      end
+
+
+    let cb_transformation_of_base d1 d2 d3 origin = 
+      let x = Direction.x d1 and y = Direction.y d1 and z = Direction.z d1 in
+      let x' = Direction.x d2 and y' = Direction.y d2 and z' = Direction.z d2 in
+      let x'' = Direction.x d3 and y'' = Direction.y d3 and z'' = Direction.z d3 in
+      let o = Point.x origin and p = Point.y origin and q = Point.z origin in
+      Matrix.from_array_matrix [| [| x; x'; x''; o |]; [| y; y'; y''; p |]; [| z; z'; z''; q |]; [| 0.; 0.; 0.; 1. |] |]
+
+      let combine_transformations initialHc = List.fold_left (fun accHc f -> f accHc) initialHc
+
+
 end
 
   
