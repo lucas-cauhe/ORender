@@ -1,5 +1,5 @@
 type config = {
-    ppm_version: int;
+    ppm_version: string;
     max: float;
     ppm_max: int;
     width: int;
@@ -25,3 +25,9 @@ val read_header : in_channel -> in_channel * config
     Returns [None] if EOF is reached
 *)
 val read_pixel : in_channel -> config -> (in_channel * pixel) option
+
+val write_header : out_channel -> config -> unit
+
+val write_pixels : out_channel -> config -> pixel list -> unit
+
+val write_to_ascii : out_channel -> int * int -> pixel list -> unit
