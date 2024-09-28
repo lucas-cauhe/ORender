@@ -62,7 +62,7 @@ end
 (** Transformations module assumes matrix arguments are 4x4 matrices *)
 module Transformations : sig
     type hc
-    exception Change_basis_error
+    exception Change_basis_error of (Matrix.t * hc * string)
     val hc_of_point : Point.t -> hc
     val hc_of_direction : Direction.t -> hc
 

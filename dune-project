@@ -19,7 +19,7 @@
  (name computer_gfx)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune (alcotest :with-test))
+ (depends ocaml dune (alcotest :with-test)  (iter (= 1.8)))
  (tags
   (topics "to describe" your project)))
 

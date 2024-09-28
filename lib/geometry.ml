@@ -128,7 +128,7 @@ module Matrix = struct
         )
       )
 
-    (* Function to calculate the inverse of a 4x4 matrix *)
+    (* Function to calculate the inverse of a matrix *)
     let inverse mat =
       let det = determinant mat in
       if det = 0.0 then
@@ -149,7 +149,7 @@ end
   
 module Transformations = struct
   type hc = Point of Point.t | Direction of Direction.t
-  exception Change_basis_error
+  exception Change_basis_error of (Matrix.t * hc * string)
 
   let prod (homCoord : hc) = function
   [ x; y; z ] -> begin
@@ -218,19 +218,19 @@ module Transformations = struct
       Direction(rotatedDirection)
 
     let change_basis mat = function
-      Point(p) -> begin
+      Point(p) as hcp -> begin
         let homCoordMatrix = Matrix.from_array_matrix [| [|Point.x p|]; [|Point.y p|]; [|Point.z p|]; [|1.|]|] in
         let mresult = Matrix.multiply mat homCoordMatrix in
         match mresult with
         | Some res -> Point(Point.from_coords (Matrix.get_element res 0 0) (Matrix.get_element res 1 0) (Matrix.get_element res 2 0))
-        | None -> raise Change_basis_error
+        | None -> raise (Change_basis_error (mat, hcp, "Error changing base of point")  )
       end
-      | Direction(d) -> begin
+      | Direction(d) as hcd -> begin
         let homCoordMatrix = Matrix.from_array_matrix [| [|Direction.x d|]; [|Direction.y d|]; [|Direction.z d|]; [|0.|] |] in
         let mresult = Matrix.multiply mat homCoordMatrix in
         match mresult with
         | Some res -> Direction(Direction.from_coords (Matrix.get_element res 0 0) (Matrix.get_element res 1 0) (Matrix.get_element res 2 0))
-        | None -> raise Change_basis_error
+        | None -> raise (Change_basis_error (mat, hcd, "Error changing base of direction")  )
       end
 
 
@@ -241,7 +241,7 @@ module Transformations = struct
       let o = Point.x origin and p = Point.y origin and q = Point.z origin in
       Matrix.from_array_matrix [| [| x; x'; x''; o |]; [| y; y'; y''; p |]; [| z; z'; z''; q |]; [| 0.; 0.; 0.; 1. |] |]
 
-      let combine_transformations initialHc = List.fold_left (fun accHc f -> f accHc) initialHc
+      let combine_transformations initialHc = List.fold_left (fun accHc f -> f accHc ) initialHc
 
 
 end
