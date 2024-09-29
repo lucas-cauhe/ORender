@@ -6,12 +6,6 @@ type config = {
     height: int;
 }
 
-type pixel = {
-    red: float;
-    green: float;
-    blue: float;
-}
-
 let read_header ic = 
   let rec header_reader rem config =
     let line = input_line ic in
@@ -28,6 +22,11 @@ let read_header ic =
   in
   header_reader 3 {ppm_version = "654"; max = 1.; ppm_max = 1; width = 10; height = 10;}
 
+let rec read_to_next_pixel ic = 
+  match input_char ic with
+  | c when c >= '0' && c <= '9' -> seek_in ic (pos_in ic - 1)
+  | _ -> read_to_next_pixel ic
+
 let read_number ic =
   let rec read_digits acc =
     let c = input_char ic in
@@ -36,15 +35,19 @@ let read_number ic =
     else
       float_of_int acc
   in
-  read_digits 0
+  let result = read_digits 0 in
+  read_to_next_pixel ic;
+  result
+  
 
-let load_pixel (p : pixel) (conf : config) : pixel = { 
+
+let load_pixel (p : Image.pixel) (conf : config) : Image.pixel = { 
   red = p.red *. conf.max /. float_of_int conf.ppm_max; 
   green = p.green *. conf.max /. float_of_int conf.ppm_max; 
   blue = p.blue *. conf.max /. float_of_int conf.ppm_max
 }
 
-let save_pixel (p : pixel) (conf : config) : pixel = { 
+let save_pixel (p : Image.pixel) (conf : config) : Image.pixel = { 
   red = p.red *. float_of_int conf.ppm_max /. conf.max; 
   green = p.green *. float_of_int conf.ppm_max /. conf.max; 
   blue = p.blue *. float_of_int conf.ppm_max /. conf.max
@@ -55,9 +58,6 @@ let read_pixel ic conf =
     let red = read_number ic in
     let green = read_number ic in
     let blue = read_number ic in
-    seek_in ic (pos_in ic + 4);
-    let next_char = input_char ic in
-    if next_char < '0' || next_char > '9' then seek_in ic (pos_in ic + 1) else seek_in ic (pos_in ic - 1); 
     Some(ic, load_pixel {red;green;blue} conf)
   with
   | End_of_file -> None

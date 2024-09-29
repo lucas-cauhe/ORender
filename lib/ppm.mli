@@ -6,12 +6,6 @@ type config = {
     height: int;
 }
 
-type pixel = {
-    red: float;
-    green: float;
-    blue: float;
-}
-
 (**
     Reads a ppm header from [in_channel] and returns a tuple that contains:
     - the input channel resulting of reading that header
@@ -24,10 +18,10 @@ val read_header : in_channel -> in_channel * config
     the "file offset" to the next pixel.
     Returns [None] if EOF is reached
 *)
-val read_pixel : in_channel -> config -> (in_channel * pixel) option
+val read_pixel : in_channel -> config -> (in_channel * Image.pixel) option
 
 val write_header : out_channel -> config -> unit
 
-val write_pixels : out_channel -> config -> pixel list -> unit
+val write_pixels : out_channel -> config -> Image.pixel list -> unit
 
-val write_to_ascii : out_channel -> int * int -> pixel list -> unit
+val write_to_ascii : out_channel -> int * int -> Image.pixel list -> unit
