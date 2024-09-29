@@ -1,26 +1,4 @@
-(* open Computer_gfx.Geometry *)
-
-(* let ppm_version = ref ""
-
-let max = ref 0
-let width, height = ref 0, ref 0
-let ppm_max = ref 0
-
-type rgb = { red: int64; green: int64; blue: int64 }
-
-let tone_map (color: rgb) = { red = 0L; green = 0L; blue= 0L } *)
-  
-
-(* let read_values ic = 
-  let rec read_next colors remaining_lines = 
-    match remaining_lines with 
-    | 0 -> colors
-    | n -> begin
-      let line = input_line ic in
-      String.s
-
-  in
-  read_next [] !height *)
+(* open Computer_gfx.Geometry *)  
        
 
 (* let test_tonemap () =
@@ -30,17 +8,35 @@ let tone_map (color: rgb) = { red = 0L; green = 0L; blue= 0L } *)
 
 in *)
 
+let luminance (p : Computer_gfx.Ppm.pixel) : float = 0.7152 *. p.red +. 0.2126 *. p.green +. 0.0722 *. p.blue
 
-let clamp (p : Computer_gfx.Ppm.pixel) : Computer_gfx.Ppm.pixel = 
-  let luminance = 0.2126 *. p.red +. 0.7152 *. p.green +. 0.0722 *. p.blue in
-  let tone_mapped_l = if luminance > 1. then 1. else luminance in
-  { red = p.red *. (tone_mapped_l /. luminance); green = p.green *. (tone_mapped_l /. luminance); blue = p.blue *. (tone_mapped_l /. luminance) }
+let _clamp (p : Computer_gfx.Ppm.pixel) : Computer_gfx.Ppm.pixel = 
+  let l_in = luminance p in
+  let tone_mapped_l = if l_in > 1. then 1. else l_in in
+  (* let tone_mapped_l = luminance *. (1. +. luminance /. 1_000.*.1_000.) /. (1. +. luminance) in *)
+  { red = p.red *. (tone_mapped_l /. l_in); green = p.green *. (tone_mapped_l /. l_in); blue = p.blue *. (tone_mapped_l /. l_in) }
+
+let _equalization (p : Computer_gfx.Ppm.pixel) (max : float) : Computer_gfx.Ppm.pixel = 
+  let l_in = luminance p in
+  let tone_mapped_l = l_in /. (luminance { red = max; green = max; blue = max }) in
+  { red = p.red *. (tone_mapped_l /. l_in); green = p.green *. (tone_mapped_l /. l_in); blue = p.blue *. (tone_mapped_l /. l_in) }
+
+let gamma (p : Computer_gfx.Ppm.pixel) (k : float) (gamma: float) : Computer_gfx.Ppm.pixel = 
+  let l_in = luminance p in
+  let tone_mapped_l = if l_in > k then k else (BatFloat.pow l_in gamma) /. (BatFloat.pow k gamma) in
+  { red = p.red *. (tone_mapped_l /. l_in); green = p.green *. (tone_mapped_l /. l_in); blue = p.blue *. (tone_mapped_l /. l_in) }
+
+let _gamma_clamp (p : Computer_gfx.Ppm.pixel) (k : float) (gamma: float) (v: float) : Computer_gfx.Ppm.pixel = 
+  let l_in = luminance p in
+  let gamma_l = if l_in > k then k else (BatFloat.pow l_in gamma) /. (BatFloat.pow k gamma) in
+  let tone_mapped_l = if gamma_l > v then v else gamma_l in
+  { red = p.red *. (tone_mapped_l /. l_in); green = p.green *. (tone_mapped_l /. l_in); blue = p.blue *. (tone_mapped_l /. l_in) }
 
 let test_tonemap in_file out_file = 
   let ic = open_in in_file in
   let oc = open_out out_file in
   let (ic, header) = Computer_gfx.Ppm.read_header ic in
-  let out_conf : Computer_gfx.Ppm.config = {ppm_version = "P3"; max = 1.; ppm_max = 255; width = header.width; height = header.height} in
+  let out_conf : Computer_gfx.Ppm.config = {ppm_version = "P3"; max = header.max; ppm_max = 65535; width = header.width; height = header.height} in
   let () = Computer_gfx.Ppm.write_header oc out_conf in
   
   let rec traverse_file buf in_chan = 
@@ -50,10 +46,10 @@ let test_tonemap in_file out_file =
       if List.length buf >= header.width then begin
         Computer_gfx.Ppm.write_pixels oc out_conf buf; (* Flush buf to file *)
         output_string oc "\n";
-        traverse_file [clamp p] ch
+        traverse_file [gamma p header.max (1./.4.)] ch
       end
       else
-        traverse_file (buf @ [clamp p]) ch (* Dejar en este orden para que sea tail recursive *)
+        traverse_file (buf @ [gamma p header.max (1./.4.)]) ch (* Dejar en este orden para que sea tail recursive *)
     end
   in
   traverse_file [] ic

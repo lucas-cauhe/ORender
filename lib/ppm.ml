@@ -55,7 +55,7 @@ let read_pixel ic conf =
     let red = read_number ic in
     let green = read_number ic in
     let blue = read_number ic in
-    seek_in ic (pos_in ic + 5);
+    seek_in ic (pos_in ic + 4);
     Some(ic, load_pixel {red;green;blue} conf)
   with
   | End_of_file -> None
