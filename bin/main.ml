@@ -21,11 +21,14 @@ let _equalization (p : Computer_gfx.Ppm.pixel) (max : float) : Computer_gfx.Ppm.
   let tone_mapped_l = l_in /. (luminance { red = max; green = max; blue = max }) in
   { red = p.red *. (tone_mapped_l /. l_in); green = p.green *. (tone_mapped_l /. l_in); blue = p.blue *. (tone_mapped_l /. l_in) }
 
+(* Usage: gamma p header.max (1./.4.) *)
 let gamma (p : Computer_gfx.Ppm.pixel) (k : float) (gamma: float) : Computer_gfx.Ppm.pixel = 
   let l_in = luminance p in
   let tone_mapped_l = if l_in > k then k else (BatFloat.pow l_in gamma) /. (BatFloat.pow k gamma) in
   { red = p.red *. (tone_mapped_l /. l_in); green = p.green *. (tone_mapped_l /. l_in); blue = p.blue *. (tone_mapped_l /. l_in) }
 
+
+(* Usage: gamma_clamp p header.max (1./.4.) 3000. *)
 let _gamma_clamp (p : Computer_gfx.Ppm.pixel) (k : float) (gamma: float) (v: float) : Computer_gfx.Ppm.pixel = 
   let l_in = luminance p in
   let gamma_l = if l_in > k then k else (BatFloat.pow l_in gamma) /. (BatFloat.pow k gamma) in
@@ -36,7 +39,7 @@ let test_tonemap in_file out_file =
   let ic = open_in in_file in
   let oc = open_out out_file in
   let (ic, header) = Computer_gfx.Ppm.read_header ic in
-  let out_conf : Computer_gfx.Ppm.config = {ppm_version = "P3"; max = header.max; ppm_max = 65535; width = header.width; height = header.height} in
+  let out_conf : Computer_gfx.Ppm.config = {ppm_version = "P3"; max = header.max; ppm_max = 255; width = header.width; height = header.height} in
   let () = Computer_gfx.Ppm.write_header oc out_conf in
   
   let rec traverse_file buf in_chan = 

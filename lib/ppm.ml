@@ -56,6 +56,8 @@ let read_pixel ic conf =
     let green = read_number ic in
     let blue = read_number ic in
     seek_in ic (pos_in ic + 4);
+    let next_char = input_char ic in
+    if next_char < '0' || next_char > '9' then seek_in ic (pos_in ic + 1) else seek_in ic (pos_in ic - 1); 
     Some(ic, load_pixel {red;green;blue} conf)
   with
   | End_of_file -> None
