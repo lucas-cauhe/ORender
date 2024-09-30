@@ -11,10 +11,9 @@ let merge_chans (p : pixel) (l_in : float) (l_out : float) : pixel = { red = p.r
 let clamp (p : pixel)  : pixel = 
   let l_in = luminance p in
   let tone_mapped_l = if l_in > 1. then 1. else l_in in
-  Printf.printf "Lin -> %f | Lout -> %f | Pixel -> r=%f,g=%f,b=%f\n" l_in tone_mapped_l p.red p.green p.blue;
-  (* let tone_mapped_l = luminance *. (1. +. luminance /. 1_000.*.1_000.) /. (1. +. luminance) in *)
+  (* Printf.printf "Lin -> %f | Lout -> %f | Pixel -> r=%f,g=%f,b=%f\n" l_in tone_mapped_l p.red p.green p.blue; *)
+  (* let tone_mapped_l = l_in *. (1. +. l_in /. 1_000.*.1_000.) /. (1. +. l_in) in *)
   merge_chans p l_in tone_mapped_l
-
 let equalization (p : pixel) (max : float) : pixel = 
   let l_in = luminance p in
   let tone_mapped_l = l_in /. (luminance { red = max; green = max; blue = max }) in

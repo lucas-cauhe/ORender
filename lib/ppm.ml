@@ -49,7 +49,7 @@ let load_pixel (p : Image.pixel) (conf : config) : Image.pixel = {
 
 let save_pixel (p : Image.pixel) (conf : config) : Image.pixel = { 
   red = p.red *. float_of_int conf.ppm_max /. conf.max; 
-  green = p.green *. float_of_int conf.ppm_max /. conf.max; 
+  green = p.green *. float_of_int conf.ppm_max /. conf.max;
   blue = p.blue *. float_of_int conf.ppm_max /. conf.max
 }
 
