@@ -7,6 +7,8 @@ type config = {
 }
 
 let read_header ic = 
+  (* Printf.printf "Initial position -> %d" (pos_in ic);
+  Printf.printf "First char -> %c" (input_char ic); *)
   let rec header_reader rem config =
     try
       let line = input_line ic in
