@@ -8,17 +8,20 @@ type config = {
 
 let read_header ic = 
   let rec header_reader rem config =
-    let line = input_line ic in
-    match rem, String.sub line 0 1 with
-    | _, "#"  -> begin
-      match String.sub line 1 3 with
-      | "MAX" -> header_reader rem {config with max = float_of_string (String.trim (String.sub line 5 (String.length line - 5)))}
-      | _ -> header_reader rem config
-    end
-    | 3, _ -> header_reader (rem-1) {config with ppm_version = line}
-    | 2, _ -> header_reader (rem-1) (Scanf.sscanf line "%d %d" (fun w h -> { config with width = w; height = h }))
-    | 1, _ -> (ic, {config with ppm_max = int_of_string (String.trim line)})
-    | _, _ -> failwith "Invalid PPM file"
+    try
+      let line = input_line ic in
+      match rem, String.sub line 0 1 with
+      | _, "#"  -> begin
+        match String.sub line 1 3 with
+        | "MAX" -> header_reader rem {config with max = float_of_string (String.trim (String.sub line 5 (String.length line - 5)))}
+        | _ -> header_reader rem config
+      end
+      | 3, _ -> header_reader (rem-1) {config with ppm_version = line}
+      | 2, _ -> header_reader (rem-1) (Scanf.sscanf line "%d %d" (fun w h -> { config with width = w; height = h }))
+      | 1, _ -> {config with ppm_max = int_of_string (String.trim line)}
+      | _, _ -> failwith "Invalid PPM file"
+    with
+    | End_of_file -> Printf.printf "rem -> %d\n" rem; config
   in
   header_reader 3 {ppm_version = "654"; max = 1.; ppm_max = 1; width = 10; height = 10;}
 
@@ -58,7 +61,7 @@ let read_pixel ic conf =
     let red = read_number ic in
     let green = read_number ic in
     let blue = read_number ic in
-    Some(ic, load_pixel {red;green;blue} conf)
+    Some(load_pixel {red;green;blue} conf)
   with
   | End_of_file -> None
   | Failure err -> print_endline err; None
@@ -68,12 +71,9 @@ let write_header oc header =
   output_string oc (Printf.sprintf "%s\n" header.ppm_version);
   output_string oc (Printf.sprintf "#MAX=%f\n" header.max);
   output_string oc (Printf.sprintf "%d %d\n" header.width header.height);
-  output_string oc (Printf.sprintf "%d\n" header.ppm_max)
+  output_string oc (Printf.sprintf "%d\n" header.ppm_max);
+  oc
 
-let write_pixels oc conf =
-  List.iter (fun p -> 
-    let ppm_pixel = save_pixel p conf in
-    output_string oc (Printf.sprintf "%d %d %d     " (int_of_float ppm_pixel.red) (int_of_float ppm_pixel.green) (int_of_float ppm_pixel.blue)))
-let write_to_ascii oc (w, h) =
-  let ascii_conf = {ppm_version = "P3"; max = 255.; ppm_max = 255; width = w; height = h} in
-  write_pixels oc ascii_conf
+let write_pixel oc conf p =
+  let ppm_pixel = save_pixel p conf in
+  output_string oc (Printf.sprintf "%d %d %d     " (int_of_float ppm_pixel.red) (int_of_float ppm_pixel.green) (int_of_float ppm_pixel.blue))
