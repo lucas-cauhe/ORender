@@ -13,14 +13,14 @@ let test_tonemap in_file out_file =
   let oc = open_out out_file in
   let header = Computer_gfx.Ppm.read_header ic in
   let out_conf : Computer_gfx.Ppm.config = {ppm_version = "P3"; max = header.max; ppm_max = 65535; width = header.width; height = header.height} in
-  let oc = Computer_gfx.Ppm.write_header oc out_conf in
+  Computer_gfx.Ppm.write_header oc out_conf;
   
   let rec traverse_file chan_len = 
     match Computer_gfx.Ppm.read_pixel ic header with
     | None -> close_out oc; close_in ic
     | Some (p) -> begin
       let chan_len = match chan_len with 
-      | l when l == header.width -> output_string oc "\n"; flush oc; 0
+      | l when l == header.width -> output_string oc "\n"; 0
       | l -> l
       in
       clamp p |> Computer_gfx.Ppm.write_pixel oc out_conf; (* Flush buf to file *)

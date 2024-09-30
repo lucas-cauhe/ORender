@@ -7,8 +7,6 @@ type config = {
 }
 
 let read_header ic = 
-  (* Printf.printf "Initial position -> %d" (pos_in ic);
-  Printf.printf "First char -> %c" (input_char ic); *)
   let rec header_reader rem config =
     try
       let line = input_line ic in
@@ -70,11 +68,13 @@ let read_pixel ic conf =
   | Scanf.Scan_failure err -> print_endline err; None
 
 let write_header oc header = 
-  output_string oc (Printf.sprintf "%s\n" header.ppm_version);
-  output_string oc (Printf.sprintf "#MAX=%f\n" header.max);
-  output_string oc (Printf.sprintf "%d %d\n" header.width header.height);
-  output_string oc (Printf.sprintf "%d\n" header.ppm_max);
-  oc
+  let header_string = Printf.sprintf "%s\n#MAX=%f\n%d %d\n%d\n" 
+    header.ppm_version
+    header.max
+    header.width header.height
+    header.ppm_max in
+  print_endline header_string;
+  output_string oc header_string
 
 let write_pixel oc conf p =
   let ppm_pixel = save_pixel p conf in

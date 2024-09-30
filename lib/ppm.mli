@@ -20,6 +20,6 @@ val read_header : in_channel -> config
 *)
 val read_pixel : in_channel -> config -> Image.pixel option
 
-val write_header : out_channel -> config -> out_channel
+val write_header : out_channel -> config -> unit
 
 val write_pixel : out_channel -> config -> Image.pixel -> unit
