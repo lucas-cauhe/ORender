@@ -1,34 +1,31 @@
-type pixel = {
-    red: float;
-    green: float;
-    blue: float;
-}
+module type ToneMapper = sig
+  val clamp : ?th:float -> float -> float
+  
+  val equalization : float -> float -> float
+  
+  val gamma : float -> float -> float -> float
+  
+  val gamma_clamp : float -> float -> float -> float -> float
 
-let luminance (p : pixel) : float = 0.2126 *. p.red +. 0.7152 *. p.green +. 0.0722 *. p.blue
+end
 
-let merge_chans (p : pixel) (l_in : float) (l_out : float) : pixel = { red = p.red *. (l_out /. l_in); green = p.green *. (l_out /. l_in); blue = p.blue *. (l_out /. l_in) }
+module Image(Pixel: Colorspace.ColorSpace) : ToneMapper = struct
+  type pixel = Pixel.pixel
 
-let clamp (p : pixel)  : pixel = 
-  let l_in = luminance p in
-  let tone_mapped_l = if l_in > 1. then 1. else l_in in
-  (* Printf.printf "Lin -> %f | Lout -> %f | Pixel -> r=%f,g=%f,b=%f\n" l_in tone_mapped_l p.red p.green p.blue; *)
-  (* let tone_mapped_l = l_in *. (1. +. l_in /. 1_000.*.1_000.) /. (1. +. l_in) in *)
-  merge_chans p l_in tone_mapped_l
-let equalization (p : pixel) (max : float) : pixel = 
-  let l_in = luminance p in
-  let tone_mapped_l = l_in /. (luminance { red = max; green = max; blue = max }) in
-  merge_chans p l_in tone_mapped_l
+  let tone_map p f = 
+    let l_in = Pixel.luminance p in
+    let l_out = f l_in in
+    Pixel.merge_chans p l_in l_out
 
-(* Usage: gamma p header.max (1./.4.) *)
-let gamma (p : pixel) (k : float) (gamma: float) : pixel = 
-  let l_in = luminance p in
-  let tone_mapped_l = if l_in > k then k else (BatFloat.pow l_in gamma) /. (BatFloat.pow k gamma) in
-  merge_chans p l_in tone_mapped_l
+  let clamp ?(th = 1.) l_in = if l_in > th then th else l_in
+
+  let equalization max l_in  = l_in /. (Pixel.luminance (Pixel.equalized max))
+
+  (* Usage: gamma p header.max (1./.4.) *)
+  let gamma k g l_in = if l_in > k then k else (BatFloat.pow l_in g) /. (BatFloat.pow k g)
+
+  (* Usage: gamma_clamp p header.max (1./.4.) 3000. *)
+  let gamma_clamp k g th l_in = gamma l_in k g |> clamp ~th:th
+end
 
 
-(* Usage: gamma_clamp p header.max (1./.4.) 3000. *)
-let gamma_clamp (p : pixel) (k : float) (gamma: float) (v: float) : pixel = 
-  let l_in = luminance p in
-  let gamma_l = if l_in > k then k else (BatFloat.pow l_in gamma) /. (BatFloat.pow k gamma) in
-  let tone_mapped_l = if gamma_l > v then v else gamma_l in
-  merge_chans p l_in tone_mapped_l
