@@ -9,10 +9,10 @@ module type ColorSpace = sig
 
 end
 
-type rgb_pixel = {
-  red: float;
-  green: float;
-  blue: float;
-}
+module type CsConversor = sig
+include ColorSpace
+val pixel_of_rgb : pixel -> pixel
+val rgb_of_pixel : pixel -> pixel
+end
 
-module Rgb : ColorSpace with type pixel := rgb_pixel
+module Rgb : CsConversor

@@ -23,7 +23,7 @@ module type Db = sig
 end
 
 module Ppm : sig
-  include Db with type pixel := Colorspace.rgb_pixel
+  include Db with type pixel := Colorspace.Rgb.pixel
   val config_of_values : string -> float -> int -> int -> int -> config
   val config_max : config -> float
   val config_width : config -> int
