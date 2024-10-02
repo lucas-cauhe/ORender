@@ -102,6 +102,7 @@ module Ppm = struct
   let config_max c = c.max
   let config_width c = c.width
   let config_height c = c.height
+  let config_ppm_max c = c.ppm_max
 end
 
 

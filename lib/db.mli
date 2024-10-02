@@ -26,6 +26,7 @@ module Ppm : sig
   include Db with type pixel := Colorspace.Rgb.pixel
   val config_of_values : string -> float -> int -> int -> int -> config
   val config_max : config -> float
+  val config_ppm_max : config -> int
   val config_width : config -> int
   val config_height : config -> int
 end

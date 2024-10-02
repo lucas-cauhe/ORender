@@ -26,6 +26,9 @@ module Point : sig
     val from_coords : float -> float -> float -> t
     val string_of_point : t -> string
     val eq : t -> t -> bool
+    val ( + ) : t -> t -> t
+    val ( - ) : t -> t -> t
+    val distance : t -> t -> float
 end 
 
 module Direction : sig

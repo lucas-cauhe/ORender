@@ -24,6 +24,12 @@ module Point = struct
   let from_coords x y z = { x; y; z }
   let string_of_point p = Printf.sprintf "Point {x = %f; y = %f; z = %f}" p.x p.y p.z
   let eq p1 p2 = p1.x = p2.x && p1.y = p2.y && p1.z = p2.z
+
+  let ( + ) = sum
+
+  let ( - ) = sub
+
+  let distance p1 p2 = sqrt ((p1.x -. p2.x) *. (p1.x -. p2.x) +. (p1.y -. p2.y) *. (p1.y -. p2.y) +. (p1.z -. p2.z) *. (p1.z -. p2.z))
 end
 
 module Direction = struct

@@ -19,7 +19,7 @@ let tone_map_file in_file out_file =
       | l when l == (PpmDb.config_width header) -> output_string oc "\n"; 0
       | l -> l
       in
-      RgbToneMapper.tone_map p RgbToneMapper.clamp |> PpmDb.write_pixel oc out_conf;
+      RgbToneMapper.tone_map p (RgbToneMapper.gamma_clamp (PpmDb.config_max header) (1./.4.) 200.) |> PpmDb.write_pixel oc out_conf;
       traverse_file (chan_len + 1)
     end
   in
