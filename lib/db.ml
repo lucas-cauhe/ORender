@@ -22,14 +22,10 @@ module type Db = sig
 
 end
 
-let rescale_pixel (p : Colorspace.rgb_pixel) (base : float) (scale : float) : Colorspace.rgb_pixel = { 
-  red = p.red *. scale /. base; 
-  green = p.green *. scale /. base; 
-  blue = p.blue *. scale /. base
-}
 
 
-module Ppm: Db with type pixel := Colorspace.rgb_pixel = struct
+
+module Ppm = struct
   type config = {
     ppm_version: string;
     max: float;
@@ -79,7 +75,8 @@ module Ppm: Db with type pixel := Colorspace.rgb_pixel = struct
       let red = read_number ic in
       let green = read_number ic in
       let blue = read_number ic in
-      Some(rescale_pixel {red;green;blue} (float_of_int conf.ppm_max) conf.max)
+      let rgb_pixel = Colorspace.Rgb.rgb_of_values red green blue in
+      Some(Colorspace.Rgb.rescale_pixel rgb_pixel (float_of_int conf.ppm_max) conf.max)
     with
     | End_of_file -> None
     | Failure err -> print_endline err; None
@@ -95,8 +92,11 @@ module Ppm: Db with type pixel := Colorspace.rgb_pixel = struct
     output_string oc header_string
 
   let write_pixel oc conf p =
-    let ppm_pixel = rescale_pixel p conf.max (float_of_int conf.ppm_max) in
-    output_string oc (Printf.sprintf "%d %d %d     " (int_of_float ppm_pixel.red) (int_of_float ppm_pixel.green) (int_of_float ppm_pixel.blue))
+    let ppm_pixel = Colorspace.Rgb.rescale_pixel p conf.max (float_of_int conf.ppm_max) in
+    let pixel_red = Colorspace.Rgb.red ppm_pixel |> int_of_float in
+    let pixel_green = Colorspace.Rgb.green ppm_pixel |> int_of_float in
+    let pixel_blue = Colorspace.Rgb.blue ppm_pixel |> int_of_float in
+    output_string oc (Printf.sprintf "%d %d %d     " pixel_red pixel_green pixel_blue)
 
   let config_of_values v max ppm_max w h = {ppm_version = v; max = max; ppm_max = ppm_max; width = w; height = h}
   let config_max c = c.max

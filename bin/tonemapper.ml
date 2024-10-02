@@ -1,11 +1,10 @@
 
-open Computer_gfx.Image
 open Computer_gfx.Colorspace
 
 module PpmDb = Computer_gfx.Db.Ppm
 
 let tone_map_file in_file out_file = 
-  let module RgbToneMapper = Computer_gfx.Image.Image(Rgb) in
+  let module RgbToneMapper = Computer_gfx.Tonemap.ToneMapper(Rgb) in
   let ic = open_in in_file in
   let oc = open_out out_file in
   let header = PpmDb.read_header ic in

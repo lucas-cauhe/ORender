@@ -10,9 +10,23 @@ module type ColorSpace = sig
 end
 
 module type CsConversor = sig
-include ColorSpace
-val pixel_of_rgb : pixel -> pixel
-val rgb_of_pixel : pixel -> pixel
+  include ColorSpace
+
+  val pixel_of_rgb : pixel -> pixel
+
+  val rgb_of_pixel : pixel -> pixel
 end
 
-module Rgb : CsConversor
+module Rgb : sig
+  include CsConversor
+
+  val rescale_pixel : pixel -> float -> float -> pixel
+
+  val rgb_of_values : float -> float -> float -> pixel
+
+  val red : pixel -> float
+
+  val green : pixel -> float
+  
+  val blue : pixel -> float
+end 
