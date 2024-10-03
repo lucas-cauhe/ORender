@@ -45,8 +45,12 @@ module Direction : sig
     val normalize : t -> t option
     val cross_product : t -> t -> t
     val from_coords : float -> float -> float -> t
+    val of_point : Point.t -> t
     val string_of_direction : t -> string
     val eq : t -> t -> bool
+
+    val ( /* ) : t -> t -> t
+    val ( * ) : t -> t -> float
 end 
 
 

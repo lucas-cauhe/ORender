@@ -22,6 +22,7 @@ module Point = struct
   | num -> Some({x = p.x /. num; y = p.y /. num; z = p.z /. num})
 
   let from_coords x y z = { x; y; z }
+  let of_point p = { x = p.x; y = p.y; z = p.z }
   let string_of_point p = Printf.sprintf "Point {x = %f; y = %f; z = %f}" p.x p.y p.z
   let eq p1 p2 = p1.x = p2.x && p1.y = p2.y && p1.z = p2.z
 
@@ -60,6 +61,10 @@ module Direction = struct
   let from_coords x y z = { x; y; z }
   let string_of_direction d = Printf.sprintf "Direction {x = %f; y = %f; z = %f}" d.x d.y d.z
   let eq d1 d2 = d1.x = d2.x && d1.y = d2.y && d1.z = d2.z
+
+  let ( */ ) = cross_product
+  let ( * ) = dot
+
 end
 
 module Matrix = struct

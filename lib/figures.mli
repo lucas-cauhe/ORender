@@ -1,14 +1,15 @@
-module Ray : sig
-  type t
-end
+type ray_type = {
+  origin: Geometry.Point.t;
+  direction: Geometry.Direction.t
+}
 
 module type Figure = sig
     type config
 
-    (** Dada una figura y un rayo, devuelve la lista de puntos con los que intersecta
+    (** Dada una figura y un rayo, devuelve una lista con las distancias a los puntos con los que intersecta
         el rayo en la figura
     *)
-    val intersects : config -> Ray.t -> float list
+    val intersects : config -> ray_type -> float list
 
     
 end

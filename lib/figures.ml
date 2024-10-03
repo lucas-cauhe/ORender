@@ -1,22 +1,38 @@
-module Ray = struct
-  type t = {
-    origin: Geometry.Point.t;
-    direction: Geometry.Direction.t
-    }
+type ray_type = {
+  origin: Geometry.Point.t;
+  direction: Geometry.Direction.t
+}
+
+module type Figure = sig
+  type config
+
+  (** Dada una figura y un rayo, devuelve una lista con las distancias a los puntos con los que intersecta
+      el rayo en la figura
+  *)
+  val intersects : config -> ray_type -> float list
+
+  
 end
 
-
-module Plane = struct
+module Plane : Figure = struct
   type config = {
     normal: Geometry.Direction.t;
     origin: Geometry.Point.t;
   }
 
-  let init d o = { normal = d; origin = o }
-
   (* Plane implicit equation: ax + by + cz + d = 0 *)
   (* Ray implicit equation: p + d * t = 0 *)
-  let intersects plane ray =
+  let intersects plane (ray : ray_type) = 
+    let c = Geometry.Direction.dot (Geometry.Direction.of_point plane.origin) plane.normal in
+    let num = Geometry.Direction.dot (Geometry.Direction.of_point ray.origin) plane.normal |> ( +. ) (-.c) in
+    let den = Geometry.Direction.dot ray.direction plane.normal in
+    [-.num /. den]
+
+  let init d o = { normal = d; origin = o }
+
+  
+  
+
 end
 
 
