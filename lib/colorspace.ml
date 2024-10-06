@@ -6,6 +6,8 @@ module type ColorSpace = sig
   val merge_chans : pixel -> float -> float -> pixel
 
   val equalized : float -> pixel
+  val show : pixel -> string
+  val eq : pixel -> pixel -> bool
 
 end
 
@@ -41,5 +43,8 @@ module Rgb = struct
 
   let pixel_of_rgb p = p
   let rgb_of_pixel p = p
+
+  let show p = Printf.sprintf "(%f, %f, %f)" p.red p.green p.blue
+  let eq p1 p2 = p1.red == p2.red && p1.green == p2.green && p1.blue == p2.blue
 
 end

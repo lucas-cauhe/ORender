@@ -7,6 +7,10 @@ module type ColorSpace = sig
 
   val equalized : float -> pixel
 
+  val show : pixel -> string
+
+  val eq : pixel -> pixel -> bool
+
 end
 
 module type CsConversor = sig
@@ -29,4 +33,5 @@ module Rgb : sig
   val green : pixel -> float
   
   val blue : pixel -> float
+
 end 

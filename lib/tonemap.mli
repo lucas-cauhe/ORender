@@ -8,5 +8,4 @@ module ToneMapper (CS: Colorspace.ColorSpace) : sig
     val gamma_clamp : float -> float -> float -> float -> float
 
     val tone_map : CS.pixel -> (float -> float) -> CS.pixel
-  
 end
