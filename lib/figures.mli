@@ -10,6 +10,7 @@ module type FigureSig = sig
         el rayo en la figura
     *)
     val intersects : config -> ray_type -> float list
+    val show : config -> unit
 
     
 end
@@ -26,3 +27,7 @@ module Sphere : sig
 end
 
 type figure = Plane of Plane.config | Sphere of Sphere.config
+type scene = figure list
+
+val find_closest_figure : scene -> ray_type -> figure
+val show_figure : figure -> unit

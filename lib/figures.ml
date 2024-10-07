@@ -1,3 +1,5 @@
+open Domainslib
+
 type ray_type = {
   origin: Geometry.Point.t;
   direction: Geometry.Direction.t
@@ -12,6 +14,7 @@ module type FigureSig = sig
       el rayo en la figura
   *)
   val intersects : config -> ray_type -> float list
+  val show : config -> unit
 
   
 end
@@ -36,6 +39,7 @@ module Plane = struct
       [-.num /. den]
 
   let init d o = { normal = d; origin = o }
+  let show conf = Printf.printf "Normal: %s, Origin: %s" (Geometry.Direction.string_of_direction conf.normal) (Geometry.Point.string_of_point conf.origin)
 
   
   
@@ -51,6 +55,7 @@ module Sphere = struct
   let center sphere = sphere.center
 
   let radius sphere = sphere.radius
+  let show conf = Printf.printf "Center: %s, Radius: %f" (Geometry.Point.string_of_point conf.center) conf.radius
 
   let intersects sphere ray =
   let module GPoint = Geometry.Point in
@@ -69,3 +74,30 @@ module Sphere = struct
 end
 
 type figure = Plane of Plane.config | Sphere of Sphere.config
+type scene = figure list
+
+let closest_figure pool (scene : figure BatArray.t ) (intersections : float list BatArray.t) (ray : ray_type) = 
+  Task.parallel_for pool ~start:0 ~finish:(BatArray.length scene - 1) ~body:(fun i -> match scene.(i) with
+    | Plane(config) -> intersections.(i) <- Plane.intersects config ray
+    | Sphere(config) -> intersections.(i) <- Sphere.intersects config ray
+  );
+  let min (fig_min, dist_min) ind next = match next with
+  | [] -> (fig_min, dist_min)
+  | curr :: _ -> if dist_min < curr then (fig_min, dist_min) else (scene.(ind), curr) in
+  let fst_dist = List.hd intersections.(0) in
+  let fst_fig = scene.(0) in
+  let (result, _) = BatArray.fold_lefti min (fst_fig, fst_dist) intersections in
+  result
+
+let find_closest_figure s ray = 
+  let pool = Task.setup_pool ~num_domains:7 () in
+  let scene_arr = BatArray.of_list s in
+  let intersections = BatArray.init (List.length s) (fun _ -> []) in
+  let fig = Task.run pool (fun () -> closest_figure pool scene_arr intersections ray) in
+  Task.teardown_pool pool;
+  fig
+  
+
+let show_figure = function Plane(conf) -> Plane.show conf
+  | Sphere(conf) -> Sphere.show conf
+
