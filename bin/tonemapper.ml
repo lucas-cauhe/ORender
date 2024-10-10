@@ -8,7 +8,7 @@ let tone_map_file in_file out_file =
   let ic = open_in in_file in
   let oc = open_out out_file in
   let header = PpmDb.read_header ic in
-  let out_conf : PpmDb.config = PpmDb.config_of_values "P3" (PpmDb.config_max header) 65535 (PpmDb.config_width header) (PpmDb.config_height header)  in
+  let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 65535 (PpmDb.config_width header) (PpmDb.config_height header)  in
   PpmDb.write_header oc out_conf;
   
   let rec traverse_file chan_len = 
@@ -25,5 +25,5 @@ let tone_map_file in_file out_file =
   in
   traverse_file 0
 
-let () = tone_map_file "ppms/hdr/mpi_office.ppm" "ppms/ascii/mpi_office.ppm"
+let () = tone_map_file "ppms/hdr/nancy_church_2.ppm" "ppms/ascii/nancy_church_2.ppm"
 

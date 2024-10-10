@@ -88,7 +88,6 @@ module Ppm = struct
       header.max
       header.width header.height
       header.ppm_max in
-    print_endline header_string;
     output_string oc header_string
 
   let write_pixel oc conf p =
