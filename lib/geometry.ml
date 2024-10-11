@@ -50,7 +50,10 @@ module Direction = struct
   let div d = function 0. -> None 
   | num -> Some({x = d.x /. num; y = d.y /. num; z = d.z /. num})
 
-  let dot d1 d2 = d1.x *. d2.x +. d1.y *. d2.y +. d1.z *. d2.z
+
+  let dot d1 d2 = 
+    let dot_ = d1.x *. d2.x +. d1.y *. d2.y +. d1.z *. d2.z in
+    if abs_float dot_ <= 1e-10 then 0. else dot_
   let modulus d = sqrt (d.x *. d.x +. d.y *. d.y +. d.z *. d.z)
 
   let normalize d = modulus d |> div d

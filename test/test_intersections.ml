@@ -20,6 +20,11 @@ let testable_intersection =
 (* SPHERE TESTS *)
 (****************)
 
+let test_sphere_no_intersection _ = 
+  let sphere = sphere (Point.from_coords 4. 0. 0.) 1. in
+  let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
+  check testable_intersection "Found intersection" None (intersects sphere ray)
+
 let test_sphere_one_intersection _ =
   (* Defines una esfera cualquiera *)
   let center = Point.from_coords 10. 10. 10. in
@@ -27,19 +32,26 @@ let test_sphere_one_intersection _ =
   let sphere = sphere center !r in
   (* El punto donde van a interseccionar el rayo y la esfera lo defines *)
   (* mediante la latitud y el acimut *)
-  let lat = ref 60. in
-  let acimut = ref 30. in
+  let lat = ref (Float.pi/.2.) in
+  let acimut = ref (Float.pi/.2.) in
   let k = ref 5. in (* cte para tomar el origen *)
-  let surface_p = Point.from_coords (!r *. sin !lat *. cos !acimut) (!r *. sin !lat *. sin !acimut) (!r *. cos !lat) in
+  let w = Direction.from_coords (!r *. sin !lat *. cos !acimut) (!r *. sin !lat *. sin !acimut) (!r *. cos !lat) in
+  let surface_p = Point.from_coords (Direction.x w) (Direction.y w) (Direction.z w) in
   
   (* Calculas uno de los vectores tangeciales (de cambio de base) a la superficie de la esfera *)
   (* En ese punto y usas ese para trazar el rayo *)
   (* En este caso se ha escogido el vector tangente al acimut, manteniendo la latitud constante *)
-  let ray_dir = Direction.from_coords (-.(!r) *. cos !lat *. sin !acimut) (!r *. cos !lat *. cos !acimut) 0. in
+  let ray_dir = Direction.from_coords (-.(!r) *. sin !lat *. sin !acimut) (!r *. sin !lat *. cos !acimut) 0. in
+  if Direction.dot ray_dir w <> 0. then failwith "not perpendicular";
   let p = point_of_ray { ray_origin = surface_p; ray_direction = ray_dir } (-.(!k)) in
   let ray = { ray_origin = p; ray_direction = ray_dir } in
   
   check testable_intersection "Intersections differ from 1" (Some [1.]) (intersects sphere ray)
+
+let test_sphere_two_intersection _ = 
+  let sphere = sphere (Point.from_coords 4. 3. 5.) 10. in
+  let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
+  check testable_intersection "Found intersection" (Some[1.;2.]) (intersects sphere ray)
 
 (***************)
 (* PLANE TESTS *)
@@ -89,7 +101,9 @@ let test_triangle_not_intersects _ =
 
 
 let test_sphere = [
-  "test_sphere_one_intersection", `Quick, test_sphere_one_intersection
+  "test_sphere_no_intersection", `Quick, test_sphere_no_intersection;
+  "test_sphere_one_intersection", `Quick, test_sphere_one_intersection;
+  "test_sphere_two_intersection", `Quick, test_sphere_two_intersection;
 ]
 
 let test_plane = [

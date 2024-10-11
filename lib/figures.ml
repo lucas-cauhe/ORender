@@ -43,15 +43,15 @@ let plane d o = Plane({ plane_normal = d; plane_origin = o })
 (* Ray implicit equation: p + d * t = 0 *)
 let plane_intersection (plane : plane_type) (ray : ray_type) : float list option =
   let open Geometry.Direction in
-    (* Check if ray and plane are parallel *)
-    match plane.plane_normal * ray.ray_direction with
-    | 0. -> None
-    | den ->
-      let c = (of_point plane.plane_origin) * plane.plane_normal in
-      let num = (of_point ray.ray_origin) * plane.plane_normal |> ( +. ) (-.c) in
-      match -.num/.den with
-      | neg when neg < 0. -> None
-      | pos -> Some([pos])
+  (* Check if ray and plane are parallel *)
+  match plane.plane_normal * ray.ray_direction with
+  | 0. -> None
+  | den ->
+    let c = (of_point plane.plane_origin) * plane.plane_normal in
+    let num = (of_point ray.ray_origin) * plane.plane_normal |> ( +. ) (-.c) in
+    match -.num/.den with
+    | neg when neg < 0. -> None
+    | pos -> Some([pos])
 
 let show_plane (plane : plane_type) = Printf.printf "Normal: %s, Origin: %s" (Geometry.Direction.string_of_direction plane.plane_normal) (Geometry.Point.string_of_point plane.plane_origin)
 
@@ -68,13 +68,15 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : float list op
   let a = GDirection.modulus ray.ray_direction |> square in
   let b = 2.0 *. (GDirection.dot (GDirection.of_point oc) ray.ray_direction) in
   let c = (GPoint.distance ray.ray_origin sphere.sphere_center |> square) -. (square sphere.sphere_radius) in
-  let discriminant = (b *. b) -. (4.0 *. a *. c) in
-  if discriminant < 0.0 then
-    None
-  else
+  Printf.printf "A = %f, B = %f, C = %f" a b c;
+  match (b *. b) -. (4.0 *. a *. c) with
+  | d when abs_float d <= 1e-10 -> Some([-.b /. (2. *. a)])
+  | discriminant when discriminant > 0. -> 
     let t1 = (-.b -. sqrt discriminant) /. (2.0 *. a) in
     let t2 = (-.b +. sqrt discriminant) /. (2.0 *. a) in
     if t1 > t2 then Some([t2; t1]) else Some([t1; t2])
+  | _ -> None
+    
 
 let show_sphere (sphere : sphere_type) = Printf.printf "Center: %s, Radius: %f" (Geometry.Point.string_of_point sphere.sphere_center) sphere.sphere_radius
 
