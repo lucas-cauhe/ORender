@@ -1,6 +1,9 @@
 open Alcotest
 open Computer_gfx.Figures
 open Computer_gfx.Geometry
+open Computer_gfx.Colorspace
+
+let color = ref (Rgb.rgb_of_values 255. 0. 0.)
 
 
 let testable_intersection = 
@@ -21,7 +24,7 @@ let testable_intersection =
 (****************)
 
 let test_sphere_no_intersection _ = 
-  let sphere = sphere (Point.from_coords 4. 0. 0.) 1. in
+  let sphere = sphere (Point.from_coords 4. 0. 0.) 1. !color in
   let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
   check testable_intersection "Found intersection" None (intersects sphere ray)
 
@@ -29,7 +32,7 @@ let test_sphere_one_intersection _ =
   (* Defines una esfera cualquiera *)
   let center = Point.from_coords 10. 10. 10. in
   let r = ref 10. in
-  let sphere = sphere center !r in
+  let sphere = sphere center !r !color in
   (* El punto donde van a interseccionar el rayo y la esfera lo defines *)
   (* mediante la latitud y el acimut *)
   let lat = ref (Float.pi/.2.) in
@@ -49,7 +52,7 @@ let test_sphere_one_intersection _ =
   check testable_intersection "Intersections differ from 1" (Some [1.]) (intersects sphere ray)
 
 let test_sphere_two_intersection _ = 
-  let sphere = sphere (Point.from_coords 4. 3. 5.) 10. in
+  let sphere = sphere (Point.from_coords 4. 3. 5.) 10. !color in
   let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
   check testable_intersection "Found intersection" (Some[1.;2.]) (intersects sphere ray)
 
@@ -63,17 +66,17 @@ let test_plane_parallel _ =
   let plane_normal = Direction.from_coords (-1.) 0.5 0.5 in
   if Direction.dot plane_normal ray_dir <> 0. then failwith "not perpendicular";
   (* Point must be present in both plane and ray's direction *)
-  let perp_plane = plane plane_normal (Point.from_coords 1. 1. 1.) in
+  let perp_plane = plane plane_normal (Point.from_coords 1. 1. 1.) !color in
   check testable_intersection "Ray & Plane intersect (not orthogonal)" None (intersects perp_plane ray)
 
 let test_plane_intersects _ = 
   let ray = { ray_origin = (Point.from_coords 0. 0. 0.); ray_direction = (Direction.from_coords 1. 1. 1.) } in
-  let plane = plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords 3. 2. 1.) in
+  let plane = plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords 3. 2. 1.) !color in
   check testable_intersection "Ray & Plane don't intersect" (Some[1.]) (intersects plane ray)
 
 let test_plane_not_intersects _ = 
   let ray = { ray_origin = (Point.from_coords 0. 0. 0.); ray_direction = (Direction.from_coords 1. 1. 1.) } in
-  let plane = plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords (-3.) 2. 1.) in
+  let plane = plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords (-3.) 2. 1.) !color in
   check testable_intersection "Ray & Plane intersect" None (intersects plane ray)
 
 
@@ -84,7 +87,7 @@ let test_plane_not_intersects _ =
 (* Ray passes through the triangle *)
 let test_triangle_intersects _ = 
   let ray = { ray_origin = (Point.from_coords 0. 0. 0.); ray_direction = (Direction.from_coords 1. 1. 1.) } in
-  let triangle = triangle (Point.from_coords 2. 0. 2.) (Point.from_coords 2. 2. 0.) (Point.from_coords 0. 2. 2.) in
+  let triangle = triangle (Point.from_coords 2. 0. 2.) (Point.from_coords 2. 2. 0.) (Point.from_coords 0. 2. 2.) !color in
   match triangle with
   | None -> failwith "bad triangle definition"
   | Some(t) -> check testable_intersection "Ray & Triangle dont intersect" (Some[1.]) (intersects t ray)
@@ -92,7 +95,7 @@ let test_triangle_intersects _ =
 (* Ray doesn't pass through the triangle *)
 let test_triangle_not_intersects _ = 
   let ray = { ray_origin = (Point.from_coords 0. 0. 0.); ray_direction = (Direction.from_coords 1. 1. 1.) } in
-  let triangle = triangle (Point.from_coords 2. 0. 1.) (Point.from_coords 2. 2. 1.) (Point.from_coords 4. 0. 1.) in
+  let triangle = triangle (Point.from_coords 2. 0. 1.) (Point.from_coords 2. 2. 1.) (Point.from_coords 4. 0. 1.) !color in
   match triangle with
   | None -> failwith "bad triangle definition"
   | Some(t) -> check testable_intersection "Ray & Triangle intersect" None (intersects t ray)

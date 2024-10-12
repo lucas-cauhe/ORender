@@ -21,7 +21,8 @@ type triangle_type = {
   triangle_normal : Geometry.Direction.t 
 }
 
-type figure = Plane of plane_type | Sphere of sphere_type | Triangle of triangle_type
+type figure_type = Plane of plane_type | Sphere of sphere_type | Triangle of triangle_type
+type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel }
 type scene = figure list
 
 let square (n : float) : float = n *. n
@@ -37,7 +38,7 @@ let point_of_ray ray dist =
 (* PLANE ASSOCIATED FUNCTIONS *)
 (******************************)
 
-let plane d o = Plane({ plane_normal = d; plane_origin = o })
+let plane d o e = { fig_type = Plane({ plane_normal = d; plane_origin = o }); emission = e }
 
 (* Plane implicit equation: ax + by + cz + d = 0 *)
 (* Ray implicit equation: p + d * t = 0 *)
@@ -59,7 +60,7 @@ let show_plane (plane : plane_type) = Printf.printf "Normal: %s, Origin: %s" (Ge
 (* SPHERE ASSOCIATED FUNCTIONS *)
 (*******************************)
 
-let sphere center radius = Sphere({ sphere_center = center; sphere_radius = radius })
+let sphere center radius e = {fig_type = Sphere({ sphere_center = center; sphere_radius = radius }); emission = e}
 
 let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : float list option = 
   let module GPoint = Geometry.Point in
@@ -85,10 +86,10 @@ let show_sphere (sphere : sphere_type) = Printf.printf "Center: %s, Radius: %f" 
 (* TRIANGLE ASSOCIATED FUNCTIONS *)
 (*********************************)
 
-let triangle a b c = 
+let triangle a b c e = 
   let (-) = Geometry.Point.sub in 
   match Geometry.Direction.cross_product (Geometry.Direction.of_point (b - a)) (Geometry.Direction.of_point (c - a)) |> Geometry.Direction.normalize with
-  | Some(normal) -> Some(Triangle({vert_a = a; vert_b = b; vert_c = c;triangle_normal = normal}))
+  | Some(normal) -> Some({fig_type = Triangle({vert_a = a; vert_b = b; vert_c = c;triangle_normal = normal}); emission = e})
   | None -> None
 
 let triangle_intersection (triangle : triangle_type) (ray : ray_type) = 
@@ -122,7 +123,7 @@ let show_triangle (triangle: triangle_type) =
 (* INTERSECTION FUNCTION *) 
 (*************************)
   
-let intersects fig ray = match fig with
+let intersects fig ray = match fig.fig_type with
 | Plane(plane) -> plane_intersection plane ray
 | Sphere(sphere) -> sphere_intersection sphere ray
 | Triangle(triangle) -> triangle_intersection triangle ray
@@ -132,7 +133,7 @@ let intersects fig ray = match fig with
 (*************************)
 
 let show_figure fig = 
-  match fig with
+  match fig.fig_type with
   | Plane(plane) -> show_plane plane
   | Sphere(sphere) -> show_sphere sphere
   | Triangle(triangle) -> show_triangle triangle 
