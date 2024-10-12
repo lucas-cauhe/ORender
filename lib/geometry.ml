@@ -57,7 +57,8 @@ module Direction = struct
   let modulus d = sqrt (d.x *. d.x +. d.y *. d.y +. d.z *. d.z)
 
   let normalize d = modulus d |> div d
-  let of_point (p : Point.t) = { x = p.x; y = p.y; z = p.z }
+  let of_point (p: Point.t) = { x = p.x; y = p.y; z = p.z }
+  let between_points p1 p2 = Point.sub p1 p2 |> of_point
 
 
   let cross_product d1 d2 = { x = d1.y *. d2.z -. d1.z *. d2.y; y = d1.z *. d2.x -. d1.x *. d2.z; z = d1.x *. d2.y -. d1.y *. d2.x }

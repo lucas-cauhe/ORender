@@ -4,18 +4,23 @@ open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 
 let color = ref (Rgb.rgb_of_values 255. 0. 0.)
+let one_intersection = ref (Intersects [{distance = 1.; surface_normal = Direction.from_coords 1. 1. 1.}])
+let two_intersection = ref (Intersects [
+  {distance = 1.; surface_normal = Direction.from_coords 1. 1. 1.};
+  {distance = 1.; surface_normal = Direction.from_coords 1. 1. 1.}
+])
 
 
 let testable_intersection = 
   let module M = struct
-    type t = float list option
-    let pp fmt = function None -> Format.fprintf fmt "No intersection\n"
-    | Some(il) -> List.iter (fun f -> Format.fprintf fmt "%f | " f) il; print_newline ()
+    type t = intersection_result
+    let pp fmt = function Zero -> Format.fprintf fmt "No intersection\n"
+    | Intersects(il) -> List.iter (fun f -> Format.fprintf fmt "{ dist = %f; snormal = %s } | " f.distance (Direction.string_of_direction f.surface_normal)) il; print_newline ()
     let equal i1 i2 = match i1, i2 with
-    | None, Some(_) -> false
-    | Some(_), None -> false
-    | None, None -> true
-    | Some(l1), Some(l2) -> List.length l1 = List.length l2
+    | Zero, Intersects(_) -> false
+    | Intersects(_), Zero -> false
+    | Zero, Zero -> true
+    | Intersects(l1), Intersects(l2) -> List.length l1 = List.length l2
   end in
   (module M : Alcotest.TESTABLE with type t = M.t)
 
@@ -26,7 +31,7 @@ let testable_intersection =
 let test_sphere_no_intersection _ = 
   let sphere = sphere (Point.from_coords 4. 0. 0.) 1. !color in
   let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
-  check testable_intersection "Found intersection" None (intersects sphere ray)
+  check testable_intersection "Found intersection" Zero (intersects sphere ray)
 
 let test_sphere_one_intersection _ =
   (* Defines una esfera cualquiera *)
@@ -49,12 +54,18 @@ let test_sphere_one_intersection _ =
   let p = point_of_ray { ray_origin = surface_p; ray_direction = ray_dir } (-.(!k)) in
   let ray = { ray_origin = p; ray_direction = ray_dir } in
   
-  check testable_intersection "Intersections differ from 1" (Some [1.]) (intersects sphere ray)
+  check testable_intersection "Intersections differ from 1" !one_intersection (intersects sphere ray)
 
 let test_sphere_two_intersection _ = 
+  let sphere = sphere (Point.from_coords 4. 3. 5.) 4. !color in
+  let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
+  check testable_intersection "Found intersection" !two_intersection (intersects sphere ray)
+
+(* Here the ray starts from within the sphere *)
+let test_sphere_one_intersection_from_origin _ = 
   let sphere = sphere (Point.from_coords 4. 3. 5.) 10. !color in
   let ray = { ray_origin = Point.from_coords 0. 0. 0.; ray_direction = Direction.from_coords 1. 1. 1. } in
-  check testable_intersection "Found intersection" (Some[1.;2.]) (intersects sphere ray)
+  check testable_intersection "Found intersection" !one_intersection (intersects sphere ray)
 
 (***************)
 (* PLANE TESTS *)
@@ -67,17 +78,17 @@ let test_plane_parallel _ =
   if Direction.dot plane_normal ray_dir <> 0. then failwith "not perpendicular";
   (* Point must be present in both plane and ray's direction *)
   let perp_plane = plane plane_normal (Point.from_coords 1. 1. 1.) !color in
-  check testable_intersection "Ray & Plane intersect (not orthogonal)" None (intersects perp_plane ray)
+  check testable_intersection "Ray & Plane intersect (not orthogonal)" Zero (intersects perp_plane ray)
 
 let test_plane_intersects _ = 
   let ray = { ray_origin = (Point.from_coords 0. 0. 0.); ray_direction = (Direction.from_coords 1. 1. 1.) } in
   let plane = plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords 3. 2. 1.) !color in
-  check testable_intersection "Ray & Plane don't intersect" (Some[1.]) (intersects plane ray)
+  check testable_intersection "Ray & Plane don't intersect" !one_intersection (intersects plane ray)
 
 let test_plane_not_intersects _ = 
   let ray = { ray_origin = (Point.from_coords 0. 0. 0.); ray_direction = (Direction.from_coords 1. 1. 1.) } in
   let plane = plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords (-3.) 2. 1.) !color in
-  check testable_intersection "Ray & Plane intersect" None (intersects plane ray)
+  check testable_intersection "Ray & Plane intersect" Zero (intersects plane ray)
 
 
 (******************)
@@ -90,7 +101,7 @@ let test_triangle_intersects _ =
   let triangle = triangle (Point.from_coords 2. 0. 2.) (Point.from_coords 2. 2. 0.) (Point.from_coords 0. 2. 2.) !color in
   match triangle with
   | None -> failwith "bad triangle definition"
-  | Some(t) -> check testable_intersection "Ray & Triangle dont intersect" (Some[1.]) (intersects t ray)
+  | Some(t) -> check testable_intersection "Ray & Triangle dont intersect" !one_intersection (intersects t ray)
 
 (* Ray doesn't pass through the triangle *)
 let test_triangle_not_intersects _ = 
@@ -98,7 +109,7 @@ let test_triangle_not_intersects _ =
   let triangle = triangle (Point.from_coords 2. 0. 1.) (Point.from_coords 2. 2. 1.) (Point.from_coords 4. 0. 1.) !color in
   match triangle with
   | None -> failwith "bad triangle definition"
-  | Some(t) -> check testable_intersection "Ray & Triangle intersect" None (intersects t ray)
+  | Some(t) -> check testable_intersection "Ray & Triangle intersect" Zero (intersects t ray)
   
 
 
@@ -106,6 +117,7 @@ let test_triangle_not_intersects _ =
 let test_sphere = [
   "test_sphere_no_intersection", `Quick, test_sphere_no_intersection;
   "test_sphere_one_intersection", `Quick, test_sphere_one_intersection;
+  "test_sphere_one_intersection_from_origin", `Quick, test_sphere_one_intersection_from_origin;
   "test_sphere_two_intersection", `Quick, test_sphere_two_intersection;
 ]
 

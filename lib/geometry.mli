@@ -46,6 +46,7 @@ module Direction : sig
     val cross_product : t -> t -> t
     val from_coords : float -> float -> float -> t
     val of_point : Point.t -> t
+    val between_points : Point.t -> Point.t -> t
     val string_of_direction : t -> string
     val eq : t -> t -> bool
 
