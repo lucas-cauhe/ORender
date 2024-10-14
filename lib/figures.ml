@@ -1,3 +1,8 @@
+(*
+  Authors: Lucas Cauhé Viñao, Andrei Dumbrava
+  Description: Figures interface implementation
+*)
+
 open Domainslib
 
 type ray_type = {
@@ -11,8 +16,8 @@ type plane_type = {
 }
 
 type sphere_type = { 
-  sphere_center : Geometry.Point.t; 
-  sphere_radius : float 
+  sphere_radius : float;
+  sphere_center : Geometry.Point.t;
 }
 type triangle_type = { 
   vert_a : Geometry.Point.t; 
@@ -21,7 +26,17 @@ type triangle_type = {
   triangle_normal : Geometry.Direction.t 
 }
 
-type figure_type = Empty | Plane of plane_type | Sphere of sphere_type | Triangle of triangle_type
+(* type cylinder_type = {
+  cylinder_radius : float;
+  cylinder_base_center : Geometry.Point.t;
+  cylinder_axis : Geometry.Direction.t; (* |cylinder_axis| = cylinder's height *)
+} *)
+
+type figure_type = Empty 
+  | Plane of plane_type 
+  | Sphere of sphere_type 
+  | Triangle of triangle_type
+  (* | Cylinder of cylinder_type *)
 type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel }
 type scene = figure list
 

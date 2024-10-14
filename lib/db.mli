@@ -1,3 +1,8 @@
+(*
+  Authors: Lucas Cauhé Viñao, Andrei Dumbrava
+  Description: IO interface
+*)
+
 module type Db = sig
   type config
   type pixel
@@ -22,6 +27,7 @@ module type Db = sig
 
 end
 
+(** PPM file format interactive IO implementation for Db *)
 module Ppm : sig
   include Db with type pixel := Colorspace.Rgb.pixel
   val config_of_values : string -> float -> int -> int -> int -> config
