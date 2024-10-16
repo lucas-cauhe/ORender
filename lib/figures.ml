@@ -10,6 +10,8 @@ type ray_type = {
   ray_direction: Geometry.Direction.t
 }
 
+let ray o d = {ray_origin = o; ray_direction = d}
+
 type plane_type = {
   plane_normal: Geometry.Direction.t;
   plane_origin: Geometry.Point.t;
@@ -190,12 +192,10 @@ let closest_figure pool (scene : figure BatArray.t ) (intersections : intersecti
   | (_, Zero) -> None
   | (_, Intersects(_)) as result -> Some(result)
 
-let find_closest_figure s ray = 
-  let pool = Task.setup_pool ~num_domains:7 () in
+let find_closest_figure s ray pool = 
   let scene_arr = BatArray.of_list s in
   let intersections = BatArray.init (List.length s) (fun _ -> Zero) in
   let fig = Task.run pool (fun () -> closest_figure pool scene_arr intersections ray) in
-  Task.teardown_pool pool;
   match fig with
   | Some(f, _) -> Some(f)
   | _ -> None

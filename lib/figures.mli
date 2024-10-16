@@ -14,6 +14,8 @@ type ray_type = {
   ray_direction: Geometry.Direction.t
 }
 
+val ray : Geometry.Point.t -> Geometry.Direction.t -> ray_type
+
 (**
   Every 3d figure that can be represented in a rendering scene
 *)
@@ -73,6 +75,6 @@ val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Color
   Given a [scene] and a [ray] returns [Some(figure)] with the closest intersected figure in the scene by the ray
   Returns [None] if no figure was intersected 
 *)
-val find_closest_figure : scene -> ray_type -> figure option
+val find_closest_figure : scene -> ray_type -> Domainslib.Task.pool -> figure option
 
 val emission : figure -> Colorspace.Rgb.pixel

@@ -1,6 +1,7 @@
 open Computer_gfx.Figures
 open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
+open Domainslib
 
 
 (* let my_scene : figure list = [
@@ -13,7 +14,9 @@ let my_scene : scene = List.init 100000 (fun _ -> plane (Direction.from_coords 1
 
 let ray = ref { ray_direction = (Direction.from_coords 1. 1. 1.); ray_origin = (Point.from_coords 0. 0. 0.) }
 
+let pool = Task.setup_pool ~num_domains:7 ()
 (* let () = List.iter (Printf.printf "%f\n") (find_intersections my_scene !ray) *)
-let () = match find_closest_figure (my_scene @ [plane (Direction.from_coords 1. 1. 1.) (Point.from_coords 0.5 0. 0.) (Rgb.rgb_of_values 255. 0. 0. ) ]) !ray with
-| Some(fig) -> show_figure fig
-| None -> print_endline "Ray doesn't intersect"
+let () = match find_closest_figure (my_scene @ [plane (Direction.from_coords 1. 1. 1.) (Point.from_coords 0.5 0. 0.) (Rgb.rgb_of_values 255. 0. 0. ) ]) !ray pool with
+| Some(fig) -> Task.teardown_pool pool; show_figure fig
+| None -> Task.teardown_pool pool; print_endline "Ray doesn't intersect"
+
