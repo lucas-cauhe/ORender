@@ -20,7 +20,7 @@ let point_in_pixel cam (row, col) =
   let up_y = Direction.y cam.up *. (1. -. float_of_int row /. (float_of_int cam.height /. 2.)) in
   let x = left_x +. up_x in
   let y = left_y +. up_y in
-  Geometry.Point.from_coords x y (Direction.z cam.forward)
+  Geometry.Point.from_coords x y ((Point.z cam.origin) +. (Direction.z cam.forward))
 
  
 let trace_ray cam (row, col) scene pool =
