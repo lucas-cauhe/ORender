@@ -15,6 +15,7 @@ type ray_type = {
 }
 
 val ray : Geometry.Point.t -> Geometry.Direction.t -> ray_type
+val string_of_ray : ray_type -> string 
 
 (**
   Every 3d figure that can be represented in a rendering scene

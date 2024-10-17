@@ -21,12 +21,7 @@ let point_in_pixel cam (row, col) =
  
 let trace_ray cam (row, col) scene pool =
   let ray_direction = Geometry.Direction.between_points (point_in_pixel cam (row, col)) cam.origin in
-  match Geometry.Direction.normalize ray_direction with
-  | Some(ray_dir) -> begin 
-    let ray = Figures.ray cam.origin ray_dir in
-    match Figures.find_closest_figure scene ray pool with 
-    | Some(fig) -> Figures.emission fig
-    | None -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
-  end
-
+  let ray = Figures.ray cam.origin ray_direction in
+  match Figures.find_closest_figure scene ray pool with 
+  | Some(fig) -> Figures.emission fig
   | None -> Colorspace.Rgb.rgb_of_values 0. 0. 0.

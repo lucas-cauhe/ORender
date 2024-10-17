@@ -11,6 +11,7 @@ type ray_type = {
 }
 
 let ray o d = {ray_origin = o; ray_direction = d}
+let string_of_ray ray = Printf.sprintf "Ray dir -> %s, Ray origin -> %s" (Geometry.Direction.string_of_direction ray.ray_direction) (Geometry.Point.string_of_point ray.ray_origin)
 
 type plane_type = {
   plane_normal: Geometry.Direction.t;

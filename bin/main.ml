@@ -13,18 +13,23 @@ open Computer_gfx.Colorspace
 open Computer_gfx.Camera
 
 let my_scene : scene = [
-  plane (Direction.from_coords 1. 0. 0.) (Point.from_coords 1. 0. 0.) (Rgb.rgb_of_values 1. 0. 0.);
-  plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords (-1.) 0. 0.) (Rgb.rgb_of_values 0. 1. 0.);
-  plane (Direction.from_coords 0. 1. 0.) (Point.from_coords 0. 1. 0.) (Rgb.rgb_of_values 0.5 0.5 0.5);
-  plane (Direction.from_coords 0. (-1.) 0.) (Point.from_coords 0. (-1.) 0.) (Rgb.rgb_of_values 0.5 0.5 0.5);
-  plane (Direction.from_coords 0. 0. (-1.)) (Point.from_coords 0. 0. (-1.)) (Rgb.rgb_of_values 1. 0. 0.);
+  (* left *)
+  plane (Direction.from_coords 1. 0. 0.) (Point.from_coords (-1.) 0. 0.) (Rgb.rgb_of_values 1. 0. 0.);
+  (* right *)
+  plane (Direction.from_coords (-1.) 0. 0.) (Point.from_coords 1. 0. 0.) (Rgb.rgb_of_values 0. 1. 0.);
+  (* down *)
+  plane (Direction.from_coords 0. 1. 0.) (Point.from_coords 0. (-1.) 0.) (Rgb.rgb_of_values 0.75 0.25 0.25);
+  (* up *)
+  plane (Direction.from_coords 0. (-1.) 0.) (Point.from_coords 0. 1. 0.) (Rgb.rgb_of_values 0.25 0.75 0.25);
+  (* back *)
+  plane (Direction.from_coords 0. 0. (-1.)) (Point.from_coords 0. 0. 1.) (Rgb.rgb_of_values 0.25 0.25 0.75);
   sphere (Point.from_coords (-0.5) (-0.7) 0.25) 0.3 (Rgb.rgb_of_values 0.75 0. 0.);
-  sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0.75 0. 0.);
+  sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0. 0. 0.75);
 ]
 
 module PpmDb = Computer_gfx.Db.Ppm
-let left = ref (Direction.from_coords (-1.) 0. 0.)
-let up = ref (Direction.from_coords 0. 1. 0.)
+let left = ref (Direction.from_coords (-3.) 0. 0.)
+let up = ref (Direction.from_coords 0. 3. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
 
