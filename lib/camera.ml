@@ -14,13 +14,12 @@ let camera up left forward origin = {
 
 let point_in_pixel cam (row, col) =
   let open Geometry in
-  let left_x = Direction.x cam.left *. (1. -. float_of_int col /. (float_of_int cam.width /. 2.)) in
-  let left_y = Direction.y cam.left *. (1. -. float_of_int col /. (float_of_int cam.height /. 2.)) in
-  let up_x = Direction.x cam.up *. (1. -. float_of_int row /. (float_of_int cam.height /. 2.)) in
-  let up_y = Direction.y cam.up *. (1. -. float_of_int row /. (float_of_int cam.height /. 2.)) in
-  let x = left_x +. up_x in
-  let y = left_y +. up_y in
-  Geometry.Point.from_coords x y ((Point.z cam.origin) +. (Direction.z cam.forward))
+  let left = Direction.prod cam.left (1. -. float_of_int row /. (float_of_int cam.width /. 2.)) in
+  let up = Direction.prod cam.up (1. -. float_of_int col /. (float_of_int cam.height /. 2.)) in
+  (* Geometry.Point.from_coords x y ((Point.z cam.origin) +. (Direction.z cam.forward)) *)
+  let dir = cam.origin |> Direction.of_point |> Direction.sum cam.forward |> Direction.sum left |> Direction.sum up in
+  (* let dir = Direction.sum (Direction.sum (Direction.sum (Direction.of_point cam.origin) cam.forward) left) up in *)
+  Point.from_coords (Direction.x dir)  (Direction.y dir)  (Direction.z dir)
 
  
 let trace_ray cam (row, col) scene pool =

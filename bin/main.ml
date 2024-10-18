@@ -28,10 +28,10 @@ let my_scene : scene = [
 ]
 
 module PpmDb = Computer_gfx.Db.Ppm
-let left = ref (Direction.from_coords 0. (-1.) 0.)
-let up = ref (Direction.from_coords (-1.) 0. 0.)
+let left = ref (Direction.from_coords 0. (1.) 0.)
+let up = ref (Direction.from_coords (1.) 0. 0.)
 let forward = ref (Direction.from_coords 0. 0. (5.))
-let origin = ref (Point.from_coords 0. 0. (-10.5))
+let origin = ref (Point.from_coords 0. 0. (-8.5))
 
 
 let () = 
