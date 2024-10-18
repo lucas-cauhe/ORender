@@ -57,4 +57,7 @@ module Rgb : sig
   
   val blue : pixel -> float
 
+  val sum : pixel -> pixel -> pixel
+  val normalize : pixel -> float -> pixel
+
 end 

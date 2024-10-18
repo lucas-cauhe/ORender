@@ -28,10 +28,10 @@ let my_scene : scene = [
 ]
 
 module PpmDb = Computer_gfx.Db.Ppm
-let left = ref (Direction.from_coords (-2.) (-2.) 0.)
-let up = ref (Direction.from_coords (-2.) 2. 0.)
+let left = ref (Direction.from_coords (-2.) 0. 0.)
+let up = ref (Direction.from_coords 0. 2. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
-let origin = ref (Point.from_coords 0. 0. (-3.5))
+let origin = ref (Point.from_coords 0. 0. (-6.5))
 
 
 let () = 
@@ -44,7 +44,7 @@ let () =
     match row, col with
     | 256, _ -> close_out oc 
     | _, _ -> begin
-      let color = trace_ray camera (row, col) my_scene pool in
+      let color = pixel_color camera (row, col) my_scene pool in
       PpmDb.write_pixel oc out_conf color;
       if col = 255 then
         let () = output_string oc "\n" in

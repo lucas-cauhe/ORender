@@ -8,4 +8,4 @@ val camera :
     Geometry.Point.t ->
     camera
 
-val trace_ray : camera -> int * int -> Figures.scene -> Domainslib.Task.pool -> Colorspace.Rgb.pixel
+val pixel_color : camera -> int * int -> Figures.scene -> Domainslib.Task.pool -> Colorspace.Rgb.pixel

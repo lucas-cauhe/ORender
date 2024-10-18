@@ -47,4 +47,9 @@ module Rgb = struct
   let show p = Printf.sprintf "(%f, %f, %f)" p.red p.green p.blue
   let eq p1 p2 = p1.red == p2.red && p1.green == p2.green && p1.blue == p2.blue
 
+  let sum p1 p2 = {red = p1.red +. p2.red; green = p1.green +. p2.green; blue = p1.blue +. p2.blue}
+
+  let normalize p norm = {red = p.red /. norm;green = p.green /. norm;blue = p.blue /. norm;}
+
+
 end
