@@ -1,4 +1,4 @@
 (executables
- (public_names render tonemapper raytracing)
- (names main tonemapper raytracing)
+ (public_names render tonemapper )
+ (names main tonemapper )
  (libraries computer_gfx iter))

@@ -72,6 +72,7 @@ module Transformations : sig
     type hc
     exception Change_basis_error of (Matrix.t * hc * string)
     val hc_of_point : Point.t -> hc
+    val point_of_hc : hc -> Point.t
     val hc_of_direction : Direction.t -> hc
 
     (** Returns [None] if homogenous coordinate was a [Direction] one *)

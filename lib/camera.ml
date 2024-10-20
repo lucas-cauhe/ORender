@@ -1,4 +1,5 @@
 open Geometry
+open Domainslib
 
 type camera = {
   forward: Geometry.Direction.t;
@@ -11,9 +12,9 @@ type camera = {
 
 let num_points = ref 128 
 
-let camera up left forward origin = {
+let camera up left forward origin (width, height) = {
   up; left; forward; origin;
-  width = 256; height = 256;
+  width; height;
 }
 
 let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.t = 
@@ -37,14 +38,15 @@ let points_in_pixel cam (row, col) : Point.t BatList.t =
   BatList.init !num_points (fun _ -> point_in_pixel cam (x_, y_) half_width half_height forward_)
 
 
-let trace_ray scene pool ray : Colorspace.Rgb.pixel =
-  match Figures.find_closest_figure scene ray pool with 
+let trace_ray scene ray : Colorspace.Rgb.pixel =
+  match Figures.find_closest_figure scene ray with 
   | Some(fig) -> Figures.emission fig
   | None -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
 
  
 let pixel_color cam (row, col) scene pool =
   let open Colorspace in
-  let color_list = BatList.map (fun dir -> Direction.between_points dir cam.origin |> Figures.ray cam.origin |> trace_ray scene pool) (points_in_pixel cam (row, col)) in
-  let color_sum = BatList.fold_left (fun acc next -> Rgb.sum acc next) (Rgb.rgb_of_values 0. 0. 0.) color_list in
-  Rgb.normalize color_sum (float_of_int !num_points)
+  let pip_arr = BatArray.of_list (points_in_pixel cam (row, col)) in
+  let color_sum () = Task.parallel_for_reduce ~start:0 ~finish:(BatArray.length pip_arr -1) ~body:(fun ind -> Direction.between_points pip_arr.(ind) cam.origin |> Figures.ray cam.origin |> trace_ray scene) pool
+    (fun acc next_color -> Rgb.sum acc next_color) (Rgb.rgb_of_values 0. 0. 0.) in 
+  Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)

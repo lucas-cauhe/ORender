@@ -3,8 +3,6 @@
   Description: Figures interface implementation
 *)
 
-open Domainslib
-
 type ray_type = {
   ray_origin: Geometry.Point.t;
   ray_direction: Geometry.Direction.t
@@ -174,30 +172,22 @@ let show_figure fig =
   | Triangle(triangle) -> show_triangle triangle 
   | Empty -> print_endline "Empty figure"
 
+let _ = Empty
+
 (** Returns [None] if ray doesn't intersect any figure in the scene. Otherwise return the first figure in the scene that the ray intersects with
   wrapped in [Some] 
   As it is implemented, thread safety is guaranteed since intersections are stored in an array at their figure's scene position
   Rather than workin with locks for computing the minimum on the fly we've decided to perform a min operation over the intersections array later.
 *)
-let closest_figure pool (scene : figure BatArray.t ) (intersections : intersection_result BatArray.t) (ray : ray_type) : (figure * intersection_result) option = 
-  Task.parallel_for pool ~start:0 ~finish:(BatArray.length scene - 1) ~body:(fun i ->
-    match intersects scene.(i) ray with
-    | Intersects(closest :: _) -> intersections.(i) <- Intersects([closest])
-    | _ -> intersections.(i) <- Zero
-  );
-  let min (min_set : figure * intersection_result) ind next = match min_set, next with
+let find_closest_figure (scene : figure list ) (ray : ray_type) : figure option = 
+  let min (min_set : figure * intersection_result) fig next = match min_set, next with
   | _, Zero -> min_set
-  | (_, Zero), Intersects(_) -> (scene.(ind), next)
-  | (_, Intersects(dist_min)), Intersects(curr) -> if (List.hd dist_min).distance < (List.hd curr).distance then min_set else (scene.(ind), next) in
-  match BatArray.fold_lefti min ({ fig_type = Empty; emission = Colorspace.Rgb.rgb_of_values 0. 0. 0. }, Zero) intersections with
-  | (_, Zero) -> None
-  | (_, Intersects(_)) as result -> Some(result)
-
-let find_closest_figure s ray pool = 
-  let scene_arr = BatArray.of_list s in
-  let intersections = BatArray.init (List.length s) (fun _ -> Zero) in
-  let fig = Task.run pool (fun () -> closest_figure pool scene_arr intersections ray) in
-  match fig with
-  | Some(f, _) -> Some(f)
-  | _ -> None
-
+  | (_, Zero), Intersects(_) -> (fig, next)
+  | (_, Intersects(dist_min)), Intersects(curr) -> if (List.hd dist_min).distance < (List.hd curr).distance then min_set else (fig, next) in
+  let rec loop_ closest figures = 
+    match figures with
+    | [] -> closest
+    | fig :: rest -> loop_ (min closest fig (intersects fig ray)) rest in
+  match loop_ (List.hd scene, Zero) scene with
+  | _, Zero -> None
+  | fig, Intersects(_) -> Some(fig) 

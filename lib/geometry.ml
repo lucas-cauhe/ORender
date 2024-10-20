@@ -183,6 +183,8 @@ module Transformations = struct
   | _ -> homCoord
 
   let hc_of_point p = Point(p)
+  let point_of_hc = function Point(p) -> p 
+  | Direction(d) -> Point.from_coords (Direction.x d) (Direction.y d) (Direction.z d) 
   let hc_of_direction d = Direction(d)
   let translate mat = function
   Point(p) -> begin

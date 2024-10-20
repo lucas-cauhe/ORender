@@ -76,6 +76,6 @@ val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Color
   Given a [scene] and a [ray] returns [Some(figure)] with the closest intersected figure in the scene by the ray
   Returns [None] if no figure was intersected 
 *)
-val find_closest_figure : scene -> ray_type -> Domainslib.Task.pool -> figure option
+val find_closest_figure : scene -> ray_type -> figure option
 
 val emission : figure -> Colorspace.Rgb.pixel
