@@ -57,6 +57,11 @@ val intersects : figure -> ray_type -> intersection_result
 val show_figure : figure -> unit
 
 (**
+  Given a [transformation] geometry type and a figure to apply it to, returns a new [figure] result of transforming the figure given
+*)
+val transform : Geometry.transformation -> figure -> figure option
+
+(**
   Returns the instance of a plane given its [normal] and a [point] in the plane
 *)
 val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure

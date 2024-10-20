@@ -164,7 +164,11 @@ module Matrix = struct
         ))
 end
 
-
+type transformation = 
+  Rotation of Matrix.t * axis
+  | Scale of float * float * float
+  | Translation of float * float * float
+  | ChangeBase of Matrix.t
   
 module Transformations = struct
   type hc = Point of Point.t | Direction of Direction.t
@@ -186,6 +190,8 @@ module Transformations = struct
   let point_of_hc = function Point(p) -> p 
   | Direction(d) -> Point.from_coords (Direction.x d) (Direction.y d) (Direction.z d) 
   let hc_of_direction d = Direction(d)
+  let direction_of_hc = function Direction(d) -> d
+  | Point(p) -> Direction.of_point p
   let translate mat = function
   Point(p) -> begin
     let tx = Matrix.get_element mat 0 3 in
@@ -196,11 +202,23 @@ module Transformations = struct
     Some(Point( translationHc ))
   end
   | _ -> None
+  let translation_transformation_of_values tx ty tz = [|
+    [| 1.; 0.; 0.; tx |];
+    [| 0.; 1.; 0.; ty |];
+    [| 0.; 0.; 1.; tz |];
+    [| 0.; 0.; 0.; 1. |];
+  |]
   let scale mat homCoord = 
     let sx = Matrix.get_element mat 0 0 in
     let sy = Matrix.get_element mat 1 1 in
     let sz = Matrix.get_element mat 2 2 in
     prod homCoord [ sx; sy; sz ]
+  let scale_transformation_of_values tx ty tz = [|
+    [| tx; 0.; 0.; 0. |];
+    [| 0.; ty; 0.; 0. |];
+    [| 0.; 0.; tz; 0. |];
+    [| 0.; 0.; 0.; 1. |];
+  |]
 
   let rotation_transformation_of_axis ~angle = function
   X -> Matrix.from_array_matrix [| [| 1.; 0.; 0.; 0.; |]; [| 0.; cos angle; -.sin angle; 0. |]; [| 0.; sin angle; cos angle; 0. |]; [| 0.; 0.; 0.; 1. |] |]

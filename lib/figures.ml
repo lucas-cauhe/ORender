@@ -3,34 +3,36 @@
   Description: Figures interface implementation
 *)
 
+open Geometry
+
 type ray_type = {
-  ray_origin: Geometry.Point.t;
-  ray_direction: Geometry.Direction.t
+  ray_origin: Point.t;
+  ray_direction: Direction.t
 }
 
 let ray o d = {ray_origin = o; ray_direction = d}
-let string_of_ray ray = Printf.sprintf "Ray dir -> %s, Ray origin -> %s" (Geometry.Direction.string_of_direction ray.ray_direction) (Geometry.Point.string_of_point ray.ray_origin)
+let string_of_ray ray = Printf.sprintf "Ray dir -> %s, Ray origin -> %s" (Direction.string_of_direction ray.ray_direction) (Point.string_of_point ray.ray_origin)
 
 type plane_type = {
-  plane_normal: Geometry.Direction.t;
-  plane_origin: Geometry.Point.t;
+  plane_normal: Direction.t;
+  plane_origin: Point.t;
 }
 
 type sphere_type = { 
   sphere_radius : float;
-  sphere_center : Geometry.Point.t;
+  sphere_center : Point.t;
 }
 type triangle_type = { 
-  vert_a : Geometry.Point.t; 
-  vert_b : Geometry.Point.t; 
-  vert_c : Geometry.Point.t; 
-  triangle_normal : Geometry.Direction.t 
+  vert_a : Point.t; 
+  vert_b : Point.t; 
+  vert_c : Point.t; 
+  triangle_normal : Direction.t 
 }
 
 (* type cylinder_type = {
   cylinder_radius : float;
-  cylinder_base_center : Geometry.Point.t;
-  cylinder_axis : Geometry.Direction.t; (* |cylinder_axis| = cylinder's height *)
+  cylinder_base_center : Point.t;
+  cylinder_axis : Direction.t; (* |cylinder_axis| = cylinder's height *)
 } *)
 
 type figure_type = Empty 
@@ -43,7 +45,7 @@ type scene = figure list
 
 type intersection = {
   distance: float;
-  surface_normal: Geometry.Direction.t
+  surface_normal: Direction.t
 }
 type intersection_result = Zero | Intersects of intersection list
 
@@ -67,7 +69,7 @@ let plane d o e = { fig_type = Plane({ plane_normal = d; plane_origin = o }); em
 (* Plane implicit equation: ax + by + cz + d = 0 *)
 (* Ray implicit equation: p + d * t = 0 *)
 let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_result =
-  let open Geometry.Direction in
+  let open Direction in
   (* Check if ray and plane are parallel *)
   match plane.plane_normal * ray.ray_direction with
   | 0. -> Zero
@@ -78,7 +80,9 @@ let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_resu
     | neg when neg < 0. -> Zero
     | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal}])
 
-let show_plane (plane : plane_type) = Printf.printf "Normal: %s, Origin: %s" (Geometry.Direction.string_of_direction plane.plane_normal) (Geometry.Point.string_of_point plane.plane_origin)
+let show_plane (plane : plane_type) = Printf.printf "Normal: %s, Origin: %s" (Direction.string_of_direction plane.plane_normal) (Point.string_of_point plane.plane_origin)
+
+let transform_plane _ fig e = Some(plane fig.plane_normal fig.plane_origin e)
 
 (*******************************)
 (* SPHERE ASSOCIATED FUNCTIONS *)
@@ -87,8 +91,8 @@ let show_plane (plane : plane_type) = Printf.printf "Normal: %s, Origin: %s" (Ge
 let sphere center radius e = {fig_type = Sphere({ sphere_center = center; sphere_radius = radius }); emission = e}
 
 let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_result = 
-  let module GPoint = Geometry.Point in
-  let module GDirection = Geometry.Direction in
+  let module GPoint = Point in
+  let module GDirection = Direction in
   let surface_normal d = GDirection.between_points (point_of_ray ray d) sphere.sphere_center in
 
   let oc = GDirection.between_points ray.ray_origin sphere.sphere_center in
@@ -113,20 +117,21 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
       Zero
     
 
-let show_sphere (sphere : sphere_type) = Printf.printf "Center: %s, Radius: %f" (Geometry.Point.string_of_point sphere.sphere_center) sphere.sphere_radius
+let show_sphere (sphere : sphere_type) = Printf.printf "Center: %s, Radius: %f" (Point.string_of_point sphere.sphere_center) sphere.sphere_radius
 
+let transform_sphere _ fig e = Some(sphere fig.sphere_center fig.sphere_radius e)
 
 (*********************************)
 (* TRIANGLE ASSOCIATED FUNCTIONS *)
 (*********************************)
 
 let triangle a b c e = 
-  match Geometry.Direction.cross_product (Geometry.Direction.between_points b a) (Geometry.Direction.between_points c a) |> Geometry.Direction.normalize with
+  match Direction.cross_product (Direction.between_points b a) (Direction.between_points c a) |> Direction.normalize with
   | Some(normal) -> Some({fig_type = Triangle({vert_a = a; vert_b = b; vert_c = c;triangle_normal = normal}); emission = e})
   | None -> None
 
 let triangle_intersection (triangle : triangle_type) (ray : ray_type) = 
-  let open Geometry.Direction in
+  let open Direction in
     match plane_intersection {plane_normal = triangle.triangle_normal; plane_origin = triangle.vert_a} ray with
     | Intersects([{ distance = d; _ }]) as il -> begin 
       let p = point_of_ray ray d in
@@ -147,9 +152,34 @@ let triangle_intersection (triangle : triangle_type) (ray : ray_type) =
     end
     | _ -> Zero
 
-
 let show_triangle (triangle: triangle_type) =  
-  Printf.printf "A: %s, B: %s, C: %s, Normal: %s" (Geometry.Point.string_of_point triangle.vert_a) (Geometry.Point.string_of_point triangle.vert_b) (Geometry.Point.string_of_point triangle.vert_c) (Geometry.Direction.string_of_direction triangle.triangle_normal)
+  Printf.printf "A: %s, B: %s, C: %s, Normal: %s" (Point.string_of_point triangle.vert_a) (Point.string_of_point triangle.vert_b) (Point.string_of_point triangle.vert_c) (Direction.string_of_direction triangle.triangle_normal)
+
+
+let transform_triangle (transform : transformation) (t : triangle_type) (e : Colorspace.Rgb.pixel) : figure option = 
+  match transform with
+  | Translation(tx, ty, tz) -> 
+    let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
+    let translated_points = Array.map 
+      (fun point -> Transformations.hc_of_point point |> Transformations.translate translation_mat |> Option.get |> Transformations.point_of_hc)
+      [|t.vert_a; t.vert_b; t.vert_c|] in
+    triangle translated_points.(0) translated_points.(1) translated_points.(2) e
+  | Scale(sx, sy, sz) -> 
+    let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
+    let scaled_dirs = Array.map
+      (fun dir -> Transformations.hc_of_direction dir |> Transformations.scale scale_mat |> Transformations.direction_of_hc)
+      [| Direction.between_points t.vert_c t.vert_a; Direction.between_points t.vert_b t.vert_a |] in
+    triangle 
+      t.vert_a 
+      (Point.sum t.vert_a (Point.from_coords (Direction.x scaled_dirs.(0)) (Direction.y scaled_dirs.(0)) (Direction.z scaled_dirs.(0)) )) 
+      (Point.sum t.vert_a (Point.from_coords (Direction.x scaled_dirs.(1)) (Direction.y scaled_dirs.(1)) (Direction.z scaled_dirs.(1)) )) 
+      e
+  | Rotation(m, ax) ->
+    let rotated_points = Array.map
+      (fun point -> Transformations.hc_of_point point |> Transformations.rotate m ax |>  Transformations.point_of_hc)
+      [| t.vert_a; t.vert_b; t.vert_c |] in
+    triangle rotated_points.(0) rotated_points.(1) rotated_points.(2) e
+  | _ -> triangle t.vert_a t.vert_b t.vert_c e
 
 (*************************)
 (* INTERSECTION FUNCTION *) 
@@ -172,6 +202,16 @@ let show_figure fig =
   | Triangle(triangle) -> show_triangle triangle 
   | Empty -> print_endline "Empty figure"
 
+(*****************************)
+(*    TRANSFORM FUNCTION     *) 
+(*****************************)
+let transform t fig = 
+  match fig.fig_type with 
+  | Empty -> None  
+  | Plane(plane) -> transform_plane t plane fig.emission
+  | Sphere(sphere) -> transform_sphere t sphere fig.emission
+  | Triangle(triangle) -> transform_triangle t triangle fig.emission 
+
 let _ = Empty
 
 (** Returns [None] if ray doesn't intersect any figure in the scene. Otherwise return the first figure in the scene that the ray intersects with
@@ -191,3 +231,5 @@ let find_closest_figure (scene : figure list ) (ray : ray_type) : figure option 
   match loop_ (List.hd scene, Zero) scene with
   | _, Zero -> None
   | fig, Intersects(_) -> Some(fig) 
+
+

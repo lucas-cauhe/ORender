@@ -67,6 +67,12 @@ module Matrix : sig
     
 end 
 
+type transformation = 
+  Rotation of Matrix.t * axis
+  | Scale of float * float * float
+  | Translation of float * float * float
+  | ChangeBase of Matrix.t
+
 (** Transformations module assumes matrix arguments are 4x4 matrices *)
 module Transformations : sig
     type hc
@@ -74,10 +80,13 @@ module Transformations : sig
     val hc_of_point : Point.t -> hc
     val point_of_hc : hc -> Point.t
     val hc_of_direction : Direction.t -> hc
+    val direction_of_hc : hc -> Direction.t
 
     (** Returns [None] if homogenous coordinate was a [Direction] one *)
     val translate : Matrix.t -> hc -> hc option
+    val translation_transformation_of_values : float -> float -> float -> Matrix.t
     val scale : Matrix.t -> hc -> hc
+    val scale_transformation_of_values : float -> float -> float -> Matrix.t
     val rotation_transformation_of_axis : angle:float -> axis -> Matrix.t
     val rotate : Matrix.t -> axis -> hc -> hc
     val change_basis : Matrix.t -> hc -> hc
