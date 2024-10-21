@@ -40,7 +40,7 @@ let points_in_pixel cam (row, col) : Point.t BatList.t =
 
 let trace_ray scene ray : Colorspace.Rgb.pixel =
   match Figures.find_closest_figure scene ray with 
-  | Some(fig) -> Figures.emission fig
+  | Some(fig) -> Figures.emission (Figures.get_figure fig)
   | None -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
 
  

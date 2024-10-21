@@ -29,6 +29,11 @@ type triangle_type = {
   triangle_normal : Direction.t 
 }
 
+type cuboid_type = {
+  cuboid_min : Point.t;
+  cuboid_max : Point.t;
+}
+
 (* type cylinder_type = {
   cylinder_radius : float;
   cylinder_base_center : Point.t;
@@ -39,9 +44,11 @@ type figure_type = Empty
   | Plane of plane_type 
   | Sphere of sphere_type 
   | Triangle of triangle_type
+  | Cuboid of cuboid_type
   (* | Cylinder of cylinder_type *)
 type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel }
-type scene = figure list
+type scene_figure = Figure of figure | BoundingBox of figure * scene_figure list
+type scene = scene_figure list
 
 type intersection = {
   distance: float;
@@ -51,6 +58,8 @@ type intersection_result = Zero | Intersects of intersection list
 
 let square (n : float) : float = n *. n
 
+let get_figure = function Figure(fig) -> fig
+  | BoundingBox(fig, _) -> fig
 
 let point_of_ray ray dist = 
   let open Geometry in
@@ -181,6 +190,41 @@ let transform_triangle (transform : transformation) (t : triangle_type) (e : Col
     triangle rotated_points.(0) rotated_points.(1) rotated_points.(2) e
   | _ -> triangle t.vert_a t.vert_b t.vert_c e
 
+
+(*******************************)
+(* CUBOID ASSOCIATED FUNCTIONS *) 
+(*******************************)
+
+let cuboid c_min c_max = { cuboid_min = c_min; cuboid_max = c_max; }
+
+let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result =
+  let open Point in
+  let open Direction in
+  let t1x = (Point.x c.cuboid_min -. Point.x ray.ray_origin) /. x ray.ray_direction in
+  let t2x = (Point.x c.cuboid_max -. Point.x ray.ray_origin) /. x ray.ray_direction in
+  let t1y = (Point.y c.cuboid_min -. Point.y ray.ray_origin) /. y ray.ray_direction in
+  let t2y = (Point.y c.cuboid_max -. Point.y ray.ray_origin) /. y ray.ray_direction in
+  let t1z = (Point.z c.cuboid_min -. Point.z ray.ray_origin) /. z ray.ray_direction in
+  let t2z = (Point.z c.cuboid_max -. Point.z ray.ray_origin) /. z ray.ray_direction in
+
+  let tmin = max (max (min t1x t2x) (min t1y t2y)) (min t1z t2z) in
+  let tmax = min (min (max t1x t2x) (max t1y t2y)) (max t1z t2z) in
+
+  if tmin < tmax && tmax > 0. then
+    let distance = if tmin > 0. then tmin else tmax in
+    let normal = 
+      if distance = t1x || distance = t2x then Direction.from_coords (if distance = t1x then -1. else 1.) 0. 0.
+      else if distance = t1y || distance = t2y then Direction.from_coords 0. (if distance = t1y then -1. else 1.) 0.
+      else Direction.from_coords 0. 0. (if distance = t1z then -1. else 1.)
+    in
+    Intersects([{distance; surface_normal = normal}])
+  else
+    Zero
+  
+
+let show_cuboid (cuboid : cuboid_type) = 
+  Printf.sprintf "min = %s; max = %s" (Point.string_of_point cuboid.cuboid_min) (Point.string_of_point cuboid.cuboid_max)
+
 (*************************)
 (* INTERSECTION FUNCTION *) 
 (*************************)
@@ -189,6 +233,7 @@ let intersects fig ray = match fig.fig_type with
 | Plane(plane) -> plane_intersection plane ray
 | Sphere(sphere) -> sphere_intersection sphere ray
 | Triangle(triangle) -> triangle_intersection triangle ray
+| Cuboid(cuboid) -> cuboid_intersection cuboid ray
 | Empty -> Zero
 
 (*************************)
@@ -200,6 +245,7 @@ let show_figure fig =
   | Plane(plane) -> show_plane plane
   | Sphere(sphere) -> show_sphere sphere
   | Triangle(triangle) -> show_triangle triangle 
+  | Cuboid(cuboid) -> show_cuboid cuboid
   | Empty -> print_endline "Empty figure"
 
 (*****************************)
@@ -211,23 +257,37 @@ let transform t fig =
   | Plane(plane) -> transform_plane t plane fig.emission
   | Sphere(sphere) -> transform_sphere t sphere fig.emission
   | Triangle(triangle) -> transform_triangle t triangle fig.emission 
+  | Cuboid(cuboid) -> transform_cuboid t cuboid fig.emission
 
 let _ = Empty
+
+
 
 (** Returns [None] if ray doesn't intersect any figure in the scene. Otherwise return the first figure in the scene that the ray intersects with
   wrapped in [Some] 
   As it is implemented, thread safety is guaranteed since intersections are stored in an array at their figure's scene position
   Rather than workin with locks for computing the minimum on the fly we've decided to perform a min operation over the intersections array later.
 *)
-let find_closest_figure (scene : figure list ) (ray : ray_type) : figure option = 
-  let min (min_set : figure * intersection_result) fig next = match min_set, next with
+let rec find_closest_figure scene ray = 
+  let min (min_set : scene_figure * intersection_result) fig next = match min_set, next with
   | _, Zero -> min_set
   | (_, Zero), Intersects(_) -> (fig, next)
   | (_, Intersects(dist_min)), Intersects(curr) -> if (List.hd dist_min).distance < (List.hd curr).distance then min_set else (fig, next) in
   let rec loop_ closest figures = 
     match figures with
     | [] -> closest
-    | fig :: rest -> loop_ (min closest fig (intersects fig ray)) rest in
+    | fig :: rest -> begin
+      match fig with
+      | Figure(f) -> loop_ (min closest fig (intersects f ray)) rest 
+      | BoundingBox(f, rest_figures) -> 
+        match intersects f ray with
+        | Zero -> loop_ closest rest 
+        | Intersects(_) -> 
+          match find_closest_figure rest_figures ray with 
+          | None -> loop_ closest rest
+          | Some(inner_figure) -> loop_ (min closest inner_figure (intersects (get_figure inner_figure) ray)) rest
+        
+      end in
   match loop_ (List.hd scene, Zero) scene with
   | _, Zero -> None
   | fig, Intersects(_) -> Some(fig) 

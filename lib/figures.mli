@@ -23,14 +23,24 @@ val string_of_ray : ray_type -> string
 type figure
 
 (**
+  Tree-like representation of the figures in the scene
+*)
+type scene_figure = Figure of figure | BoundingBox of figure * scene_figure list 
+
+(**
   Set of figures in a 3d space
 *)
-type scene = figure list
+type scene = scene_figure list
 
 (**
   Compute the point in the ray's direction from a given offset
 *)
 val point_of_ray : ray_type -> float -> Geometry.Point.t
+
+(**
+  Utility function to retrieve the internal figure 
+*)
+val get_figure : scene_figure -> figure
 
 (**
   Ray-figure intersection point info
@@ -78,9 +88,14 @@ val sphere : Geometry.Point.t -> float -> Colorspace.Rgb.pixel -> figure
 val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure option
 
 (**
+  Returns the instance of a cuboid given its [min_point] and [max_point] defining the cuboid 
+*)
+val cuboid : Geometry.Point.t -> Geometry.Point.t -> figure
+
+(**
   Given a [scene] and a [ray] returns [Some(figure)] with the closest intersected figure in the scene by the ray
   Returns [None] if no figure was intersected 
 *)
-val find_closest_figure : scene -> ray_type -> figure option
+val find_closest_figure : scene -> ray_type -> scene_figure option
 
 val emission : figure -> Colorspace.Rgb.pixel
