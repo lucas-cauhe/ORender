@@ -195,20 +195,18 @@ let transform_triangle (transform : transformation) (t : triangle_type) (e : Col
 (* CUBOID ASSOCIATED FUNCTIONS *) 
 (*******************************)
 
-let cuboid c_min c_max = { cuboid_min = c_min; cuboid_max = c_max; }
+let cuboid c_min c_max e = {fig_type = Cuboid({ cuboid_min = c_min; cuboid_max = c_max; }); emission = e; }
 
 let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result =
-  let open Point in
-  let open Direction in
-  let t1x = (Point.x c.cuboid_min -. Point.x ray.ray_origin) /. x ray.ray_direction in
-  let t2x = (Point.x c.cuboid_max -. Point.x ray.ray_origin) /. x ray.ray_direction in
-  let t1y = (Point.y c.cuboid_min -. Point.y ray.ray_origin) /. y ray.ray_direction in
-  let t2y = (Point.y c.cuboid_max -. Point.y ray.ray_origin) /. y ray.ray_direction in
-  let t1z = (Point.z c.cuboid_min -. Point.z ray.ray_origin) /. z ray.ray_direction in
-  let t2z = (Point.z c.cuboid_max -. Point.z ray.ray_origin) /. z ray.ray_direction in
+  let t1x = (Point.x c.cuboid_min -. Point.x ray.ray_origin) /. Direction.x ray.ray_direction in
+  let t2x = (Point.x c.cuboid_max -. Point.x ray.ray_origin) /. Direction.x ray.ray_direction in
+  let t1y = (Point.y c.cuboid_min -. Point.y ray.ray_origin) /. Direction.y ray.ray_direction in
+  let t2y = (Point.y c.cuboid_max -. Point.y ray.ray_origin) /. Direction.y ray.ray_direction in
+  let t1z = (Point.z c.cuboid_min -. Point.z ray.ray_origin) /. Direction.z ray.ray_direction in
+  let t2z = (Point.z c.cuboid_max -. Point.z ray.ray_origin) /. Direction.z ray.ray_direction in
 
-  let tmin = max (max (min t1x t2x) (min t1y t2y)) (min t1z t2z) in
-  let tmax = min (min (max t1x t2x) (max t1y t2y)) (max t1z t2z) in
+  let tmin = max (min t1x t2x) (min t1y t2y) |> max (min t1z t2z) in
+  let tmax = min (max t1x t2x) (max t1y t2y) |> min (max t1z t2z) in
 
   if tmin < tmax && tmax > 0. then
     let distance = if tmin > 0. then tmin else tmax in
@@ -223,7 +221,8 @@ let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result
   
 
 let show_cuboid (cuboid : cuboid_type) = 
-  Printf.sprintf "min = %s; max = %s" (Point.string_of_point cuboid.cuboid_min) (Point.string_of_point cuboid.cuboid_max)
+  Printf.printf "min = %s; max = %s" (Point.string_of_point cuboid.cuboid_min) (Point.string_of_point cuboid.cuboid_max)
+
 
 (*************************)
 (* INTERSECTION FUNCTION *) 
@@ -257,7 +256,7 @@ let transform t fig =
   | Plane(plane) -> transform_plane t plane fig.emission
   | Sphere(sphere) -> transform_sphere t sphere fig.emission
   | Triangle(triangle) -> transform_triangle t triangle fig.emission 
-  | Cuboid(cuboid) -> transform_cuboid t cuboid fig.emission
+  | Cuboid(_) -> Some(fig) 
 
 let _ = Empty
 

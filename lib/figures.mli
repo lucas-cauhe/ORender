@@ -90,7 +90,7 @@ val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Color
 (**
   Returns the instance of a cuboid given its [min_point] and [max_point] defining the cuboid 
 *)
-val cuboid : Geometry.Point.t -> Geometry.Point.t -> figure
+val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure
 
 (**
   Given a [scene] and a [ray] returns [Some(figure)] with the closest intersected figure in the scene by the ray
