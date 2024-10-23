@@ -26,12 +26,12 @@ let red_sphere_translated_center =
   | Some(new_point) -> Transformations.point_of_hc new_point
   | None -> red_sphere_center 
 
-let triangle_rotation = Transformations.rotation_transformation_of_axis ~angle:Float.pi Z
+(* let triangle_rotation = Transformations.rotation_transformation_of_axis ~angle:Float.pi Z
 
 let triangle_box = BoundingBox(cuboid (Point.from_coords (-0.5) (-0.25) 0.7) (Point.from_coords 0.75 1. 0.8) (Rgb.rgb_of_values 0. 0. 0.), 
   [Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get |> transform (Translation(0.5, 0.5,0.)) |> Option.get);
   Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0. 0.75 0.75) |> Option.get |> transform (Scale(2., 2.,0.)) |> Option.get);
-  Figure(triangle (Point.from_coords 0. (-0.25) 0.7) (Point.from_coords (-0.25) 0.25 0.7) (Point.from_coords 0.25 0.25 0.7) (Rgb.rgb_of_values 0.75 0. 0.75) |> Option.get |> transform (Rotation(triangle_rotation, Z)) |> Option.get);])
+  Figure(triangle (Point.from_coords 0. (-0.25) 0.7) (Point.from_coords (-0.25) 0.25 0.7) (Point.from_coords 0.25 0.25 0.7) (Rgb.rgb_of_values 0.75 0. 0.75) |> Option.get |> transform (Rotation(triangle_rotation, Z)) |> Option.get);]) *)
 
 let my_scene : scene = [
   (* left *)
@@ -44,16 +44,20 @@ let my_scene : scene = [
   Figure(plane (Direction.from_coords 0. (-1.) 0.) (Point.from_coords 0. 1. 0.) (Rgb.rgb_of_values 0.25 0.75 0.25));
   (* back *)
   Figure(plane (Direction.from_coords 0. 0. (-1.)) (Point.from_coords 0. 0. 1.) (Rgb.rgb_of_values 0.25 0.25 0.75));
-  triangle_box;
+  (* triangle_box; *)
   Figure(sphere red_sphere_translated_center 0.3 (Rgb.rgb_of_values 0.75 0. 0.));
-  Figure(sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0. 0. 0.75));
+  Figure(sphere (Point.from_coords (-0.5) (-0.7) 0.25) 0.3 (Rgb.rgb_of_values 0. 0. 0.75));
+]
+
+let light_sources : light_source_type list = [
+  light_source (Point.from_coords 0. 0.5 0.) (Rgb.rgb_of_values 1. 1. 1.)
 ]
 
 let left = ref (Direction.from_coords (-2.) 0. 0.)
 let up = ref (Direction.from_coords 0. 2. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
-let width, height = ref 512, ref 512 
+let width, height = ref 512, ref 512
 
 let () = 
   let camera = camera !up !left !forward !origin (!width,!height) in
@@ -65,7 +69,7 @@ let () =
     match row, col with
     | r, _ when r = !height -> close_out oc 
     | _, _ -> begin
-      let color = pixel_color camera (row, col) my_scene pool in
+      let color = pixel_color camera (row, col) my_scene light_sources pool in
       PpmDb.write_pixel oc out_conf color;
       if col = !width - 1 then
         let () = output_string oc "\n" in

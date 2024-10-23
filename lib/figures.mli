@@ -47,7 +47,8 @@ val get_figure : scene_figure -> figure
 *)
 type intersection = {
   distance: float;
-  surface_normal: Geometry.Direction.t
+  surface_normal: Geometry.Direction.t;
+  intersection_point: Geometry.Point.t;
 }
 
 (**
@@ -93,9 +94,9 @@ val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Color
 val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure
 
 (**
-  Given a [scene] and a [ray] returns [Some(figure)] with the closest intersected figure in the scene by the ray
+  Given a [scene] and a [ray] returns [Some(figure, intersection_result)] with the closest intersected figure in the scene by the ray
   Returns [None] if no figure was intersected 
 *)
-val find_closest_figure : scene -> ray_type -> scene_figure option
+val find_closest_figure : scene -> ray_type -> (scene_figure * intersection_result) option
 
 val emission : figure -> Colorspace.Rgb.pixel

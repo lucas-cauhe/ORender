@@ -59,5 +59,7 @@ module Rgb : sig
 
   val sum : pixel -> pixel -> pixel
   val normalize : pixel -> float -> pixel
+  val value_prod : pixel -> float -> pixel
+  val rgb_prod : pixel -> pixel -> pixel
 
 end 

@@ -19,11 +19,11 @@ let tone_map_file in_file out_file =
       | l when l == (PpmDb.config_width header) -> output_string oc "\n"; 0
       | l -> l
       in
-      RgbToneMapper.tone_map p RgbToneMapper.clamp |> PpmDb.write_pixel oc out_conf;
+      RgbToneMapper.tone_map p (RgbToneMapper.gamma (PpmDb.config_max out_conf) (1./.2.2)) |> PpmDb.write_pixel oc out_conf;
       traverse_file (chan_len + 1)
     end
   in
   traverse_file 0
 
-let () = tone_map_file "ppms/hdr/nancy_church_2.ppm" "ppms/ascii/nancy_church_2.ppm"
+let () = tone_map_file "ppms/rendered/cornell.ppm" "ppms/rendered/cornell_tonemapped.ppm"
 

@@ -50,6 +50,7 @@ module Rgb = struct
   let sum p1 p2 = {red = p1.red +. p2.red; green = p1.green +. p2.green; blue = p1.blue +. p2.blue}
 
   let normalize p norm = {red = p.red /. norm;green = p.green /. norm;blue = p.blue /. norm;}
-
+  let value_prod p factor = {red = p.red *. factor;green = p.green *. factor;blue = p.blue *. factor;}
+  let rgb_prod p1 p2 = {red = p1.red *. p2.red ;green = p1.green *. p2.green;blue = p1.blue *. p2.blue;}
 
 end

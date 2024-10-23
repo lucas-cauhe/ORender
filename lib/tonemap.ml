@@ -8,9 +8,9 @@ module ToneMapper (CS: Colorspace.ColorSpace) = struct
 
   let equalization max l_in  = l_in /. (CS.luminance (CS.equalized max))
 
-  (* Usage: gamma p header.max (1./.4.) *)
+  (* Usage: gamma header.max (1./.4.) *)
   let gamma k g l_in = if l_in > k then k else (BatFloat.pow l_in g) /. (BatFloat.pow k g)
 
-  (* Usage: gamma_clamp p header.max (1./.4.) 3000. *)
+  (* Usage: gamma_clamp header.max (1./.4.) 3000. *)
   let gamma_clamp k g th l_in = gamma l_in k g |> clamp ~th:th
 end
