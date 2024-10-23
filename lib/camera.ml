@@ -21,7 +21,7 @@ type light_source_type = {
   ls_power: Colorspace.Rgb.pixel
 }
 
-let num_points = ref 64 
+let num_points = ref 8 
 
 let camera up left forward origin (width, height) = {
   up; left; forward; origin;

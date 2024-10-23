@@ -129,7 +129,15 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
 
 let show_sphere (sphere : sphere_type) = Printf.printf "SPHERE {Center: %s, Radius: %f}\n" (Point.string_of_point sphere.sphere_center) sphere.sphere_radius
 
-let transform_sphere _ fig e = Some(sphere fig.sphere_center fig.sphere_radius e)
+let transform_sphere t fig e = match t with
+  | Translation(tx, ty, tz) -> 
+    let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
+    Option.bind 
+      (Transformations.hc_of_point fig.sphere_center |> Transformations.translate translation_mat)
+      (fun hc -> 
+        let translated_point = Transformations.point_of_hc hc in
+        Some(sphere translated_point fig.sphere_radius e))
+  | _ -> Some(sphere fig.sphere_center fig.sphere_radius e) 
 
 (*********************************)
 (* TRIANGLE ASSOCIATED FUNCTIONS *)

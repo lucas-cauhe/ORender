@@ -14,18 +14,6 @@ open Computer_gfx.Camera
 
 module PpmDb = Computer_gfx.Db.Ppm
 
-(* let red_sphere_center = Point.from_coords (-0.5) (-0.7) 0.25
-let translation_mat = Matrix.from_array_matrix [|
-  [| 1.; 0.; 0.; 1. |];
-  [| 0.; 1.; 0.; 0.4 |];
-  [| 0.; 0.; 1.; -0.5 |];
-  [| 0.; 0.; 0.; 1. |];
-|]
-let red_sphere_translated_center = 
-  match Transformations.hc_of_point red_sphere_center |> Transformations.translate translation_mat with
-  | Some(new_point) -> Transformations.point_of_hc new_point
-  | None -> red_sphere_center  *)
-
 (* let triangle_rotation = Transformations.rotation_transformation_of_axis ~angle:Float.pi Z
 
 let triangle_box = BoundingBox(cuboid (Point.from_coords (-0.5) (-0.25) 0.7) (Point.from_coords 0.75 1. 0.8) (Rgb.rgb_of_values 0. 0. 0.), 
@@ -45,13 +33,12 @@ let my_scene : scene = [
   (* back *)
   Figure(plane (Direction.from_coords 0. 0. (-1.)) (Point.from_coords 0. 0. 1.) (Rgb.rgb_of_values 0.25 0.25 0.75));
   (* triangle_box; *)
-  (* Figure(sphere red_sphere_translated_center 0.3 (Rgb.rgb_of_values 0.75 0. 0.)); *)
-  Figure(sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0.75 0. 0.));
-  Figure(sphere (Point.from_coords (-0.5) (-0.7) 0.25) 0.3 (Rgb.rgb_of_values 0. 0. 0.75));
+  Figure(sphere (Point.from_coords (-0.5) (-0.7) 0.25) 0.3 (Rgb.rgb_of_values 0.75 0. 0.) |> transform (Translation(0.5, 0.4, (-0.25))) |> Option.get );
+  Figure(sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0. 0. 0.75));
 ]
 
 let light_sources : light_source_type list = [
-  light_source (Point.from_coords 0. 0.5 0.) (Rgb.rgb_of_values 1. 1. 1.)
+  light_source (Point.from_coords (-0.3) 0. 0.3) (Rgb.rgb_of_values 1. 1. 1.)
 ]
 
 let left = ref (Direction.from_coords (-2.) 0. 0.)
