@@ -14,7 +14,7 @@ open Computer_gfx.Camera
 
 module PpmDb = Computer_gfx.Db.Ppm
 
-let red_sphere_center = Point.from_coords (-0.5) (-0.7) 0.25
+(* let red_sphere_center = Point.from_coords (-0.5) (-0.7) 0.25
 let translation_mat = Matrix.from_array_matrix [|
   [| 1.; 0.; 0.; 1. |];
   [| 0.; 1.; 0.; 0.4 |];
@@ -24,7 +24,7 @@ let translation_mat = Matrix.from_array_matrix [|
 let red_sphere_translated_center = 
   match Transformations.hc_of_point red_sphere_center |> Transformations.translate translation_mat with
   | Some(new_point) -> Transformations.point_of_hc new_point
-  | None -> red_sphere_center 
+  | None -> red_sphere_center  *)
 
 (* let triangle_rotation = Transformations.rotation_transformation_of_axis ~angle:Float.pi Z
 
@@ -45,7 +45,8 @@ let my_scene : scene = [
   (* back *)
   Figure(plane (Direction.from_coords 0. 0. (-1.)) (Point.from_coords 0. 0. 1.) (Rgb.rgb_of_values 0.25 0.25 0.75));
   (* triangle_box; *)
-  Figure(sphere red_sphere_translated_center 0.3 (Rgb.rgb_of_values 0.75 0. 0.));
+  (* Figure(sphere red_sphere_translated_center 0.3 (Rgb.rgb_of_values 0.75 0. 0.)); *)
+  Figure(sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0.75 0. 0.));
   Figure(sphere (Point.from_coords (-0.5) (-0.7) 0.25) 0.3 (Rgb.rgb_of_values 0. 0. 0.75));
 ]
 
@@ -57,7 +58,7 @@ let left = ref (Direction.from_coords (-2.) 0. 0.)
 let up = ref (Direction.from_coords 0. 2. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
-let width, height = ref 512, ref 512
+let width, height = ref 512, ref 512 
 
 let () = 
   let camera = camera !up !left !forward !origin (!width,!height) in

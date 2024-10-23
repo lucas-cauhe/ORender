@@ -90,7 +90,7 @@ let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_resu
     | neg when neg <= 10e-10 -> Zero
     | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal; intersection_point = point_of_ray ray pos}])
 
-let show_plane (plane : plane_type) = Printf.printf "Normal: %s, Origin: %s" (Direction.string_of_direction plane.plane_normal) (Point.string_of_point plane.plane_origin)
+let show_plane (plane : plane_type) = Printf.printf "PLANE {Normal: %s, Origin: %s}\n" (Direction.string_of_direction plane.plane_normal) (Point.string_of_point plane.plane_origin)
 
 let transform_plane _ fig e = Some(plane fig.plane_normal fig.plane_origin e)
 
@@ -118,7 +118,7 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
     if discriminant > 0. then 
       let t1 = (-.b -. sqrt discriminant) /. (2.0 *. a) in
       let t2 = (-.b +. sqrt discriminant) /. (2.0 *. a) in
-      let fst = if t1 > 0. then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
+      let fst = if t1 > 10e-10 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
       let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2 }] else [] in
       match fst, snd with
       | [], [] -> Zero
@@ -127,7 +127,7 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
       Zero
     
 
-let show_sphere (sphere : sphere_type) = Printf.printf "Center: %s, Radius: %f" (Point.string_of_point sphere.sphere_center) sphere.sphere_radius
+let show_sphere (sphere : sphere_type) = Printf.printf "SPHERE {Center: %s, Radius: %f}\n" (Point.string_of_point sphere.sphere_center) sphere.sphere_radius
 
 let transform_sphere _ fig e = Some(sphere fig.sphere_center fig.sphere_radius e)
 
@@ -163,7 +163,7 @@ let triangle_intersection (triangle : triangle_type) (ray : ray_type) =
     | _ -> Zero
 
 let show_triangle (triangle: triangle_type) =  
-  Printf.printf "A: %s, B: %s, C: %s, Normal: %s" (Point.string_of_point triangle.vert_a) (Point.string_of_point triangle.vert_b) (Point.string_of_point triangle.vert_c) (Direction.string_of_direction triangle.triangle_normal)
+  Printf.printf "TRIANGLE {A: %s, B: %s, C: %s, Normal: %s}\n" (Point.string_of_point triangle.vert_a) (Point.string_of_point triangle.vert_b) (Point.string_of_point triangle.vert_c) (Direction.string_of_direction triangle.triangle_normal)
 
 
 let transform_triangle (transform : transformation) (t : triangle_type) (e : Colorspace.Rgb.pixel) : figure option = 

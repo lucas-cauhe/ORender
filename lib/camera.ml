@@ -21,7 +21,7 @@ type light_source_type = {
   ls_power: Colorspace.Rgb.pixel
 }
 
-let num_points = ref 8
+let num_points = ref 64 
 
 let camera up left forward origin (width, height) = {
   up; left; forward; origin;
@@ -66,10 +66,10 @@ let compute_color (scene : Figures.scene) (light_sources : light_source_type lis
   | Intersects(intersection) -> begin
     let intersection = List.hd intersection in
     let color_of_ls ls = 
-      let center_to_point = Direction.between_points ls.ls_center intersection.intersection_point in
+      let center_to_point = Direction.between_points ls.ls_center intersection.intersection_point |> Direction.normalize |> Option.get in
       let ray_to_ls = Figures.ray intersection.intersection_point center_to_point in
       match Figures.find_closest_figure scene ray_to_ls with
-      | Some(_, Intersects({distance = dist; _} :: _)) when dist < Direction.modulus center_to_point && dist > 10e-10 -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
+      | Some(_, Intersects({distance = dist; intersection_point = _ip; _} :: _)) when dist < Direction.modulus center_to_point && dist > 10e-5 -> (*Printf.printf "%s vs %s for distances %f vs %f\n" (Figures.string_of_ray ray_to_ls) (Point.string_of_point ip) (Direction.modulus center_to_point) dist;*) Colorspace.Rgb.rgb_of_values 0. 0. 0.
       | _ -> begin
         match Direction.normalize center_to_point with
         | None -> emission
