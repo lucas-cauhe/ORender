@@ -38,6 +38,11 @@ type scene = scene_figure list
 val point_of_ray : ray_type -> float -> Geometry.Point.t
 
 (**
+  Compute the distance to the point contained in the ray's direction
+*)
+val dist_to_point_of_ray : ray_type -> Geometry.Point.t -> float
+
+(**
   Utility function to retrieve the internal figure 
 *)
 val get_figure : scene_figure -> figure
@@ -100,3 +105,5 @@ val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> fig
 val find_closest_figure : scene -> ray_type -> (scene_figure * intersection_result) option
 
 val emission : figure -> Colorspace.Rgb.pixel
+
+val is_sphere : scene_figure -> bool

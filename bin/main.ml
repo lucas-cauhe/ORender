@@ -38,7 +38,7 @@ let my_scene : scene = [
 ]
 
 let light_sources : light_source_type list = [
-  light_source (Point.from_coords (-0.3) 0. 0.3) (Rgb.rgb_of_values 1. 1. 1.)
+  light_source (Point.from_coords 0. 0.5 0.) (Rgb.rgb_of_values 1. 1. 1.)
 ]
 
 let left = ref (Direction.from_coords (-2.) 0. 0.)

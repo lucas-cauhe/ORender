@@ -63,10 +63,11 @@ let get_figure = function Figure(fig) -> fig
   | BoundingBox(fig, _) -> fig
 
 let point_of_ray ray dist = 
-  let open Geometry in
   let origin_dir = Direction.of_point ray.ray_origin in
   let dir_sum = Direction.prod ray.ray_direction dist |> Direction.sum origin_dir in
   Point.from_coords (Direction.x dir_sum) (Direction.y dir_sum) (Direction.z dir_sum)
+
+let dist_to_point_of_ray ray point = (Point.x point) -. (Point.x ray.ray_origin) |> ( *. ) (1./.(Direction.x ray.ray_direction)) 
 
 let emission fig = fig.emission
 
@@ -87,7 +88,7 @@ let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_resu
     let c = (of_point plane.plane_origin) * plane.plane_normal in
     let num = (of_point ray.ray_origin) * plane.plane_normal |> ( +. ) (-.c) in
     match -.num/.den with
-    | neg when neg <= 10e-10 -> Zero
+    | neg when neg <= 10e-5 -> Zero
     | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal; intersection_point = point_of_ray ray pos}])
 
 let show_plane (plane : plane_type) = Printf.printf "PLANE {Normal: %s, Origin: %s}\n" (Direction.string_of_direction plane.plane_normal) (Point.string_of_point plane.plane_origin)
@@ -118,7 +119,7 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
     if discriminant > 0. then 
       let t1 = (-.b -. sqrt discriminant) /. (2.0 *. a) in
       let t2 = (-.b +. sqrt discriminant) /. (2.0 *. a) in
-      let fst = if t1 > 10e-10 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
+      let fst = if t1 > 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
       let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2 }] else [] in
       match fst, snd with
       | [], [] -> Zero
@@ -301,3 +302,5 @@ let rec find_closest_figure scene ray =
   | fig, (Intersects(_) as inter) -> Some((fig, inter)) 
 
 
+let is_sphere = function Figure({fig_type = Sphere(_); _}) -> true
+  | _ -> false
