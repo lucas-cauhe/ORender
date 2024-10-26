@@ -119,7 +119,7 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
     if discriminant > 0. then 
       let t1 = (-.b -. sqrt discriminant) /. (2.0 *. a) in
       let t2 = (-.b +. sqrt discriminant) /. (2.0 *. a) in
-      let fst = if t1 > 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
+      let fst = if t1 >= 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
       let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2 }] else [] in
       match fst, snd with
       | [], [] -> Zero

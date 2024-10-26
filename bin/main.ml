@@ -21,6 +21,8 @@ let triangle_box = BoundingBox(cuboid (Point.from_coords (-0.5) (-0.25) 0.7) (Po
   Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0. 0.75 0.75) |> Option.get |> transform (Scale(2., 2.,0.)) |> Option.get);
   Figure(triangle (Point.from_coords 0. (-0.25) 0.7) (Point.from_coords (-0.25) 0.25 0.7) (Point.from_coords 0.25 0.25 0.7) (Rgb.rgb_of_values 0.75 0. 0.75) |> Option.get |> transform (Rotation(triangle_rotation, Z)) |> Option.get);]) *)
 
+let triangle_set : scene = List.init 1000 (fun _  -> Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get))
+
 let my_scene : scene = [
   (* left *)
   Figure(plane (Direction.from_coords 1. 0. 0.) (Point.from_coords (-1.) 0. 0.) (Rgb.rgb_of_values 1. 0. 0.));
@@ -38,7 +40,8 @@ let my_scene : scene = [
 ]
 
 let light_sources : light_source_type list = [
-  light_source (Point.from_coords 0. 0.5 0.) (Rgb.rgb_of_values 1. 1. 1.)
+  light_source (Point.from_coords 0. 0.5 0.) (Rgb.rgb_of_values 1. 1. 1.);
+  light_source (Point.from_coords 0.9 (-0.9) (-0.5)) (Rgb.rgb_of_values 1. 1. 1.)
 ]
 
 let left = ref (Direction.from_coords (-2.) 0. 0.)
@@ -47,23 +50,28 @@ let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
 let width, height = ref 512, ref 512 
 
+let bar ~total = 
+  let open Progress.Line in
+  list [ spinner (); bar total; count_to total ] 
+
 let () = 
   let camera = camera !up !left !forward !origin (!width,!height) in
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !height !width  in
   PpmDb.write_header oc out_conf;
   let pool = Task.setup_pool ~num_domains:7 () in
-  let rec color_image row col = 
+  let rec color_image row col reporter = 
     match row, col with
     | r, _ when r = !height -> close_out oc 
     | _, _ -> begin
-      let color = pixel_color camera (row, col) my_scene light_sources pool in
+      let color = pixel_color camera (row, col) (my_scene @ triangle_set) light_sources pool in
+      reporter 1;
       PpmDb.write_pixel oc out_conf color;
       if col = !width - 1 then
         let () = output_string oc "\n" in
-        color_image (row+1) 0
+        color_image (row+1) 0 reporter
       else
-        color_image row (col+1)
+        color_image row (col+1) reporter
     end in
-  color_image 0 0;
+  Progress.with_reporter (bar ~total:(!width * !height)) (fun f -> color_image 0 0 f);
   Task.teardown_pool pool;

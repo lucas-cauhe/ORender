@@ -1,4 +1,4 @@
 (executables
  (public_names render tonemapper )
  (names main tonemapper )
- (libraries computer_gfx iter))
+ (libraries computer_gfx iter progress))

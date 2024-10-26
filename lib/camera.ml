@@ -61,7 +61,7 @@ let trace_ray scene ray : Colorspace.Rgb.pixel * Figures.intersection_result =
     match Figures.is_sphere fig, ir with
     | true, Intersects(intersection :: _) -> 
       let surface_normal_ray = Figures.ray intersection.intersection_point intersection.surface_normal in
-      let moved_ip = Figures.point_of_ray surface_normal_ray 0.001 in
+      let moved_ip = Figures.point_of_ray surface_normal_ray 10e-5 in
       (Figures.emission (Figures.get_figure fig), Intersects([{ intersection with intersection_point = moved_ip}]))
     | _ -> (Figures.emission (Figures.get_figure fig), ir)
   end
@@ -73,14 +73,13 @@ let color_of_ls (scene : Figures.scene) (ls : light_source_type) (ir : Figures.i
   | Some(center_to_point) -> begin 
     let ray_to_ls = Figures.ray ir.intersection_point center_to_point in
     match Figures.find_closest_figure scene ray_to_ls with
-    | Some(_, Intersects({distance = dist; _} :: _)) when dist < Figures.dist_to_point_of_ray ray_to_ls ls.ls_center && dist > 10e-5 -> (*Printf.printf "%s vs %s for distances %f vs %f\n" (Figures.string_of_ray ray_to_ls) (Point.string_of_point ip) (Direction.modulus center_to_point) dist;*) Colorspace.Rgb.rgb_of_values 0. 0. 0.
-    | Some(_, Intersects({distance = _dist; intersection_point = _ip; _} :: _)) -> 
-      (* Printf.printf "%s vs %s for distances %f vs %f\n" (Figures.string_of_ray ray_to_ls) (Point.string_of_point ip) (Direction.modulus center_to_point) dist;  *)
+    | Some(_, Intersects({distance = dist; _} :: _)) 
+      when dist < Figures.dist_to_point_of_ray ray_to_ls ls.ls_center -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
+    | _ ->
       let li = Rgb.normalize ls.ls_power (Direction.modulus center_to_point |> square) in
       let brdf = Rgb.normalize !kd Float.pi in
       let rest = center_to_point |> Direction.dot ir.surface_normal |> abs_float in
       Rgb.value_prod (Rgb.rgb_prod li brdf) rest |> Rgb.rgb_prod emission
-    | _ -> emission
   end
 
 
