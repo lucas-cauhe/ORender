@@ -11,6 +11,7 @@ open Computer_gfx.Figures
 open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 open Computer_gfx.Camera
+open Computer_gfx.Bvh
 
 module PpmDb = Computer_gfx.Db.Ppm
 
@@ -21,7 +22,50 @@ let triangle_box = BoundingBox(cuboid (Point.from_coords (-0.5) (-0.25) 0.7) (Po
   Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0. 0.75 0.75) |> Option.get |> transform (Scale(2., 2.,0.)) |> Option.get);
   Figure(triangle (Point.from_coords 0. (-0.25) 0.7) (Point.from_coords (-0.25) 0.25 0.7) (Point.from_coords 0.25 0.25 0.7) (Rgb.rgb_of_values 0.75 0. 0.75) |> Option.get |> transform (Rotation(triangle_rotation, Z)) |> Option.get);]) *)
 
-let triangle_set : scene = List.init 1000 (fun _  -> Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get))
+(* let triangle_set : scene = List.init 1000 (fun _  -> Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get)) *)
+
+let triangle_mesh : scene = [
+  Figure(triangle (Point.from_coords (-0.5) (-0.25) 0.) (Point.from_coords (-0.25) 0.25 0.) (Point.from_coords 0. (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0. (-0.25) 0.) (Point.from_coords 0.25 0.25 0.) (Point.from_coords 0.5 (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.1 0.1 (-0.1)) (Point.from_coords (-0.5) (-0.25) 0.5) (Point.from_coords 0.5 0.5 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.8) 0.3 (-0.2)) (Point.from_coords 0.7 (-0.1) 0.5) (Point.from_coords 0.4 (-0.8) 0.9) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.0 0.0 1.0) (Point.from_coords 0.6 0.7 0.2) (Point.from_coords (-0.6) (-0.6) (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-1.0) 0.2 0.0) (Point.from_coords 0.1 (-0.9) 0.8) (Point.from_coords (-0.8) 0.4 0.5) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.7 (-0.6) 0.9) (Point.from_coords (-0.2) 0.6 (-0.2)) (Point.from_coords (-0.9) (-0.7) 0.4) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.3 0.3 (-0.25)) (Point.from_coords (-0.3) 0.5 0.7) (Point.from_coords 0.9 (-0.2) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get ); 
+Figure(triangle (Point.from_coords 0.6 (-0.8) 0.1) (Point.from_coords (-0.5) (-0.3) 0.9) (Point.from_coords 0.2 0.5 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.7) (-0.5) 0.3) (Point.from_coords 0.4 (-0.4) 0.2) (Point.from_coords 0.1 0.7 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.3) (-0.8) 0.7) (Point.from_coords 0.5 0.2 (-0.1)) (Point.from_coords (-0.2) (-0.3) 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.2 0.6 0.5) (Point.from_coords (-0.6) (-0.1) 0.4) (Point.from_coords (-0.4) 0.7 0.9) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.8 (-0.5) 0.3) (Point.from_coords (-0.7) (-0.9) 0.1) (Point.from_coords 0.3 0.6 (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.4) 0.9 0.2) (Point.from_coords 0.6 (-0.4) 0.5) (Point.from_coords (-0.5) 0.3 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.2) (-0.6) 0.9) (Point.from_coords 0.9 0.1 0.4) (Point.from_coords (-0.3) (-0.9) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.5 0.8 0.2) (Point.from_coords (-0.8) (-0.3) 0.1) (Point.from_coords 0.1 0.3 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.9) 0.1 0.8) (Point.from_coords 0.4 (-0.6) 0.5) (Point.from_coords 0.2 0.9 (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.7) (-0.2) 0.6) (Point.from_coords 0.8 (-0.9) 0.4) (Point.from_coords (-0.6) 0.4 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.9 0.7 (-0.25)) (Point.from_coords (-0.8) 0.8 0.5) (Point.from_coords (-0.1) (-0.6) 0.9) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.3) (-0.5) 0.4) (Point.from_coords 0.6 0.2 (-0.15)) (Point.from_coords (-0.5) (-0.2) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.2 0.4 0.8) (Point.from_coords (-0.4) (-0.1) 0.3) (Point.from_coords 0.7 (-0.7) 0.5) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.3 (-0.3) 0.9) (Point.from_coords (-0.6) 0.6 (-0.05)) (Point.from_coords 0.4 0.1 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.8) 0.5 0.2) (Point.from_coords 0.1 (-0.6) 0.4) (Point.from_coords 0.5 0.8 (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords 0.4 (-0.7) 0.8) (Point.from_coords (-0.5) 0.7 0.1) (Point.from_coords (-0.1) (-0.4) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+Figure(triangle (Point.from_coords (-0.7) 0.6 (-0.2)) (Point.from_coords 0.2 (-0.8) 0.5) (Point.from_coords 0.9 0.4 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+]
+
+let () =
+  let new_scene = split_scene triangle_mesh LargestAxis in
+  let rec show_scene scene =
+    match scene with
+    | [] -> ()
+    | fig :: rest -> 
+      match fig with 
+      | Figure(f) -> show_figure f; show_scene rest 
+      | BoundingBox(_, children) -> 
+        print_endline "--- BOUNDING BOX ---";
+        show_scene children;
+        print_endline "--- END OF BBOX ---";
+        show_scene rest in
+  show_scene new_scene
 
 let my_scene : scene = [
   (* left *)
@@ -64,7 +108,7 @@ let () =
     match row, col with
     | r, _ when r = !height -> close_out oc 
     | _, _ -> begin
-      let color = pixel_color camera (row, col) (my_scene @ triangle_set) light_sources pool in
+      let color = pixel_color camera (row, col) (my_scene @ triangle_mesh) light_sources pool in
       reporter 1;
       PpmDb.write_pixel oc out_conf color;
       if col = !width - 1 then
