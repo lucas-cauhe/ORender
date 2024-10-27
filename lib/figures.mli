@@ -33,6 +33,12 @@ type scene_figure = Figure of figure | BoundingBox of figure * scene_figure list
 type scene = scene_figure list
 
 (**
+  Returns the amount of figures in a scene
+  A bounding box counts as 1 
+*)
+val scene_size : scene -> int 
+
+(**
   Compute the point in the ray's direction from a given offset
 *)
 val point_of_ray : ray_type -> float -> Geometry.Point.t
@@ -46,6 +52,7 @@ val dist_to_point_of_ray : ray_type -> Geometry.Point.t -> float
   Utility function to retrieve the internal figure 
 *)
 val get_figure : scene_figure -> figure
+
 
 (**
   Ray-figure intersection point info
@@ -78,6 +85,16 @@ val show_figure : figure -> unit
 val transform : Geometry.transformation -> figure -> figure option
 
 (**
+  Function to retrieve the vertices of a figure
+*)
+val vertices : figure -> Geometry.Point.t list
+
+(**
+  Function to retrieve the barycenter of a figure
+*)
+val barycenter : figure -> Geometry.Point.t
+
+(**
   Returns the instance of a plane given its [normal] and a [point] in the plane
 *)
 val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure
@@ -98,6 +115,13 @@ val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Color
 *)
 val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure
 
+
+(**
+  Returns a BoundingBox Figure type from a cuboid and a list of child nodes
+  Returns [None] if the figure argument is not a cuboid type
+*)
+val bounding_box : figure -> scene_figure list -> scene_figure option
+
 (**
   Given a [scene] and a [ray] returns [Some(figure, intersection_result)] with the closest intersected figure in the scene by the ray
   Returns [None] if no figure was intersected 
@@ -107,3 +131,4 @@ val find_closest_figure : scene -> ray_type -> (scene_figure * intersection_resu
 val emission : figure -> Colorspace.Rgb.pixel
 
 val is_sphere : scene_figure -> bool
+val is_plane : scene_figure -> bool

@@ -29,6 +29,17 @@ module Point : sig
     val ( + ) : t -> t -> t
     val ( - ) : t -> t -> t
     val distance : t -> t -> float
+
+    (**
+        Given a list of points return the mean on each axis of all of them
+        Returns [None] if the list is empty
+    *)
+    val mean : t list -> t option 
+
+    (**
+        Returns the value of the point in a given axis
+    *)
+    val value_at_axis : axis -> t -> float
 end 
 
 module Direction : sig

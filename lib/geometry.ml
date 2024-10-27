@@ -31,7 +31,15 @@ module Point = struct
 
   let distance p1 p2 = sqrt ((p1.x -. p2.x) *. (p1.x -. p2.x) +. (p1.y -. p2.y) *. (p1.y -. p2.y) +. (p1.z -. p2.z) *. (p1.z -. p2.z))
 
-    
+  let mean plist = 
+    let x_total, y_total, z_total = List.fold_left (fun (x_acc, y_acc, z_acc) p -> (x_acc +. p.x, y_acc +. p.y, z_acc +. p.z) ) (0., 0., 0.) plist in
+    List.length plist |> float_of_int |> div (from_coords x_total y_total z_total) 
+  
+  let value_at_axis a p = 
+    match a with
+    | X -> p.x
+    | Y -> p.y
+    | Z -> p.z
 
 end
 

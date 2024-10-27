@@ -62,6 +62,8 @@ let square (n : float) : float = n *. n
 let get_figure = function Figure(fig) -> fig
   | BoundingBox(fig, _) -> fig
 
+let scene_size scene = List.length scene 
+
 let point_of_ray ray dist = 
   let origin_dir = Direction.of_point ray.ray_origin in
   let dir_sum = Direction.prod ray.ray_direction dist |> Direction.sum origin_dir in
@@ -140,6 +142,19 @@ let transform_sphere t fig e = match t with
         Some(sphere translated_point fig.sphere_radius e))
   | _ -> Some(sphere fig.sphere_center fig.sphere_radius e) 
 
+let sphere_vertices (sphere : sphere_type) : Point.t list = 
+  let x, y, z = Point.x sphere.sphere_center, Point.y sphere.sphere_center, Point.z sphere.sphere_center in
+  [
+    Point.from_coords (x +. sphere.sphere_radius) y z;
+    Point.from_coords (x -. sphere.sphere_radius) y z;
+
+    Point.from_coords x (y +. sphere.sphere_radius) z;
+    Point.from_coords x (y -. sphere.sphere_radius) z;
+    
+    Point.from_coords x y (z +. sphere.sphere_radius);
+    Point.from_coords x y (z -. sphere.sphere_radius);
+  ]
+
 (*********************************)
 (* TRIANGLE ASSOCIATED FUNCTIONS *)
 (*********************************)
@@ -200,6 +215,11 @@ let transform_triangle (transform : transformation) (t : triangle_type) (e : Col
     triangle rotated_points.(0) rotated_points.(1) rotated_points.(2) e
   | _ -> triangle t.vert_a t.vert_b t.vert_c e
 
+let triangle_vertices (triangle : triangle_type) =
+  [triangle.vert_a; triangle.vert_b; triangle.vert_c]
+
+let triangle_barycenter (triangle: triangle_type) = 
+  Point.mean [triangle.vert_a; triangle.vert_b; triangle.vert_c] |> Option.get
 
 (*******************************)
 (* CUBOID ASSOCIATED FUNCTIONS *) 
@@ -232,6 +252,21 @@ let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result
 
 let show_cuboid (cuboid : cuboid_type) = 
   Printf.printf "min = %s; max = %s" (Point.string_of_point cuboid.cuboid_min) (Point.string_of_point cuboid.cuboid_max)
+
+let cuboid_vertices (cuboid : cuboid_type) = 
+  [cuboid.cuboid_min; cuboid.cuboid_max]
+
+let cuboid_barycenter (cuboid : cuboid_type) = 
+  Point.mean [cuboid.cuboid_max; cuboid.cuboid_min] |> Option.get
+
+(**************************)
+(* BOUNDING BOX FUNCTIONS *) 
+(**************************)
+
+let bounding_box cuboid children = 
+  match cuboid.fig_type with
+  | Cuboid(_) -> Some(BoundingBox(cuboid, children))
+  | _ -> None
 
 
 (*************************)
@@ -268,6 +303,24 @@ let transform t fig =
   | Triangle(triangle) -> transform_triangle t triangle fig.emission 
   | Cuboid(_) -> Some(fig) 
 
+(****************************)
+(*    VERTICES FUNCTION     *) 
+(****************************)
+let vertices fig = 
+  match fig.fig_type with
+  | Plane(_) | Empty -> []
+  | Sphere(sphere) -> sphere_vertices sphere
+  | Triangle(triangle) -> triangle_vertices triangle
+  | Cuboid(cuboid) -> cuboid_vertices cuboid
+
+let barycenter fig = 
+  match fig.fig_type with
+  | Plane(plane) -> plane.plane_origin
+  | Sphere(sphere) -> sphere.sphere_center
+  | Triangle(triangle) -> triangle_barycenter triangle
+  | Cuboid(cuboid) -> cuboid_barycenter cuboid
+  | Empty -> Point.from_coords 0. 0. 0.
+
 let _ = Empty
 
 
@@ -303,4 +356,7 @@ let rec find_closest_figure scene ray =
 
 
 let is_sphere = function Figure({fig_type = Sphere(_); _}) -> true
+  | _ -> false
+
+let is_plane = function Figure({fig_type = Plane(_); _}) -> true
   | _ -> false
