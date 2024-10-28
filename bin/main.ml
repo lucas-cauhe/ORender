@@ -52,8 +52,9 @@ Figure(triangle (Point.from_coords 0.4 (-0.7) 0.8) (Point.from_coords (-0.5) 0.7
 Figure(triangle (Point.from_coords (-0.7) 0.6 (-0.2)) (Point.from_coords 0.2 (-0.8) 0.5) (Point.from_coords 0.9 0.4 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
 ]
 
+let new_triangle_mesh = split_scene triangle_mesh LargestAxis 
+
 let () =
-  let new_scene = split_scene triangle_mesh LargestAxis in
   let rec show_scene scene =
     match scene with
     | [] -> ()
@@ -65,7 +66,7 @@ let () =
         show_scene children;
         print_endline "--- END OF BBOX ---";
         show_scene rest in
-  show_scene new_scene
+  show_scene new_triangle_mesh
 
 let my_scene : scene = [
   (* left *)
@@ -108,7 +109,7 @@ let () =
     match row, col with
     | r, _ when r = !height -> close_out oc 
     | _, _ -> begin
-      let color = pixel_color camera (row, col) (my_scene @ triangle_mesh) light_sources pool in
+      let color = pixel_color camera (row, col) (my_scene @ new_triangle_mesh) light_sources pool in
       reporter 1;
       PpmDb.write_pixel oc out_conf color;
       if col = !width - 1 then
