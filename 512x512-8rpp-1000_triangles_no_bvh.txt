@@ -6,3 +6,4 @@ Con 24 triángulos puestos en 4x2x3 (4 en x por 3 de profundidad y 2 de altura)
 dune exec render  97,11s user 4,88s system 614% cpu 16,593 total
 -- CON BVH --
 dune exec render  37,92s user 1,43s system 525% cpu 7,490 total
+-- CON BVH SAH --

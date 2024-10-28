@@ -5,6 +5,9 @@ type bvh_algorithm = LargestAxis | Sah
 let bvh_primitives_minimum = 3
 
 
+(*********************************************)
+(* SPLIT SCENE ACROSS LARGEST AXIS ALGORITHM *)
+(*********************************************)
 
 let scene_limits (scene : Figures.scene) : Point.t * Point.t = 
   let min_max_point (min_point, max_point) point =
@@ -55,10 +58,10 @@ let split_scene_by_axis (scene : Figures.scene) (a : axis) (mid_point : float) :
 let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
   let scene_min, scene_max = scene_limits scene in
   (* Printf.printf "SceneMin = %s | SceneMax = %s" (Point.string_of_point scene_min) (Point.string_of_point scene_max); *)
-  let scene_bbox = Figures.cuboid scene_min scene_max (Colorspace.Rgb.rgb_of_values 0. 0. 0.) in
+  let scene_bbox = Figures.cuboid scene_min scene_max (Colorspace.Rgb.rgb_of_values 0. 0. 0.) ~coefficients:(Colorspace.Rgb.rgb_of_values 0. 0. 0.) in
   match Figures.scene_size scene with
   | s when s <= bvh_primitives_minimum -> [Figures.bounding_box scene_bbox scene |> Option.get] 
-  | n -> 
+  | _ -> 
     (* Printf.printf "New scene size: %d" n; *)
     let l_axis, mid_point = largest_axis scene_min scene_max scene in
     (* Printf.printf "MID_POINT: %f" mid_point; *)
@@ -66,7 +69,15 @@ let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
     (* Printf.printf "SceneA size: %d | SceneB size: %d" (Figures.scene_size scene_a) (Figures.scene_size scene_b); *)
     [Figures.bounding_box scene_bbox (split_largest_axis scene_a @ split_largest_axis scene_b) |> Option.get]
 
+(*****************)
+(* SAH ALGORITHM *)
+(*****************)
+
 let split_sah (_scene : Figures.scene) : Figures.scene = [] 
+
+(**********************)
+(* MODULE'S INTERFACE *)
+(**********************)
 
 let split_scene scene algo =  
   let scene_wout_planes = List.filter (fun fig -> not @@ Figures.is_plane fig) scene in 

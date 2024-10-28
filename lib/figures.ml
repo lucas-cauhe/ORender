@@ -4,6 +4,7 @@
 *)
 
 open Geometry
+open Colorspace 
 
 type ray_type = {
   ray_origin: Point.t;
@@ -46,7 +47,7 @@ type figure_type = Empty
   | Triangle of triangle_type
   | Cuboid of cuboid_type
   (* | Cylinder of cylinder_type *)
-type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel }
+type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel; coefficients: Colorspace.Rgb.pixel }
 type scene_figure = Figure of figure | BoundingBox of figure * scene_figure list
 type scene = scene_figure list
 
@@ -54,6 +55,7 @@ type intersection = {
   distance: float;
   surface_normal: Direction.t; 
   intersection_point: Point.t;
+  brdf: float;
 }
 type intersection_result = Zero | Intersects of intersection list
 
@@ -73,15 +75,24 @@ let dist_to_point_of_ray ray point = (Point.x point) -. (Point.x ray.ray_origin)
 
 let emission fig = fig.emission
 
+let delta_reflection = 1.
+let delta_refraction = 1.
+
+let brdf fig surface_normal wi = 
+  let kd = Rgb.red fig.coefficients in
+  let ks = Rgb.green fig.coefficients in
+  let kt = Rgb.blue fig.coefficients in
+  kd *. Float.pi +. ks *. (delta_reflection /. Direction.dot surface_normal wi) +. kt *. (delta_refraction /. Direction.dot surface_normal wi)
+
 (******************************)
 (* PLANE ASSOCIATED FUNCTIONS *)
 (******************************)
 
-let plane d o e = { fig_type = Plane({ plane_normal = d; plane_origin = o }); emission = e }
+let plane d o e ~coefficients:k = { fig_type = Plane({ plane_normal = d; plane_origin = o }); emission = e; coefficients = k }
 
 (* Plane implicit equation: ax + by + cz + d = 0 *)
 (* Ray implicit equation: p + d * t = 0 *)
-let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_result =
+let plane_intersection (fig : figure) (plane : plane_type) (ray : ray_type) : intersection_result =
   let open Direction in
   (* Check if ray and plane are parallel *)
   match plane.plane_normal * ray.ray_direction with
@@ -91,19 +102,21 @@ let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_resu
     let num = (of_point ray.ray_origin) * plane.plane_normal |> ( +. ) (-.c) in
     match -.num/.den with
     | neg when neg <= 10e-5 -> Zero
-    | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal; intersection_point = point_of_ray ray pos}])
+    | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal; intersection_point = point_of_ray ray pos; brdf = brdf fig plane.plane_normal ray.ray_direction}])
 
 let show_plane (plane : plane_type) = Printf.printf "PLANE {Normal: %s, Origin: %s}\n" (Direction.string_of_direction plane.plane_normal) (Point.string_of_point plane.plane_origin)
 
-let transform_plane _ fig e = Some(plane fig.plane_normal fig.plane_origin e)
+let transform_plane (_: transformation) (fig: plane_type) =
+  let complete_transform e k= Some(plane fig.plane_normal fig.plane_origin e ~coefficients:k) in
+  complete_transform
 
 (*******************************)
 (* SPHERE ASSOCIATED FUNCTIONS *)
 (*******************************)
 
-let sphere center radius e = {fig_type = Sphere({ sphere_center = center; sphere_radius = radius }); emission = e}
+let sphere center radius e ~coefficients:k = {fig_type = Sphere({ sphere_center = center; sphere_radius = radius }); emission = e; coefficients = k}
 
-let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_result = 
+let sphere_intersection (fig: figure) (sphere : sphere_type ) (ray : ray_type) : intersection_result = 
   let module GPoint = Point in
   let module GDirection = Direction in
   let surface_normal d = GDirection.between_points (point_of_ray ray d) sphere.sphere_center in
@@ -116,13 +129,14 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
   let discriminant = (b *. b) -. (4.0 *. a *. c) in
   if abs_float discriminant <= 1e-10 then
     let dist = -.b /. (2. *. a) in 
-    Intersects([{distance = dist; surface_normal = surface_normal dist; intersection_point = point_of_ray ray dist }])
+    let snormal = surface_normal dist in
+    Intersects([{distance = dist; surface_normal = snormal; intersection_point = point_of_ray ray dist; brdf = brdf fig snormal ray.ray_direction }])
   else
     if discriminant > 0. then 
       let t1 = (-.b -. sqrt discriminant) /. (2.0 *. a) in
       let t2 = (-.b +. sqrt discriminant) /. (2.0 *. a) in
-      let fst = if t1 >= 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1 }] else [] in
-      let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2 }] else [] in
+      let fst = if t1 >= 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1; brdf = brdf fig (surface_normal t1) ray.ray_direction }] else [] in
+      let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2; brdf = brdf fig (surface_normal t2) ray.ray_direction}] else [] in
       match fst, snd with
       | [], [] -> Zero
       | f, s -> Intersects(f @ s)
@@ -132,15 +146,17 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
 
 let show_sphere (sphere : sphere_type) = Printf.printf "SPHERE {Center: %s, Radius: %f}\n" (Point.string_of_point sphere.sphere_center) sphere.sphere_radius
 
-let transform_sphere t fig e = match t with
+let transform_sphere (t : transformation) (fig : sphere_type) : Rgb.pixel -> Rgb.pixel -> figure option = 
+  match t with
   | Translation(tx, ty, tz) -> 
     let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
-    Option.bind 
+    let complete_transform e k = Option.bind 
       (Transformations.hc_of_point fig.sphere_center |> Transformations.translate translation_mat)
       (fun hc -> 
         let translated_point = Transformations.point_of_hc hc in
-        Some(sphere translated_point fig.sphere_radius e))
-  | _ -> Some(sphere fig.sphere_center fig.sphere_radius e) 
+        Some(sphere translated_point fig.sphere_radius e ~coefficients:k)) in
+    complete_transform
+  | _ -> let complete_transform e k = Some(sphere fig.sphere_center fig.sphere_radius e ~coefficients:k) in complete_transform 
 
 let sphere_vertices (sphere : sphere_type) : Point.t list = 
   let x, y, z = Point.x sphere.sphere_center, Point.y sphere.sphere_center, Point.z sphere.sphere_center in
@@ -159,14 +175,14 @@ let sphere_vertices (sphere : sphere_type) : Point.t list =
 (* TRIANGLE ASSOCIATED FUNCTIONS *)
 (*********************************)
 
-let triangle a b c e = 
+let triangle a b c e ~coefficients:k = 
   match Direction.cross_product (Direction.between_points b a) (Direction.between_points c a) |> Direction.normalize with
-  | Some(normal) -> Some({fig_type = Triangle({vert_a = a; vert_b = b; vert_c = c;triangle_normal = normal}); emission = e})
+  | Some(normal) -> Some({fig_type = Triangle({vert_a = a; vert_b = b; vert_c = c;triangle_normal = normal}); emission = e; coefficients = k})
   | None -> None
 
-let triangle_intersection (triangle : triangle_type) (ray : ray_type) = 
+let triangle_intersection (fig: figure) (triangle : triangle_type) (ray : ray_type) = 
   let open Direction in
-    match plane_intersection {plane_normal = triangle.triangle_normal; plane_origin = triangle.vert_a} ray with
+    match plane_intersection fig {plane_normal = triangle.triangle_normal; plane_origin = triangle.vert_a} ray with
     | Intersects([{ distance = d; _ }]) as il -> begin 
       let p = point_of_ray ray d in
 
@@ -190,14 +206,14 @@ let show_triangle (triangle: triangle_type) =
   Printf.printf "TRIANGLE {A: %s, B: %s, C: %s, Normal: %s}\n" (Point.string_of_point triangle.vert_a) (Point.string_of_point triangle.vert_b) (Point.string_of_point triangle.vert_c) (Direction.string_of_direction triangle.triangle_normal)
 
 
-let transform_triangle (transform : transformation) (t : triangle_type) (e : Colorspace.Rgb.pixel) : figure option = 
+let transform_triangle (transform : transformation) (t : triangle_type) : Rgb.pixel -> coefficients:Rgb.pixel -> figure option = 
   match transform with
   | Translation(tx, ty, tz) -> 
     let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
     let translated_points = Array.map 
       (fun point -> Transformations.hc_of_point point |> Transformations.translate translation_mat |> Option.get |> Transformations.point_of_hc)
       [|t.vert_a; t.vert_b; t.vert_c|] in
-    triangle translated_points.(0) translated_points.(1) translated_points.(2) e
+    triangle translated_points.(0) translated_points.(1) translated_points.(2)
   | Scale(sx, sy, sz) -> 
     let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
     let scaled_dirs = Array.map
@@ -207,13 +223,12 @@ let transform_triangle (transform : transformation) (t : triangle_type) (e : Col
       t.vert_a 
       (Point.sum t.vert_a (Point.from_coords (Direction.x scaled_dirs.(0)) (Direction.y scaled_dirs.(0)) (Direction.z scaled_dirs.(0)) )) 
       (Point.sum t.vert_a (Point.from_coords (Direction.x scaled_dirs.(1)) (Direction.y scaled_dirs.(1)) (Direction.z scaled_dirs.(1)) )) 
-      e
   | Rotation(m, ax) ->
     let rotated_points = Array.map
       (fun point -> Transformations.hc_of_point point |> Transformations.rotate m ax |>  Transformations.point_of_hc)
       [| t.vert_a; t.vert_b; t.vert_c |] in
-    triangle rotated_points.(0) rotated_points.(1) rotated_points.(2) e
-  | _ -> triangle t.vert_a t.vert_b t.vert_c e
+    triangle rotated_points.(0) rotated_points.(1) rotated_points.(2) 
+  | _ -> triangle t.vert_a t.vert_b t.vert_c 
 
 let triangle_vertices (triangle : triangle_type) =
   [triangle.vert_a; triangle.vert_b; triangle.vert_c]
@@ -225,9 +240,9 @@ let triangle_barycenter (triangle: triangle_type) =
 (* CUBOID ASSOCIATED FUNCTIONS *) 
 (*******************************)
 
-let cuboid c_min c_max e = {fig_type = Cuboid({ cuboid_min = c_min; cuboid_max = c_max; }); emission = e; }
+let cuboid c_min c_max e ~coefficients:k = {fig_type = Cuboid({ cuboid_min = c_min; cuboid_max = c_max; }); emission = e; coefficients = k}
 
-let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result =
+let cuboid_intersection (fig: figure) (c : cuboid_type) (ray : ray_type) : intersection_result =
   let t1x = (Point.x c.cuboid_min -. Point.x ray.ray_origin) /. Direction.x ray.ray_direction in
   let t2x = (Point.x c.cuboid_max -. Point.x ray.ray_origin) /. Direction.x ray.ray_direction in
   let t1y = (Point.y c.cuboid_min -. Point.y ray.ray_origin) /. Direction.y ray.ray_direction in
@@ -245,7 +260,7 @@ let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result
       else if distance = t1y || distance = t2y then Direction.from_coords 0. (if distance = t1y then -1. else 1.) 0.
       else Direction.from_coords 0. 0. (if distance = t1z then -1. else 1.)
     in
-    Intersects([{distance; surface_normal = normal; intersection_point = point_of_ray ray distance}])
+    Intersects([{distance; surface_normal = normal; intersection_point = point_of_ray ray distance; brdf = brdf fig normal ray.ray_direction}])
   else
     Zero
   
@@ -274,10 +289,10 @@ let bounding_box cuboid children =
 (*************************)
   
 let intersects fig ray = match fig.fig_type with
-| Plane(plane) -> plane_intersection plane ray
-| Sphere(sphere) -> sphere_intersection sphere ray
-| Triangle(triangle) -> triangle_intersection triangle ray
-| Cuboid(cuboid) -> cuboid_intersection cuboid ray
+| Plane(plane) -> plane_intersection fig plane ray 
+| Sphere(sphere) -> sphere_intersection fig sphere ray
+| Triangle(triangle) -> triangle_intersection fig triangle ray
+| Cuboid(cuboid) -> cuboid_intersection fig cuboid ray
 | Empty -> Zero
 
 (*************************)
@@ -298,9 +313,9 @@ let show_figure fig =
 let transform t fig = 
   match fig.fig_type with 
   | Empty -> None  
-  | Plane(plane) -> transform_plane t plane fig.emission
-  | Sphere(sphere) -> transform_sphere t sphere fig.emission
-  | Triangle(triangle) -> transform_triangle t triangle fig.emission 
+  | Plane(plane) -> transform_plane t plane fig.emission fig.coefficients
+  | Sphere(sphere) -> transform_sphere t sphere fig.emission fig.coefficients
+  | Triangle(triangle) -> transform_triangle t triangle fig.emission ~coefficients:fig.coefficients 
   | Cuboid(_) -> Some(fig) 
 
 (****************************)
@@ -321,7 +336,7 @@ let barycenter fig =
   | Cuboid(cuboid) -> cuboid_barycenter cuboid
   | Empty -> Point.from_coords 0. 0. 0.
 
-let _ = Empty
+let empty () = {fig_type = Empty; emission = Colorspace.Rgb.rgb_of_values 0. 0. 0.; coefficients = Colorspace.Rgb.rgb_of_values 0. 0. 0.;}
 
 
 

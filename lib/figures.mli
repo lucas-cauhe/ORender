@@ -61,6 +61,7 @@ type intersection = {
   distance: float;
   surface_normal: Geometry.Direction.t;
   intersection_point: Geometry.Point.t;
+  brdf: float;
 }
 
 (**
@@ -97,24 +98,28 @@ val barycenter : figure -> Geometry.Point.t
 (**
   Returns the instance of a plane given its [normal] and a [point] in the plane
 *)
-val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure
+val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure
 
 (**
   Returns the instance of a sphere given its [center] and [radius] of the sphere 
 *)
-val sphere : Geometry.Point.t -> float -> Colorspace.Rgb.pixel -> figure
+val sphere : Geometry.Point.t -> float -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure
 
 (**
   Returns [Some(t)] with the instance of a triangle given three points if a triangle can be formed out of them 
   Returns [None] otherwise
 *)
-val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure option
+val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure option
 
 (**
   Returns the instance of a cuboid given its [min_point] and [max_point] defining the cuboid 
 *)
-val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> figure
+val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure
 
+(**
+  Returns an [Empty] figure, used for failing computations or debugging purposes
+*)
+val empty : unit -> figure
 
 (**
   Returns a BoundingBox Figure type from a cuboid and a list of child nodes
@@ -129,6 +134,7 @@ val bounding_box : figure -> scene_figure list -> scene_figure option
 val find_closest_figure : scene -> ray_type -> (scene_figure * intersection_result) option
 
 val emission : figure -> Colorspace.Rgb.pixel
+val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> float 
 
 val is_sphere : scene_figure -> bool
 val is_plane : scene_figure -> bool
