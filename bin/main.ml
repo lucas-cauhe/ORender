@@ -25,36 +25,38 @@ let triangle_box = BoundingBox(cuboid (Point.from_coords (-0.5) (-0.25) 0.7) (Po
 (* let triangle_set : scene = List.init 1000 (fun _  -> Figure(triangle (Point.from_coords 0. (-0.25) 0.8) (Point.from_coords (-0.25) 0.25 0.8) (Point.from_coords 0.25 0.25 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get)) *)
 
 let triangle_mesh : scene = [
-  Figure(triangle (Point.from_coords (-0.5) (-0.25) 0.) (Point.from_coords (-0.25) 0.25 0.) (Point.from_coords 0. (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0. (-0.25) 0.) (Point.from_coords 0.25 0.25 0.) (Point.from_coords 0.5 (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.1 0.1 (-0.1)) (Point.from_coords (-0.5) (-0.25) 0.5) (Point.from_coords 0.5 0.5 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.8) 0.3 (-0.2)) (Point.from_coords 0.7 (-0.1) 0.5) (Point.from_coords 0.4 (-0.8) 0.9) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.0 0.0 1.0) (Point.from_coords 0.6 0.7 0.2) (Point.from_coords (-0.6) (-0.6) (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-1.0) 0.2 0.0) (Point.from_coords 0.1 (-0.9) 0.8) (Point.from_coords (-0.8) 0.4 0.5) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.7 (-0.6) 0.9) (Point.from_coords (-0.2) 0.6 (-0.2)) (Point.from_coords (-0.9) (-0.7) 0.4) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.3 0.3 (-0.25)) (Point.from_coords (-0.3) 0.5 0.7) (Point.from_coords 0.9 (-0.2) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get ); 
-Figure(triangle (Point.from_coords 0.6 (-0.8) 0.1) (Point.from_coords (-0.5) (-0.3) 0.9) (Point.from_coords 0.2 0.5 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.7) (-0.5) 0.3) (Point.from_coords 0.4 (-0.4) 0.2) (Point.from_coords 0.1 0.7 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.3) (-0.8) 0.7) (Point.from_coords 0.5 0.2 (-0.1)) (Point.from_coords (-0.2) (-0.3) 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.2 0.6 0.5) (Point.from_coords (-0.6) (-0.1) 0.4) (Point.from_coords (-0.4) 0.7 0.9) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.8 (-0.5) 0.3) (Point.from_coords (-0.7) (-0.9) 0.1) (Point.from_coords 0.3 0.6 (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.4) 0.9 0.2) (Point.from_coords 0.6 (-0.4) 0.5) (Point.from_coords (-0.5) 0.3 0.8) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.2) (-0.6) 0.9) (Point.from_coords 0.9 0.1 0.4) (Point.from_coords (-0.3) (-0.9) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.5 0.8 0.2) (Point.from_coords (-0.8) (-0.3) 0.1) (Point.from_coords 0.1 0.3 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.9) 0.1 0.8) (Point.from_coords 0.4 (-0.6) 0.5) (Point.from_coords 0.2 0.9 (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.7) (-0.2) 0.6) (Point.from_coords 0.8 (-0.9) 0.4) (Point.from_coords (-0.6) 0.4 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.9 0.7 (-0.25)) (Point.from_coords (-0.8) 0.8 0.5) (Point.from_coords (-0.1) (-0.6) 0.9) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.3) (-0.5) 0.4) (Point.from_coords 0.6 0.2 (-0.15)) (Point.from_coords (-0.5) (-0.2) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.2 0.4 0.8) (Point.from_coords (-0.4) (-0.1) 0.3) (Point.from_coords 0.7 (-0.7) 0.5) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.3 (-0.3) 0.9) (Point.from_coords (-0.6) 0.6 (-0.05)) (Point.from_coords 0.4 0.1 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.8) 0.5 0.2) (Point.from_coords 0.1 (-0.6) 0.4) (Point.from_coords 0.5 0.8 (-0.1)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords 0.4 (-0.7) 0.8) (Point.from_coords (-0.5) 0.7 0.1) (Point.from_coords (-0.1) (-0.4) 0.6) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
-Figure(triangle (Point.from_coords (-0.7) 0.6 (-0.2)) (Point.from_coords 0.2 (-0.8) 0.5) (Point.from_coords 0.9 0.4 0.7) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.75) (-0.25) (-0.25)) (Point.from_coords (-0.7) (-0.2) (-0.25)) (Point.from_coords (-0.65) (-0.25) (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.75) (-0.25) 0.) (Point.from_coords (-0.7) (-0.2) 0.) (Point.from_coords (-0.65) (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.75) (-0.25) 0.25) (Point.from_coords (-0.7) (-0.2) 0.25) (Point.from_coords (-0.65) (-0.25) 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.75) 0.25 (-0.25)) (Point.from_coords (-0.7) 0.3 (-0.25)) (Point.from_coords (-0.65) 0.25 (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.75) 0.25 0.) (Point.from_coords (-0.7) 0.3 0.) (Point.from_coords (-0.65) 0.25 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.75) 0.25 0.25) (Point.from_coords (-0.7) 0.3 0.25) (Point.from_coords (-0.65) 0.25 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+
+  Figure(triangle (Point.from_coords (-0.25) (-0.25) (-0.25)) (Point.from_coords (-0.2) (-0.2) (-0.25)) (Point.from_coords (-0.15) (-0.25) (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.25) (-0.25) 0.) (Point.from_coords (-0.2) (-0.2) 0.) (Point.from_coords (-0.15) (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.25) (-0.25) 0.25) (Point.from_coords (-0.2) (-0.2) 0.25) (Point.from_coords (-0.15) (-0.25) 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.25) 0.25 (-0.25)) (Point.from_coords (-0.2) 0.3 (-0.25)) (Point.from_coords (-0.15) 0.25 (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.25) 0.25 0.) (Point.from_coords (-0.2) 0.3 0.) (Point.from_coords (-0.15) 0.25 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords (-0.25) 0.25 0.25) (Point.from_coords (-0.2) 0.3 0.25) (Point.from_coords (-0.15) 0.25 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+
+  Figure(triangle (Point.from_coords 0. (-0.25) (-0.25)) (Point.from_coords 0.2 (-0.2) (-0.25)) (Point.from_coords 0.25 (-0.25) (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0. (-0.25) 0.) (Point.from_coords 0.2 (-0.2) 0.) (Point.from_coords 0.25 (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0. (-0.25) 0.25) (Point.from_coords 0.2 (-0.2) 0.25) (Point.from_coords 0.25 (-0.25) 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0. 0.25 (-0.25)) (Point.from_coords 0.2 0.3 (-0.25)) (Point.from_coords 0.25 0.25 (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0. 0.25 0.) (Point.from_coords 0.2 0.3 0.) (Point.from_coords 0.25 0.25 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0. 0.25 0.25) (Point.from_coords 0.2 0.3 0.25) (Point.from_coords 0.25 0.25 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+
+  Figure(triangle (Point.from_coords 0.5 (-0.25) (-0.25)) (Point.from_coords 0.55 (-0.2) (-0.25)) (Point.from_coords 0.65 (-0.25) (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0.5 (-0.25) 0.) (Point.from_coords 0.55 (-0.2) 0.) (Point.from_coords 0.65 (-0.25) 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0.5 (-0.25) 0.25) (Point.from_coords 0.55 (-0.2) 0.25) (Point.from_coords 0.65 (-0.25) 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0.5 0.25 (-0.25)) (Point.from_coords 0.55 0.3 (-0.25)) (Point.from_coords 0.65 0.25 (-0.25)) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0.5 0.25 0.) (Point.from_coords 0.55 0.3 0.) (Point.from_coords 0.65 0.25 0.) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
+  Figure(triangle (Point.from_coords 0.5 0.25 0.25) (Point.from_coords 0.55 0.3 0.25) (Point.from_coords 0.65 0.25 0.25) (Rgb.rgb_of_values 0.75 0.75 0.) |> Option.get );
 ]
 
 let new_triangle_mesh = split_scene triangle_mesh LargestAxis 
 
-let () =
+(* let () =
   let rec show_scene scene =
     match scene with
     | [] -> ()
@@ -66,7 +68,7 @@ let () =
         show_scene children;
         print_endline "--- END OF BBOX ---";
         show_scene rest in
-  show_scene new_triangle_mesh
+  show_scene new_triangle_mesh *)
 
 let my_scene : scene = [
   (* left *)

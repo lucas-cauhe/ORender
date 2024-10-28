@@ -2,7 +2,7 @@ open Geometry
 
 type bvh_algorithm = LargestAxis | Sah
 
-let bvh_primitives_minimum = 2
+let bvh_primitives_minimum = 3
 
 
 
@@ -22,8 +22,9 @@ let scene_limits (scene : Figures.scene) : Point.t * Point.t =
     | fig :: rest -> let min, max = min_max_figure min_point max_point (Figures.get_figure fig) in
     min_max_scene rest min max in
   
-  let initial_point = List.hd scene |> Figures.get_figure |> Figures.vertices |> List.hd in
-  min_max_scene scene initial_point initial_point
+  let initial_min = Point.from_coords Float.infinity Float.infinity Float.infinity in 
+  let initial_max = Point.from_coords (-.Float.infinity) (-.Float.infinity) (-.Float.infinity) in 
+  min_max_scene scene initial_min initial_max
 
 let largest_axis (lower_bound : Point.t) (upper_bound : Point.t) (scene : Figures.scene) : axis * float = 
   let x_dist = Point.x upper_bound -. Point.x lower_bound in
@@ -52,13 +53,13 @@ let split_scene_by_axis (scene : Figures.scene) (a : axis) (mid_point : float) :
   loop_ [] [] scene
 
 let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
+  let scene_min, scene_max = scene_limits scene in
+  (* Printf.printf "SceneMin = %s | SceneMax = %s" (Point.string_of_point scene_min) (Point.string_of_point scene_max); *)
+  let scene_bbox = Figures.cuboid scene_min scene_max (Colorspace.Rgb.rgb_of_values 0. 0. 0.) in
   match Figures.scene_size scene with
-  | s when s <= bvh_primitives_minimum -> scene 
-  | _ -> 
+  | s when s <= bvh_primitives_minimum -> [Figures.bounding_box scene_bbox scene |> Option.get] 
+  | n -> 
     (* Printf.printf "New scene size: %d" n; *)
-    let scene_min, scene_max = scene_limits scene in
-    (* Printf.printf "SceneMin = %s | SceneMax = %s" (Point.string_of_point scene_min) (Point.string_of_point scene_max); *)
-    let scene_bbox = Figures.cuboid scene_min scene_max (Colorspace.Rgb.rgb_of_values 0. 0. 0.) in
     let l_axis, mid_point = largest_axis scene_min scene_max scene in
     (* Printf.printf "MID_POINT: %f" mid_point; *)
     let scene_a, scene_b = split_scene_by_axis scene l_axis mid_point in 
