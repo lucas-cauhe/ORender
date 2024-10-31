@@ -55,7 +55,6 @@ type intersection = {
   distance: float;
   surface_normal: Direction.t; 
   intersection_point: Point.t;
-  brdf: float;
 }
 type intersection_result = Zero | Intersects of intersection list
 
@@ -100,7 +99,7 @@ let plane_intersection (fig : figure) (plane : plane_type) (ray : ray_type) : in
     let num = (of_point ray.ray_origin) * plane.plane_normal |> ( +. ) (-.c) in
     match -.num/.den with
     | neg when neg <= 10e-5 -> Zero
-    | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal; intersection_point = point_of_ray ray pos; brdf = brdf fig plane.plane_normal ray.ray_direction}])
+    | pos -> Intersects([{distance = pos; surface_normal = plane.plane_normal; intersection_point = point_of_ray ray pos;}])
 
 let show_plane (plane : plane_type) = Printf.printf "PLANE {Normal: %s, Origin: %s}\n" (Direction.string_of_direction plane.plane_normal) (Point.string_of_point plane.plane_origin)
 
@@ -128,13 +127,13 @@ let sphere_intersection (fig: figure) (sphere : sphere_type ) (ray : ray_type) :
   if abs_float discriminant <= 1e-10 then
     let dist = -.b /. (2. *. a) in 
     let snormal = surface_normal dist in
-    Intersects([{distance = dist; surface_normal = snormal; intersection_point = point_of_ray ray dist; brdf = brdf fig snormal ray.ray_direction }])
+    Intersects([{distance = dist; surface_normal = snormal; intersection_point = point_of_ray ray dist;}])
   else
     if discriminant > 0. then 
       let t1 = (-.b -. sqrt discriminant) /. (2.0 *. a) in
       let t2 = (-.b +. sqrt discriminant) /. (2.0 *. a) in
-      let fst = if t1 >= 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1; brdf = brdf fig (surface_normal t1) ray.ray_direction }] else [] in
-      let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2; brdf = brdf fig (surface_normal t2) ray.ray_direction}] else [] in
+      let fst = if t1 >= 10e-5 then [{ distance = t1; surface_normal = surface_normal t1; intersection_point = point_of_ray ray t1;}] else [] in
+      let snd =  if t2 > 0. then [{ distance = t2; surface_normal = surface_normal t2; intersection_point = point_of_ray ray t2;}] else [] in
       match fst, snd with
       | [], [] -> Zero
       | f, s -> Intersects(f @ s)
@@ -258,7 +257,7 @@ let cuboid_intersection (fig: figure) (c : cuboid_type) (ray : ray_type) : inter
       else if distance = t1y || distance = t2y then Direction.from_coords 0. (if distance = t1y then -1. else 1.) 0.
       else Direction.from_coords 0. 0. (if distance = t1z then -1. else 1.)
     in
-    Intersects([{distance; surface_normal = normal; intersection_point = point_of_ray ray distance; brdf = brdf fig normal ray.ray_direction}])
+    Intersects([{distance; surface_normal = normal; intersection_point = point_of_ray ray distance;}])
   else
     Zero
   
