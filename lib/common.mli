@@ -1,0 +1,1 @@
+val square : float -> float

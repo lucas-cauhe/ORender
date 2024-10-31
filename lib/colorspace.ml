@@ -53,4 +53,5 @@ module Rgb = struct
   let value_prod p factor = {red = p.red *. factor;green = p.green *. factor;blue = p.blue *. factor;}
   let rgb_prod p1 p2 = {red = p1.red *. p2.red ;green = p1.green *. p2.green;blue = p1.blue *. p2.blue;}
 
+  let zero () = { red = 0.; green = 0.; blue = 0. }
 end

@@ -59,8 +59,6 @@ type intersection = {
 }
 type intersection_result = Zero | Intersects of intersection list
 
-let square (n : float) : float = n *. n
-
 let get_figure = function Figure(fig) -> fig
   | BoundingBox(fig, _) -> fig
 
@@ -122,9 +120,9 @@ let sphere_intersection (fig: figure) (sphere : sphere_type ) (ray : ray_type) :
   let surface_normal d = GDirection.between_points (point_of_ray ray d) sphere.sphere_center in
 
   let oc = GDirection.between_points ray.ray_origin sphere.sphere_center in
-  let a = GDirection.modulus ray.ray_direction |> square in
+  let a = GDirection.modulus ray.ray_direction |> Common.square in
   let b = 2.0 *. (GDirection.dot oc ray.ray_direction) in
-  let c = (GPoint.distance ray.ray_origin sphere.sphere_center |> square) -. (square sphere.sphere_radius) in
+  let c = (GPoint.distance ray.ray_origin sphere.sphere_center |> Common.square) -. (Common.square sphere.sphere_radius) in
 
   let discriminant = (b *. b) -. (4.0 *. a *. c) in
   if abs_float discriminant <= 1e-10 then

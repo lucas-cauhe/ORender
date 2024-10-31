@@ -3,8 +3,6 @@ open Colorspace
 open Domainslib
 
 
-let square (n : float) : float = n *. n
-
 type camera = {
   forward: Geometry.Direction.t;
   left: Geometry.Direction.t;
@@ -14,11 +12,6 @@ type camera = {
   height: int;
 }
 
-type light_source_type = {
-  ls_center: Point.t;
-  ls_power: Colorspace.Rgb.pixel
-}
-
 let num_points = ref 8 
 
 let camera up left forward origin (width, height) = {
@@ -26,11 +19,9 @@ let camera up left forward origin (width, height) = {
   width; height;
 }
 
-let light_source c p = {
-  ls_power = p;
-  ls_center = c;
-}
-
+(**
+  Returns a point inside a pixel
+*)
 let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.t = 
   let x_random = Random.float (1. /. float_of_int cam.width) in
   let y_random = Random.float (1. /. float_of_int cam.height) in
@@ -40,6 +31,9 @@ let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.t =
   Point.from_coords (Direction.x dir)  (Direction.y dir)  (Direction.z dir)
 
 
+(**
+  Returns the defined number of points inside a pixel to trace a ray through.
+*)
 let points_in_pixel cam (row, col) : Point.t BatList.t =
   let x_ = 1. -. 2. *. (float_of_int col /. float_of_int cam.width) in
   let y_ = 1. -. 2. *. (float_of_int row /. float_of_int cam.height) in
@@ -52,46 +46,10 @@ let points_in_pixel cam (row, col) : Point.t BatList.t =
   BatList.init !num_points (fun _ -> point_in_pixel cam (x_, y_) half_width half_height forward_)
 
 
-let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
-  match Figures.find_closest_figure scene ray with 
-  | Some(fig, ir) -> begin
-    match Figures.is_sphere fig, ir with
-    | true, Intersects(intersection :: _) -> 
-      let surface_normal_ray = Figures.ray intersection.intersection_point intersection.surface_normal in
-      let moved_ip = Figures.point_of_ray surface_normal_ray 10e-5 in
-      (fig, Intersects([{ intersection with intersection_point = moved_ip}]))
-    | _ -> (fig, ir)
-  end
-  | None -> (Figures.Figure(Figures.empty ()), Zero)
-
-let color_of_ls (scene : Figures.scene) (ls : light_source_type) (ir : Figures.intersection) (fig : Figures.scene_figure) : Colorspace.Rgb.pixel = 
-  let emission = Figures.emission (Figures.get_figure fig) in
-  match  Direction.between_points ls.ls_center ir.intersection_point |> Direction.normalize with
-  | None -> emission 
-  | Some(center_to_point) -> begin 
-    let ray_to_ls = Figures.ray ir.intersection_point center_to_point in
-    match Figures.find_closest_figure scene ray_to_ls with
-    | Some(_, Intersects({distance = dist; _} :: _)) 
-      when dist < Figures.dist_to_point_of_ray ray_to_ls ls.ls_center -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
-    | _ ->
-      let li = Rgb.normalize ls.ls_power (Direction.modulus center_to_point |> square) in
-      let rest = center_to_point |> Direction.dot ir.surface_normal |> abs_float in
-      Rgb.value_prod li (ir.brdf *. rest) |> Rgb.rgb_prod emission
-  end
-
-
-let compute_color (scene : Figures.scene) (light_sources : light_source_type list) ((fig, ir): Figures.scene_figure * Figures.intersection_result) : Colorspace.Rgb.pixel = 
-  match ir with
-  | Zero -> Colorspace.Rgb.rgb_of_values 0. 0. 0.
-  | Intersects(intersection) -> begin
-    let intersection = List.hd intersection in
-    List.fold_left (fun acc ls -> Rgb.sum acc (color_of_ls scene ls intersection fig) ) (Rgb.rgb_of_values 0. 0. 0.) light_sources  
-  end
-
 let pixel_color cam (row, col) scene light_sources pool =
   let open Colorspace in
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col)) in
-  let compute_pixel_color ind = Direction.between_points pip_arr.(ind) cam.origin |> Figures.ray cam.origin |> trace_ray scene |> compute_color scene light_sources in
+  let compute_pixel_color ind = Direction.between_points pip_arr.(ind) cam.origin |> Figures.ray cam.origin |> Pathtracing.path_tracing scene light_sources in 
   let color_sum () = Task.parallel_for_reduce ~start:0 ~finish:(BatArray.length pip_arr -1) ~body:compute_pixel_color pool
     (fun acc next_color -> Rgb.sum acc next_color) (Rgb.rgb_of_values 0. 0. 0.) in 
   Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)

@@ -61,5 +61,6 @@ module Rgb : sig
   val normalize : pixel -> float -> pixel
   val value_prod : pixel -> float -> pixel
   val rgb_prod : pixel -> pixel -> pixel
+  val zero : unit -> pixel
 
 end 

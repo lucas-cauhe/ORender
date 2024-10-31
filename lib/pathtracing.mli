@@ -1,0 +1,1 @@
+val path_tracing : Figures.scene -> Camera.light_source_type list -> Figures.ray_type -> Colorspace.Rgb.pixel
