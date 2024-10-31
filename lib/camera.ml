@@ -1,13 +1,12 @@
 open Geometry
-open Colorspace
 open Domainslib
 
 
 type camera = {
-  forward: Geometry.Direction.t;
-  left: Geometry.Direction.t;
-  up: Geometry.Direction.t;
-  origin: Geometry.Point.t;
+  forward: Direction.t;
+  left: Direction.t;
+  up: Direction.t;
+  origin: Point.t;
   width: int;
   height: int;
 }
@@ -51,5 +50,5 @@ let pixel_color cam (row, col) scene light_sources pool =
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col)) in
   let compute_pixel_color ind = Direction.between_points pip_arr.(ind) cam.origin |> Figures.ray cam.origin |> Pathtracing.path_tracing scene light_sources in 
   let color_sum () = Task.parallel_for_reduce ~start:0 ~finish:(BatArray.length pip_arr -1) ~body:compute_pixel_color pool
-    (fun acc next_color -> Rgb.sum acc next_color) (Rgb.rgb_of_values 0. 0. 0.) in 
+    (fun acc next_color -> Rgb.sum acc next_color) (Rgb.zero ()) in 
   Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)

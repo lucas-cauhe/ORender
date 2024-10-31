@@ -1,4 +1,5 @@
 open Geometry
+open Colorspace
 
 type bvh_algorithm = LargestAxis | Sah
 
@@ -58,7 +59,7 @@ let split_scene_by_axis (scene : Figures.scene) (a : axis) (mid_point : float) :
 let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
   let scene_min, scene_max = scene_limits scene in
   (* Printf.printf "SceneMin = %s | SceneMax = %s" (Point.string_of_point scene_min) (Point.string_of_point scene_max); *)
-  let scene_bbox = Figures.cuboid scene_min scene_max (Colorspace.Rgb.rgb_of_values 0. 0. 0.) ~coefficients:(Colorspace.Rgb.rgb_of_values 0. 0. 0.) in
+  let scene_bbox = Figures.cuboid scene_min scene_max (Rgb.zero ()) ~coefficients:(Rgb.zero ()) in
   match Figures.scene_size scene with
   | s when s <= bvh_primitives_minimum -> [Figures.bounding_box scene_bbox scene |> Option.get] 
   | _ -> 

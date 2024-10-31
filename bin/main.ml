@@ -12,6 +12,7 @@ open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 open Computer_gfx.Camera
 open Computer_gfx.Bvh
+open Computer_gfx.Light
 
 module PpmDb = Computer_gfx.Db.Ppm
 
@@ -86,7 +87,7 @@ let my_scene : scene = [
   Figure(sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 0. 0. 0.75) ~coefficients:(Rgb.rgb_of_values 0.8 0. 0.));
 ]
 
-let light_sources : light_source_type list = [
+let light_sources : light_source list = [
   light_source (Point.from_coords 0. 0.95 0.) (Rgb.rgb_of_values 1. 1. 1.);
   (* light_source (Point.from_coords 0.9 (-0.9) (-0.5)) (Rgb.rgb_of_values 1. 1. 1.) *)
 ]

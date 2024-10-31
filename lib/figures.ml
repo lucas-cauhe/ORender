@@ -333,7 +333,7 @@ let barycenter fig =
   | Cuboid(cuboid) -> cuboid_barycenter cuboid
   | Empty -> Point.from_coords 0. 0. 0.
 
-let empty () = {fig_type = Empty; emission = Colorspace.Rgb.rgb_of_values 0. 0. 0.; coefficients = Colorspace.Rgb.rgb_of_values 0. 0. 0.;}
+let empty () = {fig_type = Empty; emission = Rgb.zero (); coefficients = Rgb.zero ()}
 
 
 

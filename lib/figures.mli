@@ -61,7 +61,6 @@ type intersection = {
   distance: float;
   surface_normal: Geometry.Direction.t;
   intersection_point: Geometry.Point.t;
-  brdf: float;
 }
 
 (**
