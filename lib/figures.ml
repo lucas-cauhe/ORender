@@ -89,7 +89,7 @@ let plane d o e ~coefficients:k = { fig_type = Plane({ plane_normal = d; plane_o
 
 (* Plane implicit equation: ax + by + cz + d = 0 *)
 (* Ray implicit equation: p + d * t = 0 *)
-let plane_intersection (fig : figure) (plane : plane_type) (ray : ray_type) : intersection_result =
+let plane_intersection (plane : plane_type) (ray : ray_type) : intersection_result =
   let open Direction in
   (* Check if ray and plane are parallel *)
   match plane.plane_normal * ray.ray_direction with
@@ -113,7 +113,7 @@ let transform_plane (_: transformation) (fig: plane_type) =
 
 let sphere center radius e ~coefficients:k = {fig_type = Sphere({ sphere_center = center; sphere_radius = radius }); emission = e; coefficients = k}
 
-let sphere_intersection (fig: figure) (sphere : sphere_type ) (ray : ray_type) : intersection_result = 
+let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_result = 
   let module GPoint = Point in
   let module GDirection = Direction in
   let surface_normal d = GDirection.between_points (point_of_ray ray d) sphere.sphere_center in
@@ -177,9 +177,9 @@ let triangle a b c e ~coefficients:k =
   | Some(normal) -> Some({fig_type = Triangle({vert_a = a; vert_b = b; vert_c = c;triangle_normal = normal}); emission = e; coefficients = k})
   | None -> None
 
-let triangle_intersection (fig: figure) (triangle : triangle_type) (ray : ray_type) = 
+let triangle_intersection (triangle : triangle_type) (ray : ray_type) = 
   let open Direction in
-    match plane_intersection fig {plane_normal = triangle.triangle_normal; plane_origin = triangle.vert_a} ray with
+    match plane_intersection {plane_normal = triangle.triangle_normal; plane_origin = triangle.vert_a} ray with
     | Intersects([{ distance = d; _ }]) as il -> begin 
       let p = point_of_ray ray d in
 
@@ -239,7 +239,7 @@ let triangle_barycenter (triangle: triangle_type) =
 
 let cuboid c_min c_max e ~coefficients:k = {fig_type = Cuboid({ cuboid_min = c_min; cuboid_max = c_max; }); emission = e; coefficients = k}
 
-let cuboid_intersection (fig: figure) (c : cuboid_type) (ray : ray_type) : intersection_result =
+let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result =
   let t1x = (Point.x c.cuboid_min -. Point.x ray.ray_origin) /. Direction.x ray.ray_direction in
   let t2x = (Point.x c.cuboid_max -. Point.x ray.ray_origin) /. Direction.x ray.ray_direction in
   let t1y = (Point.y c.cuboid_min -. Point.y ray.ray_origin) /. Direction.y ray.ray_direction in
@@ -286,10 +286,10 @@ let bounding_box cuboid children =
 (*************************)
   
 let intersects fig ray = match fig.fig_type with
-| Plane(plane) -> plane_intersection fig plane ray 
-| Sphere(sphere) -> sphere_intersection fig sphere ray
-| Triangle(triangle) -> triangle_intersection fig triangle ray
-| Cuboid(cuboid) -> cuboid_intersection fig cuboid ray
+| Plane(plane) -> plane_intersection plane ray 
+| Sphere(sphere) -> sphere_intersection sphere ray
+| Triangle(triangle) -> triangle_intersection triangle ray
+| Cuboid(cuboid) -> cuboid_intersection cuboid ray
 | Empty -> Zero
 
 (*************************)
