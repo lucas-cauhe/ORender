@@ -75,10 +75,17 @@ let emission fig = fig.emission
 let delta_reflection = 1.
 let delta_refraction = 1.
 
+let russian_roulette (coef : Rgb.pixel) : float * float * float =
+  let kd = Rgb.red coef in
+  let ks = Rgb.green coef in
+  let kt = Rgb.blue coef in
+  let rd = Random.float 1. in
+  if rd < 0.2 then (0., 0., 0.) 
+  (*IMPLEMENT RUSSIAN ROULETTE*)
+  else (kd, ks, kt)
+
 let brdf fig surface_normal wi = 
-  let kd = Rgb.red fig.coefficients in
-  let ks = Rgb.green fig.coefficients in
-  let kt = Rgb.blue fig.coefficients in
+  let kd, ks, kt = russian_roulette fig.coefficients in 
   kd *. Float.pi +. ks *. (delta_reflection /. Direction.dot surface_normal wi) +. kt *. (delta_refraction /. Direction.dot surface_normal wi)
 
 (******************************)

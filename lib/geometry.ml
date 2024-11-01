@@ -294,3 +294,9 @@ module Transformations = struct
 end
 
   
+
+let cartesian_of_spherical (rand_lat:float) (rand_long:float) (r: float) = 
+  let x = r *. sin rand_lat *. sin rand_long in
+  let y = r *. sin rand_lat *. cos rand_long in
+  let z = r *. cos rand_lat in
+  Direction.from_coords x y z

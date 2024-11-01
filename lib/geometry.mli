@@ -104,3 +104,5 @@ module Transformations : sig
     val cb_transformation_of_base : Direction.t -> Direction.t -> Direction.t -> Point.t -> Matrix.t
     val combine_transformations : hc -> (hc -> hc) list -> hc
 end
+
+val cartesian_of_spherical : float -> float -> float -> Direction.t
