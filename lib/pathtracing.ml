@@ -1,6 +1,8 @@
 open Colorspace
 open Geometry
 
+let eps = ref 10e-5
+
 (**
   Traces a ray [ray] accross the given [scene] to find which is the first figure that intersects with the ray, if any
 *)
@@ -34,30 +36,54 @@ let direct_light (light : Rgb.pixel) (brdf : float) (emission : Rgb.pixel) =
 let cosine_norm (n : Direction.t) (wi : Direction.t) = 
   Direction.dot n wi |> abs_float
 
+
+let rec area_light_path_tracing scene light_source wi acc = 
+  match trace_ray scene wi with
+  | (_, Zero) -> acc
+  | (_, Intersects(ir :: _)) when Light.point_belongs_to_ls ir.intersection_point light_source -> Rgb.rgb_prod (Light.power light_source) acc 
+  | (fig, Intersects(ir :: _)) -> begin
+    (* compute wi  *)
+    let outgoing_direction = montecarlo_sample () in
+    (* compute current brdf *)
+    let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
+    if current_brdf < !eps then
+      acc
+    else 
+      let current_contribution = Rgb.value_prod acc current_brdf |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) in 
+      area_light_path_tracing scene light_source
+        (Figures.ray ir.intersection_point outgoing_direction)
+        (Rgb.sum acc current_contribution) 
+  end
+  | _ -> acc 
+
+
+let rec point_light_path_tracing scene light_sources wi prev_brdf acc = 
+  match trace_ray scene wi with
+  | (_, Zero) -> acc
+  | (fig, Intersects(ir :: _)) -> begin
+    (* compute wi  *)
+    let outgoing_direction = montecarlo_sample () in
+    (* compute current brdf *)
+    let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
+    if current_brdf < !eps then
+      acc
+    else 
+      (* add all shadow rays' effect *)
+      let light_power = List.fold_left (fun acc_lp ls -> Light.shadow_ray scene ir ls |> Rgb.sum acc_lp) (Rgb.zero ()) light_sources in
+      let current_contribution = direct_light light_power (prev_brdf *. current_brdf) (Figures.get_figure fig |> Figures.emission) in
+      point_light_path_tracing scene light_sources 
+        (Figures.ray ir.intersection_point outgoing_direction)
+        (prev_brdf *. current_brdf)
+        (Rgb.sum acc current_contribution) 
+  end
+  | _ -> acc 
+
+
 (**
   Path tracing algorithm implementation
 *)
 let path_tracing scene light_sources camera_ray = 
-  let eps = 10e-5 in
-  let rec rec_path_tracing wi prev_brdf acc = 
-    match trace_ray scene wi with
-    | (_, Zero) -> acc
-    | (fig, Intersects(ir :: _)) -> begin
-      (* compute wi  *)
-      let outgoing_direction = montecarlo_sample () in
-      (* compute current brdf *)
-      let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
-      if current_brdf < eps then
-        acc
-      else 
-        (* add all shadow rays' effect *)
-        let light_power = List.fold_left (fun acc_lp ls -> Light.shadow_ray scene ir ls |> Rgb.sum acc_lp) (Rgb.zero ()) light_sources in
-        let current_contribution = direct_light light_power (prev_brdf *. current_brdf) (Figures.get_figure fig |> Figures.emission) in
-        rec_path_tracing 
-          (Figures.ray ir.intersection_point outgoing_direction)
-          (prev_brdf *. current_brdf)
-          (Rgb.sum acc current_contribution) 
-    end
-    | _ -> acc in
-      
-  rec_path_tracing camera_ray 1. (Rgb.zero ())
+  let ls_hd = List.hd light_sources in
+  match Light.light_source_type_val ls_hd with
+  | Light.Area(fig) -> area_light_path_tracing (fig :: scene) ls_hd camera_ray (Rgb.zero ())
+  | Light.Point(_) -> point_light_path_tracing scene light_sources camera_ray 1. (Rgb.zero ()) 

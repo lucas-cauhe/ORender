@@ -79,7 +79,7 @@ let my_scene : scene = [
   (* down *)
   Figure(plane (Direction.from_coords 0. 1. 0.) (Point.from_coords 0. (-1.) 0.) (Rgb.rgb_of_values 0.75 0.75 0.75) ~coefficients:(Rgb.rgb_of_values 0.5 0. 0.));
   (* up *)
-  Figure(plane (Direction.from_coords 0. (-1.) 0.) (Point.from_coords 0. 1. 0.) (Rgb.rgb_of_values 0.75 0.75 0.75) ~coefficients:(Rgb.rgb_of_values 0.5 0. 0.));
+  (* Figure(plane (Direction.from_coords 0. (-1.) 0.) (Point.from_coords 0. 1. 0.) (Rgb.rgb_of_values 0.75 0.75 0.75) ~coefficients:(Rgb.rgb_of_values 0.5 0. 0.)); *)
   (* back *)
   Figure(plane (Direction.from_coords 0. 0. (-1.)) (Point.from_coords 0. 0. 1.) (Rgb.rgb_of_values 0.75 0.75 0.75) ~coefficients:(Rgb.rgb_of_values 0.5 0. 0.));
   (* triangle_box; *)
@@ -88,7 +88,8 @@ let my_scene : scene = [
 ]
 
 let light_sources : light_source list = [
-  light_source (Point.from_coords 0. 0.95 0.) (Rgb.rgb_of_values 1. 1. 1.);
+  (* light_source (Point(Point.from_coords 0. 0.95 0.)) (Rgb.rgb_of_values 1. 1. 1.); *)
+  light_source (Area(Figure(plane (Direction.from_coords 0. (-1.) 0.) (Point.from_coords 0. 1. 0.) (Rgb.rgb_of_values 0.75 0.75 0.75) ~coefficients:(Rgb.rgb_of_values 0.5 0. 0.)))) (Rgb.rgb_of_values 1. 1. 1.) 
   (* light_source (Point.from_coords 0.9 (-0.9) (-0.5)) (Rgb.rgb_of_values 1. 1. 1.) *)
 ]
 

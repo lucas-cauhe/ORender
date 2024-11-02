@@ -95,6 +95,11 @@ val vertices : figure -> Geometry.Point.t list
 val barycenter : figure -> Geometry.Point.t
 
 (**
+  Test whether a point belongs to a figure
+*)
+val point_belongs_to_fig : Geometry.Point.t -> figure -> bool
+
+(**
   Returns the instance of a plane given its [normal] and a [point] in the plane
 *)
 val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure

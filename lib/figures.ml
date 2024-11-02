@@ -6,6 +6,8 @@
 open Geometry
 open Colorspace 
 
+let eps = ref 10e-5
+
 type ray_type = {
   ray_origin: Point.t;
   ray_direction: Direction.t
@@ -114,6 +116,9 @@ let transform_plane (_: transformation) (fig: plane_type) =
   let complete_transform e k= Some(plane fig.plane_normal fig.plane_origin e ~coefficients:k) in
   complete_transform
 
+let point_belongs_to_plane (p : Point.t) (fig : plane_type) = 
+  (Direction.between_points p fig.plane_origin |> Direction.dot fig.plane_normal |> abs_float) < !eps 
+
 (*******************************)
 (* SPHERE ASSOCIATED FUNCTIONS *)
 (*******************************)
@@ -174,6 +179,12 @@ let sphere_vertices (sphere : sphere_type) : Point.t list =
     Point.from_coords x y (z +. sphere.sphere_radius);
     Point.from_coords x y (z -. sphere.sphere_radius);
   ]
+
+let point_belongs_to_sphere (p : Point.t) (fig: sphere_type) = 
+  let xsquare = Point.x p |> Common.square in
+  let ysquare = Point.y p |> Common.square in
+  let zsquare = Point.z p |> Common.square in
+  (xsquare +. ysquare +. zsquare -. (fig.sphere_radius |> Common.square) |> abs_float) < !eps 
 
 (*********************************)
 (* TRIANGLE ASSOCIATED FUNCTIONS *)
@@ -240,6 +251,7 @@ let triangle_vertices (triangle : triangle_type) =
 let triangle_barycenter (triangle: triangle_type) = 
   Point.mean [triangle.vert_a; triangle.vert_b; triangle.vert_c] |> Option.get
 
+
 (*******************************)
 (* CUBOID ASSOCIATED FUNCTIONS *) 
 (*******************************)
@@ -277,6 +289,12 @@ let cuboid_vertices (cuboid : cuboid_type) =
 
 let cuboid_barycenter (cuboid : cuboid_type) = 
   Point.mean [cuboid.cuboid_max; cuboid.cuboid_min] |> Option.get
+
+let point_belongs_to_cuboid (p: Point.t) (cuboid: cuboid_type) =
+  let px, cubxmin, cubxmax = Point.x p, Point.x cuboid.cuboid_min, Point.x cuboid.cuboid_max in
+  let py, cubymin, cubymax = Point.y p, Point.y cuboid.cuboid_min, Point.y cuboid.cuboid_max in
+  let pz, cubzmin, cubzmax = Point.z p, Point.z cuboid.cuboid_min, Point.z cuboid.cuboid_max in
+  px >= cubxmin && px <= cubxmax && py >= cubymin && py <= cubymax && pz >= cubzmin && pz <= cubzmax
 
 (**************************)
 (* BOUNDING BOX FUNCTIONS *) 
@@ -332,6 +350,9 @@ let vertices fig =
   | Triangle(triangle) -> triangle_vertices triangle
   | Cuboid(cuboid) -> cuboid_vertices cuboid
 
+(******************************)
+(*    BARYCENTER FUNCTION     *) 
+(******************************)
 let barycenter fig = 
   match fig.fig_type with
   | Plane(plane) -> plane.plane_origin
@@ -339,6 +360,14 @@ let barycenter fig =
   | Triangle(triangle) -> triangle_barycenter triangle
   | Cuboid(cuboid) -> cuboid_barycenter cuboid
   | Empty -> Point.from_coords 0. 0. 0.
+
+let point_belongs_to_fig p fig = 
+  match fig.fig_type with
+  | Plane(plane) -> point_belongs_to_plane p plane
+  | Sphere(sphere) -> point_belongs_to_sphere p sphere
+  | Triangle(_) -> false (* not yet implemented *) 
+  | Cuboid(cuboid) -> point_belongs_to_cuboid p cuboid
+  | Empty -> false
 
 let empty () = {fig_type = Empty; emission = Rgb.zero (); coefficients = Rgb.zero ()}
 
