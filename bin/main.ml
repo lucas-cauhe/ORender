@@ -11,8 +11,9 @@ open Computer_gfx.Figures
 open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 open Computer_gfx.Camera
-(* open Computer_gfx.Bvh *)
+open Computer_gfx.Bvh 
 open Computer_gfx.Light
+open Computer_gfx.Obj_parser
 
 module PpmDb = Computer_gfx.Db.Ppm
 
@@ -71,6 +72,7 @@ let new_triangle_mesh = split_scene triangle_mesh LargestAxis  *)
         show_scene rest in
   show_scene new_triangle_mesh *)
 
+
 let my_scene : scene = [
   (* left *)
   Figure(plane (Direction.from_coords 1. 0. 0.) (Point.from_coords (-1.) 0. 0.) (Rgb.rgb_of_values 1. 0. 0.) ~coefficients:(Rgb.rgb_of_values 0.8 0. 0.));
@@ -87,8 +89,15 @@ let my_scene : scene = [
   Figure(sphere (Point.from_coords 0.5 (-0.7) (-0.25)) 0.3 (Rgb.rgb_of_values 1. 1. 1.) ~coefficients:(Rgb.rgb_of_values 0.9 0. 0.));
 ]
 
+let my_scene_from_obj filename =
+  let vertices, _, faces = read_obj_file filename in
+  let scene_objects = convert_to_scene (vertices, faces) in
+  let _ = split_scene scene_objects LargestAxis in
+  (* new_triangle_mesh @ [ *)
+  my_scene
+
 let light_sources : light_source list = [
-  light_source (Point.from_coords 0. 0.95 0.) (Rgb.rgb_of_values 1. 1. 1.);
+  light_source (Point.from_coords 0. 9.95 0.) (Rgb.rgb_of_values 1. 1. 1.);
   (* light_source (Point.from_coords 0.9 (-0.9) (-0.5)) (Rgb.rgb_of_values 1. 1. 1.) *)
 ]
 
@@ -103,6 +112,7 @@ let bar ~total =
   list [ spinner (); bar total; count_to total ] 
 
 let () = 
+  let my_scene = my_scene_from_obj "obj_files/camel.obj" in
   let camera = camera !up !left !forward !origin (!width,!height) in
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !height !width  in
