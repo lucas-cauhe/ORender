@@ -77,18 +77,6 @@ let emission fig = fig.emission
 let delta_reflection = 1.
 let delta_refraction = 1.
 
-let russian_roulette (coef : Rgb.pixel) : float * float * float =
-  let kd = Rgb.red coef in
-  let ks = Rgb.green coef in
-  let kt = Rgb.blue coef in
-  let rd = Random.float 1. in
-  if rd < 0.2 then (0., 0., 0.) 
-  (*IMPLEMENT RUSSIAN ROULETTE*)
-  else (kd, ks, kt)
-
-let brdf fig surface_normal wi = 
-  let kd, ks, kt = russian_roulette fig.coefficients in 
-  kd *. Float.pi +. ks *. (delta_reflection /. Direction.dot surface_normal wi) +. kt *. (delta_refraction /. Direction.dot surface_normal wi)
 
 (******************************)
 (* PLANE ASSOCIATED FUNCTIONS *)
@@ -408,3 +396,23 @@ let is_sphere = function Figure({fig_type = Sphere(_); _}) -> true
 
 let is_plane = function Figure({fig_type = Plane(_); _}) -> true
   | _ -> false
+
+type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
+
+let russian_roulette (fig : figure) = 
+  let coefs = ref [] in
+  if Rgb.red fig.coefficients > 0. then coefs := Diffuse :: !coefs; 
+  if Rgb.green fig.coefficients > 0. then coefs := Specular :: !coefs; 
+  if Rgb.blue fig.coefficients > 0. then coefs := Refraction :: !coefs; 
+
+  if Random.float 1. < 0.2 then 
+    Absorption
+  else
+    List.nth !coefs (Random.int (List.length !coefs)) 
+
+let brdf fig surface_normal wi rres = 
+  match rres with
+  | Absorption -> 0.
+  | Diffuse -> (Rgb.red fig.coefficients) *. Float.pi
+  | Specular -> (Rgb.green fig.coefficients) *. (delta_reflection /. Direction.dot surface_normal wi)
+  | Refraction -> (Rgb.blue fig.coefficients) *. (delta_refraction /. Direction.dot surface_normal wi)

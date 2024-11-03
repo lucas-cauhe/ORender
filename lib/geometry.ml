@@ -295,8 +295,8 @@ end
 
   
 
-let cartesian_of_spherical (rand_lat:float) (rand_long:float) (r: float) = 
-  let x = r *. sin rand_lat *. sin rand_long in
-  let y = r *. sin rand_lat *. cos rand_long in
-  let z = r *. cos rand_lat in
-  Direction.from_coords x y z
+let cartesian_of_spherical (lat:float) (azimuth:float) (r:float) = 
+  let x = r *. sin lat *. sin azimuth in
+  let y = r *. sin lat *. cos azimuth in
+  let z = r *. cos lat in
+  Direction.from_coords x y z 

@@ -138,7 +138,11 @@ val bounding_box : figure -> scene_figure list -> scene_figure option
 val find_closest_figure : scene -> ray_type -> (scene_figure * intersection_result) option
 
 val emission : figure -> Colorspace.Rgb.pixel
-val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> float 
 
 val is_sphere : scene_figure -> bool
 val is_plane : scene_figure -> bool
+
+type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
+
+val russian_roulette : figure -> russian_roulette_result
+val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> russian_roulette_result -> float 

@@ -1,5 +1,5 @@
-open Colorspace
 open Geometry
+open Colorspace
 
 let eps = ref 10e-5
 
@@ -18,11 +18,18 @@ let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
   end
   | None -> (Figures.Figure(Figures.empty ()), Zero)
 
-let montecarlo_sample () = 
-  let rand_lat = 1. -. Random.float 1. |> sqrt |> Float.acos in
-  let rand_azimut = 2. *. Float.pi *. Random.float 1. in
-  (* It is impossible that the modulus of the global coords' direction is ever 0, hence can do Option.get *)
-  Geometry.cartesian_of_spherical rand_lat rand_azimut 1. |> Direction.normalize |> Option.get
+let montecarlo_sample (normal : Direction.t) (wo : Direction.t) = function 
+  Figures.Diffuse ->
+    let rand_lat = 1. -. Random.float 1. |> sqrt |> Float.acos in
+    let rand_azimut = 2. *. Float.pi *. Random.float 1. in
+    (* It is impossible that the modulus of the global coords' direction is ever 0, hence can do Option.get *)
+    Geometry.cartesian_of_spherical rand_lat rand_azimut 1. |> Direction.normalize |> Option.get
+  | Figures.Specular -> 
+    Direction.dot wo normal |> ( *. ) 2. |> Direction.prod normal |> Direction.sub wo 
+  | Figures.Refraction ->
+    (* not yet implemented *)
+    normal
+  | Figures.Absorption -> normal
 
 (**
   Render equation implementation
@@ -42,17 +49,18 @@ let rec area_light_path_tracing scene light_source wi acc =
   | (_, Zero) -> acc
   | (_, Intersects(ir :: _)) when Light.point_belongs_to_ls ir.intersection_point light_source -> Rgb.rgb_prod (Light.power light_source) acc 
   | (fig, Intersects(ir :: _)) -> begin
+    let roulette_result = Figures.russian_roulette (Figures.get_figure fig) in
     (* compute wi  *)
-    let outgoing_direction = montecarlo_sample () in
+    let outgoing_direction = montecarlo_sample ir.surface_normal wi.ray_direction roulette_result in
     (* compute current brdf *)
-    let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
+    let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction roulette_result |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
     if current_brdf < !eps then
       acc
     else 
       let current_contribution = Rgb.value_prod acc current_brdf |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) in 
       area_light_path_tracing scene light_source
         (Figures.ray ir.intersection_point outgoing_direction)
-        (Rgb.sum acc current_contribution) 
+        current_contribution 
   end
   | _ -> acc 
 
@@ -61,10 +69,11 @@ let rec point_light_path_tracing scene light_sources wi prev_brdf acc =
   match trace_ray scene wi with
   | (_, Zero) -> acc
   | (fig, Intersects(ir :: _)) -> begin
+    let roulette_result = Figures.russian_roulette (Figures.get_figure fig) in
     (* compute wi  *)
-    let outgoing_direction = montecarlo_sample () in
+    let outgoing_direction = montecarlo_sample ir.surface_normal wi.ray_direction roulette_result in
     (* compute current brdf *)
-    let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
+    let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction roulette_result |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
     if current_brdf < !eps then
       acc
     else 
@@ -85,5 +94,5 @@ let rec point_light_path_tracing scene light_sources wi prev_brdf acc =
 let path_tracing scene light_sources camera_ray = 
   let ls_hd = List.hd light_sources in
   match Light.light_source_type_val ls_hd with
-  | Light.Area(fig) -> area_light_path_tracing (fig :: scene) ls_hd camera_ray (Rgb.zero ())
+  | Light.Area(fig) -> area_light_path_tracing (fig :: scene) ls_hd camera_ray (Rgb.rgb_of_values 1. 1. 1.) 
   | Light.Point(_) -> point_light_path_tracing scene light_sources camera_ray 1. (Rgb.zero ()) 
