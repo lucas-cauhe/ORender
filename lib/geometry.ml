@@ -288,15 +288,20 @@ module Transformations = struct
       let o = Point.x origin and p = Point.y origin and q = Point.z origin in
       Matrix.from_array_matrix [| [| x; x'; x''; o |]; [| y; y'; y''; p |]; [| z; z'; z''; q |]; [| 0.; 0.; 0.; 1. |] |]
 
-      let combine_transformations initialHc = List.fold_left (fun accHc f -> f accHc ) initialHc
+    let combine_transformations initialHc = List.fold_left (fun accHc f -> f accHc ) initialHc
 
 
 end
 
   
 
-let cartesian_of_spherical (lat:float) (azimuth:float) (r:float) = 
+let cartesian_of_spherical (lat:float) (azimuth:float) (n:Direction.t) (ip: Point.t) = 
+  let r = Direction.modulus n in
   let x = r *. sin lat *. sin azimuth in
   let y = r *. sin lat *. cos azimuth in
   let z = r *. cos lat in
-  Direction.from_coords x y z 
+  let u = Direction.from_coords (-.r *. sin lat *. cos azimuth) (r *. sin lat *. sin azimuth) 0. in
+  let v = Direction.cross_product u n in
+  let omega = Transformations.hc_of_direction (Direction.from_coords x y z |> Direction.normalize |> Option.get) in
+  Transformations.change_basis (Transformations.cb_transformation_of_base u v n ip) omega |> Transformations.direction_of_hc
+  

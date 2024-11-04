@@ -105,4 +105,4 @@ module Transformations : sig
     val combine_transformations : hc -> (hc -> hc) list -> hc
 end
 
-val cartesian_of_spherical : float -> float -> float -> Direction.t
+val cartesian_of_spherical : float -> float -> Direction.t -> Point.t -> Direction.t
