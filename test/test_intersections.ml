@@ -4,7 +4,7 @@ open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 
 let color = ref (Rgb.rgb_of_values 255. 0. 0.)
-let brdf = ref (Rgb.rgb_of_values 1. 0. 0.)
+let brdf = ref (Rgb.rgb_of_values 1. 0. 0., Rgb.rgb_of_values 1. 0. 0., Rgb.rgb_of_values 1. 0. 0.)
 let one_intersection = ref (Intersects [{distance = 1.; surface_normal = Direction.from_coords 1. 1. 1.; intersection_point = Point.from_coords 1. 1. 1.}])
 let two_intersection = ref (Intersects [
   {distance = 1.; surface_normal = Direction.from_coords 1. 1. 1.; intersection_point = Point.from_coords 1. 1. 1.};

@@ -14,6 +14,8 @@ type ray_type = {
   ray_direction: Geometry.Direction.t
 }
 
+type coefficients = Colorspace.Rgb.pixel*Colorspace.Rgb.pixel*Colorspace.Rgb.pixel
+
 val ray : Geometry.Point.t -> Geometry.Direction.t -> ray_type
 val string_of_ray : ray_type -> string 
 
@@ -102,23 +104,23 @@ val point_belongs_to_fig : Geometry.Point.t -> figure -> bool
 (**
   Returns the instance of a plane given its [normal] and a [point] in the plane
 *)
-val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure
+val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
 
 (**
   Returns the instance of a sphere given its [center] and [radius] of the sphere 
 *)
-val sphere : Geometry.Point.t -> float -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure
+val sphere : Geometry.Point.t -> float -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
 
 (**
   Returns [Some(t)] with the instance of a triangle given three points if a triangle can be formed out of them 
   Returns [None] otherwise
 *)
-val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure option
+val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure option
 
 (**
   Returns the instance of a cuboid given its [min_point] and [max_point] defining the cuboid 
 *)
-val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:Colorspace.Rgb.pixel -> figure
+val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
 
 (**
   Returns an [Empty] figure, used for failing computations or debugging purposes
@@ -145,4 +147,4 @@ val is_plane : scene_figure -> bool
 type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
 
 val russian_roulette : figure -> russian_roulette_result
-val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> russian_roulette_result -> float 
+val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> russian_roulette_result -> Colorspace.Rgb.pixel

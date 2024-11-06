@@ -8,6 +8,9 @@ open Colorspace
 
 let eps = ref 10e-5
 
+type coefficients = Colorspace.Rgb.pixel*Colorspace.Rgb.pixel*Colorspace.Rgb.pixel
+
+
 type ray_type = {
   ray_origin: Point.t;
   ray_direction: Direction.t
@@ -37,19 +40,13 @@ type cuboid_type = {
   cuboid_max : Point.t;
 }
 
-(* type cylinder_type = {
-  cylinder_radius : float;
-  cylinder_base_center : Point.t;
-  cylinder_axis : Direction.t; (* |cylinder_axis| = cylinder's height *)
-} *)
-
 type figure_type = Empty 
   | Plane of plane_type 
   | Sphere of sphere_type 
   | Triangle of triangle_type
   | Cuboid of cuboid_type
   (* | Cylinder of cylinder_type *)
-type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel; coefficients: Colorspace.Rgb.pixel }
+type figure = { fig_type: figure_type; emission: Colorspace.Rgb.pixel; coefficients: coefficients }
 type scene_figure = Figure of figure | BoundingBox of figure * scene_figure list
 type scene = scene_figure list
 
@@ -74,8 +71,8 @@ let dist_to_point_of_ray ray point = (Point.x point) -. (Point.x ray.ray_origin)
 
 let emission fig = fig.emission
 
-let delta_reflection = 1.
-let delta_refraction = 1.
+let _delta_reflection = 1.
+let _delta_refraction = 1.
 
 
 (******************************)
@@ -143,7 +140,7 @@ let sphere_intersection (sphere : sphere_type ) (ray : ray_type) : intersection_
 
 let show_sphere (sphere : sphere_type) = Printf.printf "SPHERE {Center: %s, Radius: %f}\n" (Point.string_of_point sphere.sphere_center) sphere.sphere_radius
 
-let transform_sphere (t : transformation) (fig : sphere_type) : Rgb.pixel -> Rgb.pixel -> figure option = 
+let transform_sphere (t : transformation) (fig : sphere_type) : Rgb.pixel -> coefficients -> figure option = 
   match t with
   | Translation(tx, ty, tz) -> 
     let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
@@ -209,7 +206,7 @@ let show_triangle (triangle: triangle_type) =
   Printf.printf "TRIANGLE {A: %s, B: %s, C: %s, Normal: %s}\n" (Point.string_of_point triangle.vert_a) (Point.string_of_point triangle.vert_b) (Point.string_of_point triangle.vert_c) (Direction.string_of_direction triangle.triangle_normal)
 
 
-let transform_triangle (transform : transformation) (t : triangle_type) : Rgb.pixel -> coefficients:Rgb.pixel -> figure option = 
+let transform_triangle (transform : transformation) (t : triangle_type) : Rgb.pixel -> coefficients:coefficients -> figure option = 
   match transform with
   | Translation(tx, ty, tz) -> 
     let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
@@ -357,7 +354,7 @@ let point_belongs_to_fig p fig =
   | Cuboid(cuboid) -> point_belongs_to_cuboid p cuboid
   | Empty -> false
 
-let empty () = {fig_type = Empty; emission = Rgb.zero (); coefficients = Rgb.zero ()}
+let empty () = {fig_type = Empty; emission = Rgb.zero (); coefficients = (Rgb.zero (), Rgb.zero (), Rgb.zero ())}
 
 
 
@@ -401,18 +398,21 @@ type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
 
 let russian_roulette (fig : figure) = 
   let coefs = ref [] in
-  if Rgb.red fig.coefficients > 0. then coefs := Diffuse :: !coefs; 
-  if Rgb.green fig.coefficients > 0. then coefs := Specular :: !coefs; 
-  if Rgb.blue fig.coefficients > 0. then coefs := Refraction :: !coefs; 
+  let kd, ks, kt = fig.coefficients in
+  let rgb_internal_sum rgb = (Rgb.red rgb) +. (Rgb.green rgb) +. (Rgb.blue rgb) in
+  if rgb_internal_sum kd > 0. then coefs := Diffuse :: !coefs; 
+  if rgb_internal_sum ks > 0. then coefs := Specular :: !coefs; 
+  if rgb_internal_sum kt > 0. then coefs := Refraction :: !coefs; 
 
   if Random.float 1. < 0.2 then 
     Absorption
   else
     List.nth !coefs (Random.int (List.length !coefs)) 
 
-let brdf fig surface_normal wi rres = 
+let brdf fig _ _ rres = 
+  let kd, ks, kt = fig.coefficients in
   match rres with
-  | Absorption -> 0.
-  | Diffuse -> (Rgb.red fig.coefficients) *. Float.pi
-  | Specular -> (Rgb.green fig.coefficients) *. (delta_reflection /. Direction.dot surface_normal wi)
-  | Refraction -> (Rgb.blue fig.coefficients) *. (delta_refraction /. Direction.dot surface_normal wi)
+  | Absorption -> Rgb.zero()
+  | Diffuse -> Rgb.normalize kd Float.pi
+  | Specular -> ks(*(Rgb fig.coefficients) *. (delta_reflection /. Direction.dot surface_normal wi)*)
+  | Refraction -> kt(*(Rgb fig.coefficients) *. (delta_refraction /. Direction.dot surface_normal wi) *)

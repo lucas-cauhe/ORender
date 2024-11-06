@@ -53,8 +53,8 @@ let rec area_light_path_tracing scene light_source wi acc =
       (* compute wi  *)
       let outgoing_direction = montecarlo_sample ir.surface_normal wi.ray_direction ir.intersection_point roulette_result in
       (* compute current brdf *)
-      let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction roulette_result |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
-      let current_contribution = Rgb.value_prod acc current_brdf |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) in 
+      let current_brdf = cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod (Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction roulette_result )  in
+      let current_contribution = Rgb.rgb_prod acc current_brdf |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) in 
       area_light_path_tracing scene light_source
         (Figures.ray ir.intersection_point outgoing_direction)
         current_contribution 
@@ -62,7 +62,7 @@ let rec area_light_path_tracing scene light_source wi acc =
   | _ -> acc 
 
 
-let rec point_light_path_tracing scene light_sources wi = 
+let point_light_path_tracing scene light_sources wi = 
   match trace_ray scene wi with
   | (_, Zero) -> Rgb.zero () 
   | (fig, Intersects(ir :: _)) -> begin
@@ -72,10 +72,13 @@ let rec point_light_path_tracing scene light_sources wi =
       (* compute wi  *)
       let outgoing_direction = montecarlo_sample ir.surface_normal wi.ray_direction ir.intersection_point roulette_result in
       (* compute current brdf *)
-      let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction roulette_result |> ( *. ) (cosine_norm ir.surface_normal outgoing_direction) in
-      (* add all shadow rays' effect *)
-      let current_contribution = List.fold_left (fun acc_lp ls -> Rgb.value_prod (Light.shadow_ray scene ir ls) current_brdf |> Rgb.sum acc_lp) (Rgb.zero ()) light_sources in
-      Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) (point_light_path_tracing scene light_sources (Figures.ray ir.intersection_point outgoing_direction)) |> Rgb.sum current_contribution
+      let current_brdf = Figures.brdf (Figures.get_figure fig) ir.surface_normal outgoing_direction roulette_result in
+      let direct_light_cosine = Direction.dot ir.surface_normal ()
+      let rec_brdf = current_brdf * wi_cos in
+      let direct_brdf = current_brdf * direct_light_cosine in
+      (* add all shadow rays' effect *) 
+      List.fold_left (fun acc_lp ls -> Rgb.sum (Light.shadow_ray scene ir ls) direct_brdf |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) |> Rgb.sum acc_lp) (Rgb.zero ()) light_sources
+      (* Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission) (point_light_path_tracing scene light_sources (Figures.ray ir.intersection_point outgoing_direction)) |> Rgb.sum current_contribution *)
   end
   | _ -> Rgb.zero () 
 
