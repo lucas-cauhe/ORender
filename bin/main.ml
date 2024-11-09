@@ -7,14 +7,17 @@
 in *)
 open Domainslib
 
-open Computer_gfx.Figures
+open Computer_gfx.Scene.Figures
 open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
-open Computer_gfx.Camera
+open Computer_gfx.Scene.Camera
 (* open Computer_gfx.Bvh *)
-open Computer_gfx.Light
+open Computer_gfx.Scene.Light
+open Computer_gfx.Pathtracing
 
 module PpmDb = Computer_gfx.Db.Ppm
+
+
 
 (* let triangle_rotation = Transformations.rotation_transformation_of_axis ~angle:Float.pi Z
 
@@ -98,10 +101,19 @@ let up = ref (Direction.from_coords 0. 2. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
 let width, height = ref 512, ref 512 
+let num_points = ref 32
 
 let bar ~total = 
   let open Progress.Line in
   list [ spinner (); bar total; count_to total ] 
+
+
+let pixel_color cam (row, col) scene light_sources pool =
+  let pip_arr = BatArray.of_list ( points_in_pixel cam (row, col) !num_points ) in
+  let compute_pixel_color ind = Direction.between_points pip_arr.(ind) (cam_origin cam) |> ray (cam_origin cam) |> path_tracing scene light_sources in 
+  let color_sum () = Task.parallel_for_reduce ~start:0 ~finish:(BatArray.length pip_arr -1) ~body:compute_pixel_color pool
+    (fun acc next_color -> Rgb.sum acc next_color) (Rgb.zero ()) in 
+  Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)
 
 let () = 
   let camera = camera !up !left !forward !origin (!width,!height) in

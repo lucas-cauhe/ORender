@@ -1,5 +1,4 @@
 open Geometry
-open Domainslib
 
 
 type camera = {
@@ -11,7 +10,6 @@ type camera = {
   height: int;
 }
 
-let num_points = ref 32
 
 let camera up left forward origin (width, height) = {
   up; left; forward; origin;
@@ -30,10 +28,7 @@ let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.point_t 
   Point.from_coords (Direction.x dir)  (Direction.y dir)  (Direction.z dir)
 
 
-(**
-  Returns the defined number of points inside a pixel to trace a ray through.
-*)
-let points_in_pixel cam (row, col) : Point.point_t BatList.t =
+let points_in_pixel cam (row, col) rpp =
   let x_ = 1. -. 2. *. (float_of_int col /. float_of_int cam.width) in
   let y_ = 1. -. 2. *. (float_of_int row /. float_of_int cam.height) in
   let fov = Float.pi /. 2. in
@@ -42,13 +37,6 @@ let points_in_pixel cam (row, col) : Point.point_t BatList.t =
   let half_height = tan (fov /. 2.) *. distance_to_pplane in
   let half_width = half_height *. ar in
   let forward_ = Direction.prod cam.forward distance_to_pplane in
-  BatList.init !num_points (fun _ -> point_in_pixel cam (x_, y_) half_width half_height forward_)
+  BatList.init rpp (fun _ -> point_in_pixel cam (x_, y_) half_width half_height forward_)
 
-
-let pixel_color cam (row, col) scene light_sources pool =
-  let open Colorspace in
-  let pip_arr = BatArray.of_list (points_in_pixel cam (row, col)) in
-  let compute_pixel_color ind = Direction.between_points pip_arr.(ind) cam.origin |> Figures.ray cam.origin |> Pathtracing.path_tracing scene light_sources in 
-  let color_sum () = Task.parallel_for_reduce ~start:0 ~finish:(BatArray.length pip_arr -1) ~body:compute_pixel_color pool
-    (fun acc next_color -> Rgb.sum acc next_color) (Rgb.zero ()) in 
-  Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)
+let cam_origin cam = cam.origin

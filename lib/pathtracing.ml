@@ -1,4 +1,5 @@
 open Geometry
+open Scene
 open Colorspace
 
 (**

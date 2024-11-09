@@ -1,5 +1,6 @@
 open Geometry
 open Colorspace
+open Scene
 
 type bvh_algorithm = LargestAxis | Sah
 

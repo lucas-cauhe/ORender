@@ -1,5 +1,5 @@
 open Alcotest
-open Computer_gfx.Figures
+open Computer_gfx.Scene.Figures
 open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 
