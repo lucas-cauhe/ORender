@@ -146,5 +146,5 @@ val is_plane : scene_figure -> bool
 
 type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
 
-val russian_roulette : figure -> russian_roulette_result
-val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> russian_roulette_result -> Colorspace.Rgb.pixel
+val russian_roulette : figure -> russian_roulette_result * float
+val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> russian_roulette_result * float -> Colorspace.Rgb.pixel

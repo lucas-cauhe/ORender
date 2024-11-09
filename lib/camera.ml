@@ -11,7 +11,7 @@ type camera = {
   height: int;
 }
 
-let num_points = ref 64 
+let num_points = ref 32
 
 let camera up left forward origin (width, height) = {
   up; left; forward; origin;

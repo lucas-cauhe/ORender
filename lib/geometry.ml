@@ -81,6 +81,12 @@ module Direction = struct
   let ( /* ) = cross_product
   let ( * ) = dot
 
+  let perpendicular d = 
+    if d.z != 0. && -.d.x != d.y then 
+      from_coords d.z d.z (-.d.x -.d.y)
+  else 
+      from_coords (d.y -. d.z) d.x d.x
+
 end
 
 module Matrix = struct
@@ -295,13 +301,16 @@ end
 
   
 
-let cartesian_of_spherical (lat:float) (azimuth:float) (n:Direction.t) (ip: Point.t) = 
+let cartesian_of_spherical (lat:float) (azimuth:float) (n:Direction.t) = 
   let r = Direction.modulus n in
-  let x = r *. sin lat *. sin azimuth in
-  let y = r *. sin lat *. cos azimuth in
-  let z = r *. cos lat in
-  let u = Direction.from_coords (-.r *. sin lat *. cos azimuth) (r *. sin lat *. sin azimuth) 0. in
-  let v = Direction.cross_product u n in
-  let omega = Transformations.hc_of_direction (Direction.from_coords x y z |> Direction.normalize |> Option.get) in
-  Transformations.change_basis (Transformations.cb_transformation_of_base u v n ip) omega |> Transformations.direction_of_hc
+  Direction.from_coords (r *. sin lat *. cos azimuth) (r *. sin lat *. sin azimuth) (r *. cos lat) 
+    |> Direction.normalize 
+    |> Option.get 
+
   
+let cb_matrix_tangent (n : Direction.t) (origin : Point.t) = 
+  (* let u = Direction.from_coords (-.r *. sin lat *. cos azimuth) (r *. sin lat *. sin azimuth) 0. in *)
+  let n_perp = Direction.perpendicular n in
+  let u = Direction.cross_product n_perp n in
+  let v = Direction.cross_product u n in
+  Transformations.cb_transformation_of_base u v n origin

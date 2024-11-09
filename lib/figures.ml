@@ -7,6 +7,7 @@ open Geometry
 open Colorspace 
 
 let eps = ref 10e-5
+let absorption_prob = ref 0.2
 
 type coefficients = Colorspace.Rgb.pixel*Colorspace.Rgb.pixel*Colorspace.Rgb.pixel
 
@@ -404,15 +405,15 @@ let russian_roulette (fig : figure) =
   if rgb_internal_sum ks > 0. then coefs := Specular :: !coefs; 
   if rgb_internal_sum kt > 0. then coefs := Refraction :: !coefs; 
 
-  if Random.float 1. < 0.2 then 
-    Absorption
+  if Random.float 1. < !absorption_prob then 
+    (Absorption, !absorption_prob)
   else
-    List.nth !coefs (Random.int (List.length !coefs)) 
+    (List.nth !coefs (Random.int (List.length !coefs)), (1.-. !absorption_prob)/.(List.length !coefs |> float_of_int)) 
 
-let brdf fig _ _ rres = 
+let brdf fig surface_normal wi (rres, prob) = 
   let kd, ks, kt = fig.coefficients in
   match rres with
   | Absorption -> Rgb.zero()
-  | Diffuse -> Rgb.normalize kd Float.pi
-  | Specular -> ks(*(Rgb fig.coefficients) *. (delta_reflection /. Direction.dot surface_normal wi)*)
+  | Diffuse -> Rgb.normalize kd prob 
+  | Specular -> Rgb.value_prod ks (1. /. Direction.dot surface_normal wi)
   | Refraction -> kt(*(Rgb fig.coefficients) *. (delta_refraction /. Direction.dot surface_normal wi) *)
