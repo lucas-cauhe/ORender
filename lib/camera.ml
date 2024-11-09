@@ -3,10 +3,10 @@ open Domainslib
 
 
 type camera = {
-  forward: Direction.t;
-  left: Direction.t;
-  up: Direction.t;
-  origin: Point.t;
+  forward: Direction.direction_t;
+  left: Direction.direction_t;
+  up: Direction.direction_t;
+  origin: Point.point_t;
   width: int;
   height: int;
 }
@@ -21,7 +21,7 @@ let camera up left forward origin (width, height) = {
 (**
   Returns a point inside a pixel
 *)
-let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.t = 
+let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.point_t = 
   let x_random = Random.float (1. /. float_of_int cam.width) in
   let y_random = Random.float (1. /. float_of_int cam.height) in
   let left_ = Direction.prod cam.left ((x_ +. x_random) *. half_width) in
@@ -33,7 +33,7 @@ let point_in_pixel cam (x_, y_) half_width half_height forward_ : Point.t =
 (**
   Returns the defined number of points inside a pixel to trace a ray through.
 *)
-let points_in_pixel cam (row, col) : Point.t BatList.t =
+let points_in_pixel cam (row, col) : Point.point_t BatList.t =
   let x_ = 1. -. 2. *. (float_of_int col /. float_of_int cam.width) in
   let y_ = 1. -. 2. *. (float_of_int row /. float_of_int cam.height) in
   let fov = Float.pi /. 2. in

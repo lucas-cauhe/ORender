@@ -16,7 +16,7 @@ let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
   end
   | None -> (Figures.Figure(Figures.empty ()), Zero)
 
-let montecarlo_sample (normal : Direction.t) (wo : Direction.t) (ip : Point.t) = function 
+let montecarlo_sample (normal : Direction.direction_t) (wo : Direction.direction_t) (ip : Point.point_t) = function 
   Figures.Diffuse ->
     let rand_lat = 1. -. Random.float 1. |> sqrt |> Float.acos in
     let rand_azimut = 2. *. Float.pi *. Random.float 1. in
@@ -54,7 +54,7 @@ let direct_light (scene : Figures.scene) (light : Light.light_source) (x : Figur
 (**
   Cosine norn given a figure's intersection point surface normal and the outgoing direction wi.
 *)
-let cosine_norm (n : Direction.t) (wi : Direction.t) = 
+let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) = 
   Direction.dot n wi |> abs_float
 
 

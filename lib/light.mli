@@ -7,7 +7,7 @@ type light_source
   Type of light source: [Area] or [Point]
 *)
 type light_source_type = 
-  Area of Figures.scene_figure | Point of Geometry.Point.t
+  Area of Figures.scene_figure | Point of Geometry.Point.point_t
 
 (**
     Return a [light_source] value given its center and power
@@ -33,7 +33,7 @@ val power : light_source -> Colorspace.Rgb.pixel
 val shadow_ray : Figures.scene -> Figures.intersection -> light_source -> Colorspace.Rgb.pixel
 
 (**
-  Check whether a [Point.t] is placed in the surface of an area light source.
+  Check whether a [Point.point_t] is placed in the surface of an area light source.
   If the given [light_source] is a point light, result will be [false]
 *)
-val point_belongs_to_ls : Geometry.Point.t -> light_source -> bool
+val point_belongs_to_ls : Geometry.Point.point_t -> light_source -> bool

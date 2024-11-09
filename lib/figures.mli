@@ -10,13 +10,13 @@
 (** Ray defined by its origin [ray_origin] and direction [ray_direction]
 *)
 type ray_type = {
-  ray_origin: Geometry.Point.t;
-  ray_direction: Geometry.Direction.t
+  ray_origin: Geometry.Point.point_t;
+  ray_direction: Geometry.Direction.direction_t
 }
 
 type coefficients = Colorspace.Rgb.pixel*Colorspace.Rgb.pixel*Colorspace.Rgb.pixel
 
-val ray : Geometry.Point.t -> Geometry.Direction.t -> ray_type
+val ray : Geometry.Point.point_t -> Geometry.Direction.direction_t -> ray_type
 val string_of_ray : ray_type -> string 
 
 (**
@@ -43,12 +43,12 @@ val scene_size : scene -> int
 (**
   Compute the point in the ray's direction from a given offset
 *)
-val point_of_ray : ray_type -> float -> Geometry.Point.t
+val point_of_ray : ray_type -> float -> Geometry.Point.point_t
 
 (**
   Compute the distance to the point contained in the ray's direction
 *)
-val dist_to_point_of_ray : ray_type -> Geometry.Point.t -> float
+val dist_to_point_of_ray : ray_type -> Geometry.Point.point_t -> float
 
 (**
   Utility function to retrieve the internal figure 
@@ -61,8 +61,8 @@ val get_figure : scene_figure -> figure
 *)
 type intersection = {
   distance: float;
-  surface_normal: Geometry.Direction.t;
-  intersection_point: Geometry.Point.t;
+  surface_normal: Geometry.Direction.direction_t;
+  intersection_point: Geometry.Point.point_t;
 }
 
 (**
@@ -89,38 +89,38 @@ val transform : Geometry.transformation -> figure -> figure option
 (**
   Function to retrieve the vertices of a figure
 *)
-val vertices : figure -> Geometry.Point.t list
+val vertices : figure -> Geometry.Point.point_t list
 
 (**
   Function to retrieve the barycenter of a figure
 *)
-val barycenter : figure -> Geometry.Point.t
+val barycenter : figure -> Geometry.Point.point_t
 
 (**
   Test whether a point belongs to a figure
 *)
-val point_belongs_to_fig : Geometry.Point.t -> figure -> bool
+val point_belongs_to_fig : Geometry.Point.point_t -> figure -> bool
 
 (**
   Returns the instance of a plane given its [normal] and a [point] in the plane
 *)
-val plane : Geometry.Direction.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
+val plane : Geometry.Direction.direction_t -> Geometry.Point.point_t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
 
 (**
   Returns the instance of a sphere given its [center] and [radius] of the sphere 
 *)
-val sphere : Geometry.Point.t -> float -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
+val sphere : Geometry.Point.point_t -> float -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
 
 (**
   Returns [Some(t)] with the instance of a triangle given three points if a triangle can be formed out of them 
   Returns [None] otherwise
 *)
-val triangle : Geometry.Point.t -> Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure option
+val triangle : Geometry.Point.point_t -> Geometry.Point.point_t -> Geometry.Point.point_t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure option
 
 (**
   Returns the instance of a cuboid given its [min_point] and [max_point] defining the cuboid 
 *)
-val cuboid : Geometry.Point.t -> Geometry.Point.t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
+val cuboid : Geometry.Point.point_t -> Geometry.Point.point_t -> Colorspace.Rgb.pixel -> coefficients:coefficients -> figure
 
 (**
   Returns an [Empty] figure, used for failing computations or debugging purposes
@@ -147,4 +147,4 @@ val is_plane : scene_figure -> bool
 type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
 
 val russian_roulette : figure -> russian_roulette_result * float
-val brdf : figure -> Geometry.Direction.t -> Geometry.Direction.t -> russian_roulette_result * float -> Colorspace.Rgb.pixel
+val brdf : figure -> Geometry.Direction.direction_t -> Geometry.Direction.direction_t -> russian_roulette_result * float -> Colorspace.Rgb.pixel

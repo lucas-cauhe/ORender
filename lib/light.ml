@@ -3,7 +3,7 @@ open Colorspace
 open Figures
 
 type light_source_type = 
-  Area of Figures.scene_figure | Point of Geometry.Point.t
+  Area of Figures.scene_figure | Point of Geometry.Point.point_t
 
 type light_source = {
   ls_power: Rgb.pixel;

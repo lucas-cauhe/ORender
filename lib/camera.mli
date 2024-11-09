@@ -2,10 +2,10 @@
 type camera
 
 val camera : 
-    Geometry.Direction.t ->
-    Geometry.Direction.t ->
-    Geometry.Direction.t ->
-    Geometry.Point.t ->
+    Geometry.Direction.direction_t ->
+    Geometry.Direction.direction_t ->
+    Geometry.Direction.direction_t ->
+    Geometry.Point.point_t ->
     (int * int) -> 
     camera
 

@@ -13,32 +13,32 @@ type coefficients = Colorspace.Rgb.pixel*Colorspace.Rgb.pixel*Colorspace.Rgb.pix
 
 
 type ray_type = {
-  ray_origin: Point.t;
-  ray_direction: Direction.t
+  ray_origin: Point.point_t;
+  ray_direction: Direction.direction_t
 }
 
 let ray o d = {ray_origin = o; ray_direction = d}
 let string_of_ray ray = Printf.sprintf "Ray dir -> %s, Ray origin -> %s" (Direction.string_of_direction ray.ray_direction) (Point.string_of_point ray.ray_origin)
 
 type plane_type = {
-  plane_normal: Direction.t;
-  plane_origin: Point.t;
+  plane_normal: Direction.direction_t;
+  plane_origin: Point.point_t;
 }
 
 type sphere_type = { 
   sphere_radius : float;
-  sphere_center : Point.t;
+  sphere_center : Point.point_t;
 }
 type triangle_type = { 
-  vert_a : Point.t; 
-  vert_b : Point.t; 
-  vert_c : Point.t; 
-  triangle_normal : Direction.t 
+  vert_a : Point.point_t; 
+  vert_b : Point.point_t; 
+  vert_c : Point.point_t; 
+  triangle_normal : Direction.direction_t 
 }
 
 type cuboid_type = {
-  cuboid_min : Point.t;
-  cuboid_max : Point.t;
+  cuboid_min : Point.point_t;
+  cuboid_max : Point.point_t;
 }
 
 type figure_type = Empty 
@@ -53,8 +53,8 @@ type scene = scene_figure list
 
 type intersection = {
   distance: float;
-  surface_normal: Direction.t; 
-  intersection_point: Point.t;
+  surface_normal: Direction.direction_t; 
+  intersection_point: Point.point_t;
 }
 type intersection_result = Zero | Intersects of intersection list
 
@@ -102,7 +102,7 @@ let transform_plane (_: transformation) (fig: plane_type) =
   let complete_transform e k= Some(plane fig.plane_normal fig.plane_origin e ~coefficients:k) in
   complete_transform
 
-let point_belongs_to_plane (p : Point.t) (fig : plane_type) = 
+let point_belongs_to_plane (p : Point.point_t) (fig : plane_type) = 
   (Direction.between_points p fig.plane_origin |> Direction.dot fig.plane_normal |> abs_float) < !eps 
 
 (*******************************)
@@ -153,7 +153,7 @@ let transform_sphere (t : transformation) (fig : sphere_type) : Rgb.pixel -> coe
     complete_transform
   | _ -> let complete_transform e k = Some(sphere fig.sphere_center fig.sphere_radius e ~coefficients:k) in complete_transform 
 
-let sphere_vertices (sphere : sphere_type) : Point.t list = 
+let sphere_vertices (sphere : sphere_type) : Point.point_t list = 
   let x, y, z = Point.x sphere.sphere_center, Point.y sphere.sphere_center, Point.z sphere.sphere_center in
   [
     Point.from_coords (x +. sphere.sphere_radius) y z;
@@ -166,7 +166,7 @@ let sphere_vertices (sphere : sphere_type) : Point.t list =
     Point.from_coords x y (z -. sphere.sphere_radius);
   ]
 
-let point_belongs_to_sphere (p : Point.t) (fig: sphere_type) = 
+let point_belongs_to_sphere (p : Point.point_t) (fig: sphere_type) = 
   let xsquare = Point.x p |> Common.square in
   let ysquare = Point.y p |> Common.square in
   let zsquare = Point.z p |> Common.square in
@@ -204,7 +204,11 @@ let triangle_intersection (triangle : triangle_type) (ray : ray_type) =
     | _ -> Zero
 
 let show_triangle (triangle: triangle_type) =  
-  Printf.printf "TRIANGLE {A: %s, B: %s, C: %s, Normal: %s}\n" (Point.string_of_point triangle.vert_a) (Point.string_of_point triangle.vert_b) (Point.string_of_point triangle.vert_c) (Direction.string_of_direction triangle.triangle_normal)
+  Printf.printf "TRIANGLE {A: %s, B: %s, C: %s, Normal: %s}\n" 
+    (Point.string_of_point triangle.vert_a) 
+    (Point.string_of_point triangle.vert_b) 
+    (Point.string_of_point triangle.vert_c) 
+    (Direction.string_of_direction triangle.triangle_normal)
 
 
 let transform_triangle (transform : transformation) (t : triangle_type) : Rgb.pixel -> coefficients:coefficients -> figure option = 
@@ -276,7 +280,7 @@ let cuboid_vertices (cuboid : cuboid_type) =
 let cuboid_barycenter (cuboid : cuboid_type) = 
   Point.mean [cuboid.cuboid_max; cuboid.cuboid_min] |> Option.get
 
-let point_belongs_to_cuboid (p: Point.t) (cuboid: cuboid_type) =
+let point_belongs_to_cuboid (p: Point.point_t) (cuboid: cuboid_type) =
   let px, cubxmin, cubxmax = Point.x p, Point.x cuboid.cuboid_min, Point.x cuboid.cuboid_max in
   let py, cubymin, cubymax = Point.y p, Point.y cuboid.cuboid_min, Point.y cuboid.cuboid_max in
   let pz, cubzmin, cubzmax = Point.z p, Point.z cuboid.cuboid_min, Point.z cuboid.cuboid_max in

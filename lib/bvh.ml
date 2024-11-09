@@ -10,7 +10,7 @@ let bvh_primitives_minimum = 3
 (* SPLIT SCENE ACROSS LARGEST AXIS ALGORITHM *)
 (*********************************************)
 
-let scene_limits (scene : Figures.scene) : Point.t * Point.t = 
+let scene_limits (scene : Figures.scene) : Point.point_t * Point.point_t = 
   let min_max_point (min_point, max_point) point =
     (
       Point.from_coords (min (Point.x min_point) (Point.x point) ) (min (Point.y min_point) (Point.y point) ) (min (Point.z min_point) (Point.z point) ),
@@ -30,7 +30,7 @@ let scene_limits (scene : Figures.scene) : Point.t * Point.t =
   let initial_max = Point.from_coords (-.Float.infinity) (-.Float.infinity) (-.Float.infinity) in 
   min_max_scene scene initial_min initial_max
 
-let largest_axis (lower_bound : Point.t) (upper_bound : Point.t) (scene : Figures.scene) : axis * float = 
+let largest_axis (lower_bound : Point.point_t) (upper_bound : Point.point_t) (scene : Figures.scene) : axis * float = 
   let x_dist = Point.x upper_bound -. Point.x lower_bound in
   let y_dist = Point.y upper_bound -. Point.y lower_bound in
   let z_dist = Point.z upper_bound -. Point.z lower_bound in
@@ -50,7 +50,7 @@ let split_scene_by_axis (scene : Figures.scene) (a : axis) (mid_point : float) :
     | fig :: rest -> 
       let barycenter = Figures.barycenter (Figures.get_figure fig) in
       (* Printf.printf "Barycenter: %s vs midpoint: %f" (Point.string_of_point barycenter) mid_point; *)
-      if Point.value_at_axis a barycenter <= mid_point then 
+      if value_at_axis a barycenter <= mid_point then 
         loop_ (fig :: scene_a) scene_b rest
       else
         loop_ scene_a (fig :: scene_b) rest in
