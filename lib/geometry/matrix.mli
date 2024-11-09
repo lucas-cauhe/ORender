@@ -1,6 +1,7 @@
 (** Geometry's Matrix module *)
 
 type matrix_t
+
 val identity : int -> matrix_t
 val transpose : matrix_t -> matrix_t
 val get_element : matrix_t -> int -> int -> float

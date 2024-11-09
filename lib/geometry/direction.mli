@@ -1,7 +1,8 @@
 (** Geometry's Direction module *)
 
-(** Direction internal type *)
 type direction_t
+(** Direction internal type *)
+
 val x : direction_t -> float
 val y : direction_t -> float
 val z : direction_t -> float
@@ -19,6 +20,5 @@ val between_points : Point.point_t -> Point.point_t -> direction_t
 val string_of_direction : direction_t -> string
 val eq : direction_t -> direction_t -> bool
 val perpendicular : direction_t -> direction_t
-
 val ( /* ) : direction_t -> direction_t -> direction_t
 val ( * ) : direction_t -> direction_t -> float
