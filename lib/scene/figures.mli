@@ -164,16 +164,6 @@ val find_closest_figure :
 *)
 
 val emission : figure -> Colorspace.Rgb.pixel
+val coefficients : figure -> coefficients
 val is_sphere : scene_figure -> bool
 val is_plane : scene_figure -> bool
-
-type russian_roulette_result = Absorption | Diffuse | Specular | Refraction
-
-val russian_roulette : figure -> russian_roulette_result * float
-
-val brdf :
-  figure ->
-  Geometry.Direction.direction_t ->
-  Geometry.Direction.direction_t ->
-  russian_roulette_result * float ->
-  Colorspace.Rgb.pixel

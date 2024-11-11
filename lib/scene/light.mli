@@ -39,3 +39,10 @@ val point_belongs_to_ls : Geometry.Point.point_t -> light_source -> bool
   Check whether a [Point.point_t] is placed in the surface of an area light source.
   If the given [light_source] is a point light, result will be [false]
 *)
+
+(**
+  Samples lights for a given list of [light_source]
+  If the light_source list is [Point] light, then a new one is returned like the given one
+  If the light_source list is [Area] light, then a random one is selected (if multiple) and multiple [Point] light are sampled from it
+*)
+val sample_light : light_source list -> light_source list

@@ -7,7 +7,6 @@ open Geometry
 open Colorspace
 
 let eps = ref 10e-5
-let absorption_prob = ref 0.2
 
 type coefficients = Colorspace.Rgb.pixel * Colorspace.Rgb.pixel * Colorspace.Rgb.pixel
 
@@ -95,8 +94,7 @@ let dist_to_point_of_ray ray point =
 ;;
 
 let emission fig = fig.emission
-let _delta_reflection = 1.
-let _delta_refraction = 1.
+let coefficients fig = fig.coefficients
 
 (******************************)
 (* PLANE ASSOCIATED FUNCTIONS *)
@@ -625,32 +623,4 @@ let is_plane = function
   | _ -> false
 ;;
 
-type russian_roulette_result =
-  | Absorption
-  | Diffuse
-  | Specular
-  | Refraction
-
-let russian_roulette (fig : figure) =
-  let coefs = ref [] in
-  let kd, ks, kt = fig.coefficients in
-  let rgb_internal_sum rgb = Rgb.red rgb +. Rgb.green rgb +. Rgb.blue rgb in
-  if rgb_internal_sum kd > 0. then coefs := Diffuse :: !coefs;
-  if rgb_internal_sum ks > 0. then coefs := Specular :: !coefs;
-  if rgb_internal_sum kt > 0. then coefs := Refraction :: !coefs;
-  if Random.float 1. < !absorption_prob then
-    Absorption, !absorption_prob
-  else
-    ( List.nth !coefs (Random.int (List.length !coefs))
-    , (1. -. !absorption_prob) /. (List.length !coefs |> float_of_int) )
-;;
-
-let brdf fig surface_normal wi (rres, prob) =
-  let kd, ks, kt = fig.coefficients in
-  match rres with
-  | Absorption -> Rgb.zero ()
-  | Diffuse -> Rgb.normalize kd prob
-  | Specular -> Rgb.value_prod ks (1. /. Direction.dot surface_normal wi)
-  | Refraction -> kt
-;;
 (*(Rgb fig.coefficients) *. (delta_refraction /. Direction.dot surface_normal wi) *)

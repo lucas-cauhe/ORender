@@ -43,3 +43,12 @@ let point_belongs_to_ls p ls =
   | Area fig -> Figures.point_belongs_to_fig p (Figures.get_figure fig)
   | Point _ -> false
 ;;
+
+let sample_light ls =
+  match (List.hd ls).ls_type with
+  | Point _ -> ls
+  | Area _ ->
+    let _chosen_light = List.nth ls (Random.int (List.length ls)) in
+    (*todo*)
+    ls
+;;
