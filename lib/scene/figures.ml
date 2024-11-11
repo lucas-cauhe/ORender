@@ -101,7 +101,8 @@ let coefficients fig = fig.coefficients
 (******************************)
 
 let plane d o e ~coefficients:k =
-  { fig_type = Plane { plane_normal = d; plane_origin = o }
+  { fig_type =
+      Plane { plane_normal = Direction.normalize d |> Option.get; plane_origin = o }
   ; emission = e
   ; coefficients = k
   }
@@ -161,16 +162,16 @@ let sphere center radius e ~coefficients:k =
 ;;
 
 let sphere_intersection (sphere : sphere_type) (ray : ray_type) : intersection_result =
-  let module GPoint = Point in
-  let module GDirection = Direction in
   let surface_normal d =
-    GDirection.between_points (point_of_ray ray d) sphere.sphere_center
+    Direction.between_points (point_of_ray ray d) sphere.sphere_center
+    |> Direction.normalize
+    |> Option.get
   in
-  let oc = GDirection.between_points ray.ray_origin sphere.sphere_center in
-  let a = GDirection.modulus ray.ray_direction |> Common.square in
-  let b = 2.0 *. GDirection.dot oc ray.ray_direction in
+  let oc = Direction.between_points ray.ray_origin sphere.sphere_center in
+  let a = Direction.modulus ray.ray_direction |> Common.square in
+  let b = 2.0 *. Direction.dot oc ray.ray_direction in
   let c =
-    (GPoint.distance ray.ray_origin sphere.sphere_center |> Common.square)
+    (Point.distance ray.ray_origin sphere.sphere_center |> Common.square)
     -. Common.square sphere.sphere_radius
   in
   let discriminant = (b *. b) -. (4.0 *. a *. c) in

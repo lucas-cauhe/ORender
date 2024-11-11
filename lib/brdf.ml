@@ -18,7 +18,19 @@ let delta wr wi =
 ;;
 
 let sample_specular wo normal =
-  Direction.dot wo normal |> ( *. ) 2. |> Direction.prod normal |> Direction.sub wo
+  Direction.dot wo normal
+  |> ( *. ) 2.
+  |> Direction.prod normal
+  |> Direction.sub wo
+  |> Direction.normalize
+  |> Option.get
+;;
+
+let sample_refraction w0 normal media_in media_out =
+  let theta_zero = Direction.angle normal w0 in
+  let thetai = Float.asin @@ (media_out /. media_in *. Float.sin theta_zero) in
+  let inv_normal = Direction.prod normal (-1.) in
+  Direction.prod inv_normal (Float.cos thetai) |> Direction.normalize |> Option.get
 ;;
 
 let montecarlo_sample normal wo ip = function
@@ -35,9 +47,7 @@ let montecarlo_sample normal wo ip = function
     Geometry.Transformations.change_basis cb_mat wi_prime
     |> Geometry.Transformations.direction_of_hc
   | Specular -> sample_specular wo normal
-  | Refraction ->
-    (* not yet implemented *)
-    normal
+  | Refraction -> normal
   | Absorption -> normal
 ;;
 
@@ -63,5 +73,7 @@ let brdf fig n w0 wi (rres, prob) =
   | Specular ->
     let wr = sample_specular w0 n in
     Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi)
-  | Refraction -> kt
+  | Refraction ->
+    let wr = sample_refraction w0 n 1. 1. in
+    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi)
 ;;

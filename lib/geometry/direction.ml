@@ -52,3 +52,5 @@ let perpendicular d =
   else
     from_coords (d.y -. d.z) d.x d.x
 ;;
+
+let angle d1 d2 = Float.acos @@ (dot d1 d2 /. modulus d1 /. modulus d2)

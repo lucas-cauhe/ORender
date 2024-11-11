@@ -19,6 +19,7 @@ val of_point : Point.point_t -> direction_t
 val between_points : Point.point_t -> Point.point_t -> direction_t
 val string_of_direction : direction_t -> string
 val eq : direction_t -> direction_t -> bool
+val angle : direction_t -> direction_t -> float
 val perpendicular : direction_t -> direction_t
 val ( /* ) : direction_t -> direction_t -> direction_t
 val ( * ) : direction_t -> direction_t -> float

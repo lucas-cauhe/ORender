@@ -42,7 +42,7 @@ let direct_light
   Rgb.rgb_prod (List.fold_left point_ligth_shadow_ray (Rgb.zero ()) ls)
 ;;
 
-(** Cosine norn given a figure's intersection point surface normal and the outgoing direction wi. *)
+(** Cosine norm given a figure's intersection point surface normal and the outgoing direction wi. *)
 let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
   Direction.dot n wi |> abs_float
 ;;
