@@ -75,7 +75,10 @@ let rec rec_path_tracing scene light_sources wi =
            (roulette_result, roulette_prob)
        in
        let direct_light_contribution =
-         direct_light scene (Light.sample_light light_sources) ir current_brdf
+         if roulette_result != Specular then
+           direct_light scene (Light.sample_light light_sources) ir current_brdf
+         else
+           Rgb.zero ()
        in
        let global_light_contribution =
          cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod current_brdf
