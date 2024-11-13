@@ -145,7 +145,7 @@ let left = ref (Direction.from_coords (-2.) 0. 0.)
 let up = ref (Direction.from_coords 0. 2. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
-let width, height = ref 512, ref 512
+let width, height = ref 1024, ref 576
 let num_points = ref 64
 
 let bar ~total =
@@ -177,7 +177,7 @@ let pixel_color cam (row, col) scene light_sources pool =
 let () =
   let camera = camera !up !left !forward !origin (!width, !height) in
   let oc = open_out "ppms/rendered/cornell.ppm" in
-  let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !height !width in
+  let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
   let pool = Task.setup_pool ~num_domains:7 () in
   let rec color_image row col reporter =
@@ -187,7 +187,7 @@ let () =
       let color = pixel_color camera (row, col) my_scene light_sources pool in
       reporter 1;
       PpmDb.write_pixel oc out_conf color;
-      if col = !width - 1 then (
+      if col >= !width - 1 then (
         let () = output_string oc "\n" in
         color_image (row + 1) 0 reporter
       ) else
