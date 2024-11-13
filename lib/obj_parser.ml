@@ -1,3 +1,5 @@
+open Colorspace
+
 type vertex =
   { x : float
   ; y : float
@@ -58,11 +60,8 @@ let convert_to_scene (vertexs, faces) =
          (convert_vertex v1)
          (convert_vertex v2)
          (convert_vertex v3)
-         (Colorspace.Rgb.rgb_of_values 0.75 0.75 0.)
-         ~coefficients:
-           ( Colorspace.Rgb.rgb_of_values 0.75 0.75 0.
-           , Colorspace.Rgb.zero ()
-           , Colorspace.Rgb.zero () )
+         (Rgb.rgb_of_values 0.75 0.75 0.)
+         ~coefficients:(Rgb.rgb_of_values 0.75 0.75 0., Rgb.zero (), Rgb.zero ())
        |> Option.get)
   in
   List.map convert_face faces
