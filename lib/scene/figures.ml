@@ -54,10 +54,15 @@ type figure_type =
   | Cuboid of cuboid_type
 (* | Cylinder of cylinder_type *)
 
+type figure_properties =
+  { emission : Colorspace.Rgb.pixel
+  ; coefficients : coefficients
+  ; refraction : float
+  }
+
 type figure =
   { fig_type : figure_type
-  ; emission : Colorspace.Rgb.pixel
-  ; coefficients : coefficients
+  ; fig_properties : figure_properties
   }
 
 type scene_figure =
@@ -93,18 +98,18 @@ let dist_to_point_of_ray ray point =
   Point.x point -. Point.x ray.ray_origin |> ( *. ) (1. /. Direction.x ray.ray_direction)
 ;;
 
-let emission fig = fig.emission
-let coefficients fig = fig.coefficients
+let emission fig = fig.fig_properties.emission
+let coefficients fig = fig.fig_properties.coefficients
+let refraction fig = fig.fig_properties.refraction
 
 (******************************)
 (* PLANE ASSOCIATED FUNCTIONS *)
 (******************************)
 
-let plane d o e ~coefficients:k =
+let plane d o props =
   { fig_type =
       Plane { plane_normal = Direction.normalize d |> Option.get; plane_origin = o }
-  ; emission = e
-  ; coefficients = k
+  ; fig_properties = props
   }
 ;;
 
@@ -137,9 +142,7 @@ let show_plane (plane : plane_type) =
 ;;
 
 let transform_plane (_ : transformation) (fig : plane_type) =
-  let complete_transform e k =
-    Some (plane fig.plane_normal fig.plane_origin e ~coefficients:k)
-  in
+  let complete_transform props = Some (plane fig.plane_normal fig.plane_origin props) in
   complete_transform
 ;;
 
@@ -154,10 +157,9 @@ let point_belongs_to_plane (p : Point.point_t) (fig : plane_type) =
 (* SPHERE ASSOCIATED FUNCTIONS *)
 (*******************************)
 
-let sphere center radius e ~coefficients:k =
+let sphere center radius props =
   { fig_type = Sphere { sphere_center = center; sphere_radius = radius }
-  ; emission = e
-  ; coefficients = k
+  ; fig_properties = props
   }
 ;;
 
@@ -222,23 +224,23 @@ let show_sphere (sphere : sphere_type) =
 ;;
 
 let transform_sphere (t : transformation) (fig : sphere_type)
-  : Rgb.pixel -> coefficients -> figure option
+  : figure_properties -> figure option
   =
   match t with
   | Translation (tx, ty, tz) ->
     let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
-    let complete_transform e k =
+    let complete_transform props =
       Option.bind
         (Transformations.hc_of_point fig.sphere_center
          |> Transformations.translate translation_mat)
         (fun hc ->
           let translated_point = Transformations.point_of_hc hc in
-          Some (sphere translated_point fig.sphere_radius e ~coefficients:k))
+          Some (sphere translated_point fig.sphere_radius props))
     in
     complete_transform
   | _ ->
-    let complete_transform e k =
-      Some (sphere fig.sphere_center fig.sphere_radius e ~coefficients:k)
+    let complete_transform props =
+      Some (sphere fig.sphere_center fig.sphere_radius props)
     in
     complete_transform
 ;;
@@ -271,7 +273,7 @@ let point_belongs_to_sphere (p : Point.point_t) (fig : sphere_type) =
 (* TRIANGLE ASSOCIATED FUNCTIONS *)
 (*********************************)
 
-let triangle a b c e ~coefficients:k =
+let triangle a b c props =
   match
     Direction.cross_product (Direction.between_points b a) (Direction.between_points c a)
     |> Direction.normalize
@@ -280,8 +282,7 @@ let triangle a b c e ~coefficients:k =
     Some
       { fig_type =
           Triangle { vert_a = a; vert_b = b; vert_c = c; triangle_normal = normal }
-      ; emission = e
-      ; coefficients = k
+      ; fig_properties = props
       }
   | None -> None
 ;;
@@ -321,7 +322,7 @@ let show_triangle (triangle : triangle_type) =
 ;;
 
 let transform_triangle (transform : transformation) (t : triangle_type)
-  : Rgb.pixel -> coefficients:coefficients -> figure option
+  : figure_properties -> figure option
   =
   match transform with
   | Translation (tx, ty, tz) ->
@@ -387,11 +388,8 @@ let triangle_barycenter (triangle : triangle_type) =
 (* CUBOID ASSOCIATED FUNCTIONS *)
 (*******************************)
 
-let cuboid c_min c_max e ~coefficients:k =
-  { fig_type = Cuboid { cuboid_min = c_min; cuboid_max = c_max }
-  ; emission = e
-  ; coefficients = k
-  }
+let cuboid c_min c_max props =
+  { fig_type = Cuboid { cuboid_min = c_min; cuboid_max = c_max }; fig_properties = props }
 ;;
 
 let cuboid_intersection (c : cuboid_type) (ray : ray_type) : intersection_result =
@@ -531,10 +529,9 @@ let show_figure fig =
 let transform t fig =
   match fig.fig_type with
   | Empty -> None
-  | Plane plane -> transform_plane t plane fig.emission fig.coefficients
-  | Sphere sphere -> transform_sphere t sphere fig.emission fig.coefficients
-  | Triangle triangle ->
-    transform_triangle t triangle fig.emission ~coefficients:fig.coefficients
+  | Plane plane -> transform_plane t plane fig.fig_properties
+  | Sphere sphere -> transform_sphere t sphere fig.fig_properties
+  | Triangle triangle -> transform_triangle t triangle fig.fig_properties
   | Cuboid _ -> Some fig
 ;;
 
@@ -572,8 +569,11 @@ let point_belongs_to_fig p fig =
 
 let empty () =
   { fig_type = Empty
-  ; emission = Rgb.zero ()
-  ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.zero ()
+  ; fig_properties =
+      { emission = Rgb.zero ()
+      ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.zero ()
+      ; refraction = 0.
+      }
   }
 ;;
 

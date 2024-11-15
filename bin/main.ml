@@ -76,67 +76,83 @@ let my_scene : scene =
       (plane
          (Direction.from_coords 1. 0. 0.)
          (Point.from_coords (-1.) 0. 0.)
-         (Rgb.rgb_of_values 0.75 0.75 0.75)
-         ~coefficients:(Rgb.zero (), Rgb.rgb_of_values 0.9 0.9 0.9, Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+         ; refraction = 1.
+         })
   ; (* right *)
     Figure
       (plane
          (Direction.from_coords (-1.) 0. 0.)
          (Point.from_coords 1. 0. 0.)
-         (Rgb.rgb_of_values 0. 1. 0.)
-         ~coefficients:(Rgb.rgb_of_values 0.0 0.8 0.0, Rgb.zero (), Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 0. 1. 0.
+         ; coefficients = Rgb.rgb_of_values 0.0 0.8 0.0, Rgb.zero (), Rgb.zero ()
+         ; refraction = 1.
+         })
   ; (* down *)
     Figure
       (plane
          (Direction.from_coords 0. 1. 0.)
          (Point.from_coords 0. (-1.) 0.)
-         (Rgb.rgb_of_values 0.75 0.75 0.75)
-         ~coefficients:(Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
+         ; refraction = 1.
+         })
   ; (* up *)
     Figure
       (plane
          (Direction.from_coords 0. (-1.) 0.)
          (Point.from_coords 0. 1. 0.)
-         (Rgb.rgb_of_values 0.75 0.75 0.75)
-         ~coefficients:(Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
+         ; refraction = 1.
+         })
   ; (* back *)
     Figure
       (plane
          (Direction.from_coords 0. 0. (-1.))
          (Point.from_coords 0. 0. 1.)
-         (Rgb.rgb_of_values 0.75 0.75 0.75)
-         ~coefficients:(Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+         ; refraction = 1.
+         })
   ; (* triangle_box; *)
     Figure
       (sphere
          (Point.from_coords (-0.5) (-0.7) 0.25)
          0.3
-         (Rgb.rgb_of_values 1. 0.6 1.)
-         ~coefficients:
-           (Rgb.rgb_of_values 0.5 0.4 0.5, Rgb.rgb_of_values 0.3 0.4 0.3, Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 1. 0.6 1.
+         ; coefficients =
+             Rgb.rgb_of_values 0.5 0.4 0.5, Rgb.rgb_of_values 0.3 0.4 0.3, Rgb.zero ()
+         ; refraction = 1.
+         })
     (*|> transform (Translation(0.5, 0.4, (-0.25))) |> Option.get*)
   ; Figure
       (sphere
          (Point.from_coords 0.5 (-0.7) (-0.25))
          0.3
          (* (Rgb.rgb_of_values 0. 1. 0.5) *)
-         (Rgb.rgb_of_values 1. 1. 1.)
-         (* ~coefficients:(Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ())) *)
-         ~coefficients:(Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero ()))
+         { emission = Rgb.rgb_of_values 1. 1. 1.
+         ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8
+         ; refraction = 1.5
+         }
+         (* ~coefficients:(Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ())) *))
   ]
 ;;
 
 let light_sources : light_source list =
-  (* [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.) *)
-  [ light_source
+  [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.)
+    (* [ light_source
       (Area
          (Figure
             (plane
                (Direction.from_coords 0. (-1.) 0.)
                (Point.from_coords 0. 1. 0.)
-               (Rgb.rgb_of_values 0.75 0.75 0.75)
-               ~coefficients:(Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()))))
-      (Rgb.rgb_of_values 1. 1. 1.)
+               { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+               ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+               ; refraction = 1.
+               })))
+      (Rgb.rgb_of_values 1. 1. 1.) *)
     (* light_source (Point(Point.from_coords 0.9 (-0.9) (-0.5))) (Rgb.rgb_of_values 1. 1. 1.) *)
   ]
 ;;
@@ -144,8 +160,10 @@ let light_sources : light_source list =
 let left = ref (Direction.from_coords (-2.) 0. 0.)
 let up = ref (Direction.from_coords 0. 2. 0.)
 let forward = ref (Direction.from_coords 0. 0. 3.)
-let origin = ref (Point.from_coords 0. 0. (-3.5))
-let width, height = ref 1024, ref 576
+let origin = ref (Point.from_coords 0. 0. (-4.5))
+
+(* let width, height = ref 1024, ref 576 *)
+let width, height = ref 512, ref 512
 let num_points = ref 64
 
 let bar ~total =

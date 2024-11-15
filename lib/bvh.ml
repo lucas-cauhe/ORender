@@ -87,8 +87,10 @@ let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
     Figures.cuboid
       scene_min
       scene_max
-      (Rgb.zero ())
-      ~coefficients:(Rgb.zero (), Rgb.zero (), Rgb.zero ())
+      { emission = Rgb.zero ()
+      ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.zero ()
+      ; refraction = 0.
+      }
   in
   match Figures.scene_size scene with
   | s when s <= bvh_primitives_minimum ->

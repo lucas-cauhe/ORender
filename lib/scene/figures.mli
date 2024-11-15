@@ -20,6 +20,12 @@ type coefficients =
 val ray : Geometry.Point.point_t -> Geometry.Direction.direction_t -> ray_type
 val string_of_ray : ray_type -> string
 
+type figure_properties =
+  { emission : Colorspace.Rgb.pixel
+  ; coefficients : coefficients
+  ; refraction : float
+  }
+
 type figure
 (**
   Every 3d figure that can be represented in a rendering scene
@@ -106,8 +112,7 @@ val point_belongs_to_fig : Geometry.Point.point_t -> figure -> bool
 val plane :
   Geometry.Direction.direction_t ->
   Geometry.Point.point_t ->
-  Colorspace.Rgb.pixel ->
-  coefficients:coefficients ->
+  figure_properties ->
   figure
 (**
   Returns the instance of a plane given its [normal] and a [point] in the plane
@@ -116,8 +121,7 @@ val plane :
 val sphere :
   Geometry.Point.point_t ->
   float ->
-  Colorspace.Rgb.pixel ->
-  coefficients:coefficients ->
+  figure_properties ->
   figure
 (**
   Returns the instance of a sphere given its [center] and [radius] of the sphere 
@@ -127,8 +131,7 @@ val triangle :
   Geometry.Point.point_t ->
   Geometry.Point.point_t ->
   Geometry.Point.point_t ->
-  Colorspace.Rgb.pixel ->
-  coefficients:coefficients ->
+    figure_properties ->
   figure option
 (**
   Returns [Some(t)] with the instance of a triangle given three points if a triangle can be formed out of them 
@@ -138,8 +141,7 @@ val triangle :
 val cuboid :
   Geometry.Point.point_t ->
   Geometry.Point.point_t ->
-  Colorspace.Rgb.pixel ->
-  coefficients:coefficients ->
+    figure_properties ->
   figure
 (**
   Returns the instance of a cuboid given its [min_point] and [max_point] defining the cuboid 
@@ -165,5 +167,6 @@ val find_closest_figure :
 
 val emission : figure -> Colorspace.Rgb.pixel
 val coefficients : figure -> coefficients
+val refraction : figure -> float
 val is_sphere : scene_figure -> bool
 val is_plane : scene_figure -> bool

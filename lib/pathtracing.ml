@@ -18,6 +18,11 @@ let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
   | None -> Figures.Figure (Figures.empty ()), Zero
 ;;
 
+(** Cosine norm given a figure's intersection point surface normal and the outgoing direction wi. *)
+let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
+  Direction.dot n wi |> abs_float
+;;
+
 (** Compute the direct light given a [Light.light_source] and a [Figures.intersection].
     Returns a function that expects the brdf value to finally compute value of the direct light *)
 let direct_light
@@ -29,25 +34,21 @@ let direct_light
   let point_ligth_shadow_ray acc light =
     match Light.light_source_type_val light with
     | Point ls_center ->
-      let cosine_norm =
+      let dist_to_light =
         Direction.between_points x.intersection_point ls_center
         |> Direction.normalize
         |> Option.get
-        |> Direction.dot x.surface_normal
-        |> abs_float
       in
-      Rgb.value_prod (Light.shadow_ray scene x light) cosine_norm |> Rgb.sum acc
+      Rgb.value_prod
+        (Light.shadow_ray scene x light)
+        (cosine_norm x.surface_normal dist_to_light)
+      |> Rgb.sum acc
     | Area _ -> Rgb.zero ()
   in
   Rgb.rgb_prod (List.fold_left point_ligth_shadow_ray (Rgb.zero ()) ls)
 ;;
 
-(** Cosine norm given a figure's intersection point surface normal and the outgoing direction wi. *)
-let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
-  Direction.dot n wi |> abs_float
-;;
-
-let rec rec_path_tracing scene light_sources wi =
+let rec rec_path_tracing scene light_sources wi current_media =
   match trace_ray scene wi with
   | _, Zero -> Rgb.zero ()
   | _, Intersects (ir :: _)
@@ -58,11 +59,12 @@ let rec rec_path_tracing scene light_sources wi =
      | Absorption, _ -> Rgb.zero ()
      | roulette_result, roulette_prob ->
        (* compute wi *)
-       let outgoing_direction =
+       let outgoing_direction, next_media =
          montecarlo_sample
-           ir.surface_normal
+           (Figures.get_figure fig)
+           ir
            wi.ray_direction
-           ir.intersection_point
+           current_media
            roulette_result
        in
        (* compute current brdf *)
@@ -73,6 +75,7 @@ let rec rec_path_tracing scene light_sources wi =
            wi.ray_direction
            outgoing_direction
            (roulette_result, roulette_prob)
+           current_media
        in
        let direct_light_contribution =
          if roulette_result != Specular then
@@ -88,16 +91,17 @@ let rec rec_path_tracing scene light_sources wi =
          (rec_path_tracing
             scene
             light_sources
-            (Figures.ray ir.intersection_point outgoing_direction))
+            (Figures.ray ir.intersection_point outgoing_direction)
+            next_media)
        |> Rgb.sum direct_light_contribution
        |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission))
     (* Rgb.rgb_prod direct_light_contribution (Figures.get_figure fig |> Figures.emission) *)
     (* Rgb.rgb_of_values
-       (if Direction.x ir.surface_normal >= 0. then
+       (if Direction.z outgoing_direction >= 0. then
        1.
        else
        0.)
-       (if Direction.x ir.surface_normal < 0. then
+       (if Direction.z outgoing_direction < 0. then
        1.
        else
        0.)
@@ -109,6 +113,6 @@ let rec rec_path_tracing scene light_sources wi =
 let path_tracing scene light_sources camera_ray =
   let ls_hd = List.hd light_sources in
   match Light.light_source_type_val ls_hd with
-  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources camera_ray
-  | Light.Point _ -> rec_path_tracing scene light_sources camera_ray
+  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources camera_ray 1.
+  | Light.Point _ -> rec_path_tracing scene light_sources camera_ray 1.
 ;;

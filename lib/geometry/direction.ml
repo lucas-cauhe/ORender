@@ -54,3 +54,4 @@ let perpendicular d =
 ;;
 
 let angle d1 d2 = Float.acos @@ (dot d1 d2 /. modulus d1 /. modulus d2)
+let inv d = prod d (-1.)
