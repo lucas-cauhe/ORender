@@ -78,7 +78,7 @@ let rec rec_path_tracing scene light_sources wi current_media =
            current_media
        in
        let direct_light_contribution =
-         if roulette_result != Specular then
+         if roulette_result = Diffuse then
            direct_light scene (Light.sample_light light_sources) ir current_brdf
          else
            Rgb.zero ()

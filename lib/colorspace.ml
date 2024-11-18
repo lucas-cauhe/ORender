@@ -66,4 +66,13 @@ module Rgb = struct
   ;;
 
   let zero () = { red = 0.; green = 0.; blue = 0. }
+
+  let max p =
+    if p.red >= p.green && p.red >= p.blue then
+      p.red
+    else if p.green >= p.red && p.green >= p.blue then
+      p.green
+    else
+      p.blue
+  ;;
 end

@@ -52,3 +52,7 @@ let sample_light ls =
     (*todo*)
     ls
 ;;
+
+(* let rec produce_lights ls n () =
+   let
+   Seq.Cons (l, produce_lights ls (n + 1)) *)

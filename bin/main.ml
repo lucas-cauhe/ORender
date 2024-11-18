@@ -133,7 +133,8 @@ let my_scene : scene =
          0.3
          (* (Rgb.rgb_of_values 0. 1. 0.5) *)
          { emission = Rgb.rgb_of_values 1. 1. 1.
-         ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8
+         ; coefficients =
+             Rgb.zero (), Rgb.rgb_of_values 0. 0. 0., Rgb.rgb_of_values 0.7 0.7 0.7
          ; refraction = 1.5
          }
          (* ~coefficients:(Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ())) *))
@@ -141,8 +142,8 @@ let my_scene : scene =
 ;;
 
 let light_sources : light_source list =
-  [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.)
-    (* [ light_source
+  (* [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.) *)
+  [ light_source
       (Area
          (Figure
             (plane
@@ -152,7 +153,7 @@ let light_sources : light_source list =
                ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
                ; refraction = 1.
                })))
-      (Rgb.rgb_of_values 1. 1. 1.) *)
+      (Rgb.rgb_of_values 1. 1. 1.)
     (* light_source (Point(Point.from_coords 0.9 (-0.9) (-0.5))) (Rgb.rgb_of_values 1. 1. 1.) *)
   ]
 ;;

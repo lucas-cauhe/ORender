@@ -26,48 +26,6 @@ let sample_specular wo normal =
   |> Option.get
 ;;
 
-(* let sample_refraction w0 normal media_in media_out =
-  let _theta_zero = Direction.angle normal w0 in
-  let cosTh = min (Direction.dot (Direction.inv w0) normal) 1. in
-  let sinTh = sqrt (1. -. Common.square cosTh) in
-  let entrance = Direction.dot w0 normal < 0. in
-  let inv_normal =
-    if entrance then
-      normal
-    else
-      Direction.inv normal
-  in
-  let max_refraction =
-    if entrance then
-      1. /. media_in 
-    else
-      media_out
-  in
-  if max_refraction *. sinTh > 1. then
-    sample_specular w0 inv_normal, media_in
-  else (
-    let cos_out = min (Direction.dot (Direction.inv w0) inv_normal) 1. in
-    let r_perp =
-      Direction.prod
-        (Direction.prod inv_normal cos_out |> Direction.sum w0)
-        max_refraction
-    in
-    let r_parallel =
-      sqrt @@ abs_float @@ (1. -. Direction.dot r_perp r_perp)
-      |> Direction.prod (Direction.inv inv_normal)
-    in
-    ( Direction.sum r_perp r_parallel
-    , if entrance then
-        media_out
-      else
-        media_in ) *)
-(* let thetai = Float.asin @@ (media_in /. media_out *. Float.sin theta_zero) in
-    ( Direction.prod inv_normal (Float.cos thetai) |> Direction.normalize |> Option.get
-    , if media_in = media_out then
-        1.
-      else
-        media_out ) *)
-
 let sample_refraction w0 normal media_in media_out =
   let theta_zero = Direction.angle normal w0 in
   let entrance = Direction.dot w0 normal < 0. in
@@ -122,18 +80,41 @@ let montecarlo_sample
   | Absorption -> normal, scene_media
 ;;
 
+let random_choice (k1_type, k1) (k2_type, k2) =
+  let p1 = Rgb.max k1 /. (Rgb.max k1 +. Rgb.max k2) in
+  let p2 = 1. -. p1 in
+  if Random.float 1. <= p1 then
+    k1_type, p1
+  else
+    k2_type, p2
+;;
+
+let only_choice kd ks _ =
+  let ki_type =
+    if Rgb.max kd > 0. then
+      Diffuse
+    else if Rgb.max ks > 0. then
+      Specular
+    else
+      Refraction
+  in
+  ki_type, 1. -. !absorption_prob
+;;
+
 let russian_roulette (fig : figure) =
-  let coefs = ref [] in
   let kd, ks, kt = coefficients fig in
-  let rgb_internal_sum rgb = Rgb.red rgb +. Rgb.green rgb +. Rgb.blue rgb in
-  if rgb_internal_sum kd > 0. then coefs := Diffuse :: !coefs;
-  if rgb_internal_sum ks > 0. then coefs := Specular :: !coefs;
-  if rgb_internal_sum kt > 0. then coefs := Refraction :: !coefs;
+  let choice =
+    if Rgb.max kd > 0. && Rgb.max ks > 0. then
+      random_choice (Diffuse, kd) (Specular, ks)
+    else if Rgb.max ks > 0. && Rgb.max kt > 0. then
+      random_choice (Specular, ks) (Refraction, kt)
+    else
+      only_choice kd ks kt
+  in
   if Random.float 1. < !absorption_prob then
     Absorption, !absorption_prob
   else
-    ( List.nth !coefs (Random.int (List.length !coefs))
-    , (1. -. !absorption_prob) /. (List.length !coefs |> float_of_int) )
+    choice
 ;;
 
 let brdf fig n w0 wi (rres, prob) scene_media =

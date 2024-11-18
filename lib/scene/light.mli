@@ -46,3 +46,9 @@ val point_belongs_to_ls : Geometry.Point.point_t -> light_source -> bool
   If the light_source list is [Area] light, then a random one is selected (if multiple) and multiple [Point] light are sampled from it
 *)
 val sample_light : light_source list -> light_source list
+
+(* val produce_lights : light_source list -> light_source   *)
+(**
+  Creates an (infinite) list of photons weighted by the contribution of 
+  each light source in the scene 
+*)
