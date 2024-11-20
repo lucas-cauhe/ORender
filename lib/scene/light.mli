@@ -56,3 +56,5 @@ val sample_light : light_source list -> light_source list
 val sample_light_point : light_source -> Geometry.Point.point_t
 
 val sample_light_source : light_source -> light_source
+
+val to_string : light_source -> string

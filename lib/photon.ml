@@ -29,4 +29,12 @@ module Photon = struct
   let position ph = ph.position
   let direction ph = ph.direction
   let flux ph = ph.flux
+
+  let to_string ph =
+    Printf.sprintf
+      "Flux -> %s | Position -> %s | Direction -> %s\n"
+      (Rgb.show ph.flux)
+      (Point.string_of_point ph.position)
+      (Direction.string_of_direction ph.direction)
+  ;;
 end

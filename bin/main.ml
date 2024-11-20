@@ -7,8 +7,10 @@
 open Domainslib
 open Computer_gfx.Scene.Figures
 open Computer_gfx.Geometry
+module Photon = Computer_gfx.Photon
 open Computer_gfx.Colorspace
 open Computer_gfx.Scene.Camera
+open Computer_gfx.Photonmap
 
 (* open Computer_gfx.Bvh *)
 open Computer_gfx.Scene.Light
@@ -142,8 +144,8 @@ let my_scene : scene =
 ;;
 
 let light_sources : light_source list =
-  (* [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.) *)
-  [ light_source
+  [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.)
+    (* [ light_source
       (Area
          (Figure
             (plane
@@ -153,7 +155,7 @@ let light_sources : light_source list =
                ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
                ; refraction = 1.
                })))
-      (Rgb.rgb_of_values 1. 1. 1.)
+      (Rgb.rgb_of_values 1. 1. 1.) *)
     (* light_source (Point(Point.from_coords 0.9 (-0.9) (-0.5))) (Rgb.rgb_of_values 1. 1. 1.) *)
   ]
 ;;
@@ -194,10 +196,15 @@ let pixel_color cam (row, col) scene light_sources pool =
 ;;
 
 let () =
+  Random.self_init ();
   let camera = camera !up !left !forward !origin (!width, !height) in
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
+  let phmap = random_walk my_scene light_sources 1 in
+  List.iter
+    (fun photon -> Printf.printf "Photon -> %s" (Photon.Photon.to_string photon))
+    (PhotonMap.to_list phmap);
   let pool = Task.setup_pool ~num_domains:7 () in
   let rec color_image row col reporter =
     match row, col with

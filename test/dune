@@ -5,3 +5,7 @@
 (test
  (name test_intersections)
  (libraries alcotest computer_gfx))
+
+(test
+ (name test_photonmap)
+ (libraries alcotest computer_gfx))

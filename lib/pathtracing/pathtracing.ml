@@ -3,6 +3,7 @@ open Scene
 open Bindings
 open Colorspace
 open Brdf
+module Bindings = Bindings
 
 (** Traces a ray [ray] accross the given [scene] to find which is the first figure that intersects with the ray, if any *)
 let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =

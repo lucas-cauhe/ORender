@@ -68,3 +68,9 @@ let sample_light_source ls =
   | Point _ -> ls
   | Area _ -> { ls with ls_type = Point (sample_light_point ls) }
 ;;
+
+let to_string ls =
+  match ls.ls_type with
+  | Point p -> Printf.sprintf "Point Light -> %s" (Point.string_of_point p)
+  | Area _ -> Printf.sprintf "Area Light"
+;;
