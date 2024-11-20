@@ -18,11 +18,6 @@ let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
   | None -> Figures.Figure (Figures.empty ()), Zero
 ;;
 
-(** Cosine norm given a figure's intersection point surface normal and the outgoing direction wi. *)
-let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
-  Direction.dot n wi |> abs_float
-;;
-
 (** Compute the direct light given a [Light.light_source] and a [Figures.intersection].
     Returns a function that expects the brdf value to finally compute value of the direct light *)
 let direct_light

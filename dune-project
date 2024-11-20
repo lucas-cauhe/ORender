@@ -1,4 +1,5 @@
 (lang dune 3.14)
+(using ctypes 0.3)
 
 (name computer_gfx)
 

@@ -52,3 +52,7 @@ val sample_light : light_source list -> light_source list
   Creates an (infinite) list of photons weighted by the contribution of 
   each light source in the scene 
 *)
+
+val sample_light_point : light_source -> Geometry.Point.point_t
+
+val sample_light_source : light_source -> light_source

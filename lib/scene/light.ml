@@ -56,3 +56,15 @@ let sample_light ls =
 (* let rec produce_lights ls n () =
    let
    Seq.Cons (l, produce_lights ls (n + 1)) *)
+
+let sample_light_point ls =
+  match ls.ls_type with
+  | Point p -> p
+  | Area _ -> Point.from_coords 0. 0. 0.
+;;
+
+let sample_light_source ls =
+  match ls.ls_type with
+  | Point _ -> ls
+  | Area _ -> { ls with ls_type = Point (sample_light_point ls) }
+;;

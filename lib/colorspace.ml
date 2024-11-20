@@ -75,4 +75,6 @@ module Rgb = struct
     else
       p.blue
   ;;
+
+  let sum_inside p = p.red +. p.green +. p.blue
 end

@@ -63,5 +63,6 @@ module Rgb : sig
   val rgb_prod : pixel -> pixel -> pixel
   val zero : unit -> pixel
   val max : pixel -> float
+  val sum_inside : pixel -> float
 
 end 

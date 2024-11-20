@@ -54,25 +54,27 @@ let sample_refraction w0 normal media_in media_out =
   )
 ;;
 
+let sample_spherical_direction normal origin =
+  let rand_lat = 1. -. Random.float 1. |> sqrt |> Float.acos in
+  let rand_azimut = 2. *. Float.pi *. Random.float 1. in
+  (* It is impossible that the modulus of the global coords' direction is ever 0, hence can do Option.get *)
+  let normal_normalized = Direction.normalize normal |> Option.get in
+  let wi_prime =
+    Geometry.cartesian_of_spherical rand_lat rand_azimut normal_normalized
+    |> Geometry.Transformations.hc_of_direction
+  in
+  let cb_mat = Geometry.cb_matrix_tangent normal_normalized origin in
+  Geometry.Transformations.change_basis cb_mat wi_prime
+  |> Geometry.Transformations.direction_of_hc
+;;
+
 let montecarlo_sample
   fig
   { surface_normal = normal; intersection_point = ip; _ }
   wo
   scene_media
   = function
-  | Diffuse ->
-    let rand_lat = 1. -. Random.float 1. |> sqrt |> Float.acos in
-    let rand_azimut = 2. *. Float.pi *. Random.float 1. in
-    (* It is impossible that the modulus of the global coords' direction is ever 0, hence can do Option.get *)
-    let normal_normalized = Direction.normalize normal |> Option.get in
-    let wi_prime =
-      Geometry.cartesian_of_spherical rand_lat rand_azimut normal_normalized
-      |> Geometry.Transformations.hc_of_direction
-    in
-    let cb_mat = Geometry.cb_matrix_tangent normal_normalized ip in
-    ( Geometry.Transformations.change_basis cb_mat wi_prime
-      |> Geometry.Transformations.direction_of_hc
-    , scene_media )
+  | Diffuse -> sample_spherical_direction normal ip, scene_media
   | Specular -> sample_specular wo normal, scene_media
   | Refraction ->
     let media_out = refraction fig in
@@ -129,4 +131,8 @@ let brdf fig n w0 wi (rres, prob) scene_media =
     let media_out = refraction fig in
     let wr, _ = sample_refraction w0 n scene_media media_out in
     Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi)
+;;
+
+let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
+  Direction.dot n wi |> abs_float
 ;;
