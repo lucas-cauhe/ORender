@@ -1,5 +1,6 @@
 open Geometry
 open Scene
+open Bindings
 open Colorspace
 open Brdf
 
@@ -44,65 +45,58 @@ let direct_light
 ;;
 
 let rec rec_path_tracing scene light_sources wi current_media =
-  match trace_ray scene wi with
-  | _, Zero -> Rgb.zero ()
-  | _, Intersects (ir :: _)
-    when Light.point_belongs_to_ls ir.intersection_point (List.hd light_sources) ->
-    Light.power (List.hd light_sources)
-  | fig, Intersects (ir :: _) ->
-    (match russian_roulette (Figures.get_figure fig) with
-     | Absorption, _ -> Rgb.zero ()
-     | roulette_result, roulette_prob ->
-       (* compute wi *)
-       let outgoing_direction, next_media =
-         montecarlo_sample
-           (Figures.get_figure fig)
-           ir
-           wi.ray_direction
-           current_media
-           roulette_result
-       in
-       (* compute current brdf *)
-       let current_brdf =
-         brdf
-           (Figures.get_figure fig)
-           ir.surface_normal
-           wi.ray_direction
-           outgoing_direction
-           (roulette_result, roulette_prob)
-           current_media
-       in
-       let direct_light_contribution =
-         if roulette_result = Diffuse then
-           direct_light scene (Light.sample_light light_sources) ir current_brdf
-         else
-           Rgb.zero ()
-       in
-       let global_light_contribution =
-         cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod current_brdf
-       in
-       Rgb.rgb_prod
-         global_light_contribution
-         (rec_path_tracing
-            scene
-            light_sources
-            (Figures.ray ir.intersection_point outgoing_direction)
-            next_media)
-       |> Rgb.sum direct_light_contribution
-       |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission))
-    (* Rgb.rgb_prod direct_light_contribution (Figures.get_figure fig |> Figures.emission) *)
-    (* Rgb.rgb_of_values
-       (if Direction.z outgoing_direction >= 0. then
-       1.
-       else
-       0.)
-       (if Direction.z outgoing_direction < 0. then
-       1.
-       else
-       0.)
-       0.) *)
-  | _ -> Rgb.zero ()
+  let& fig, ir = trace_ray scene wi, List.hd light_sources in
+  let* roulette_result, roulette_prob = russian_roulette (Figures.get_figure fig) in
+  (* compute wi *)
+  let outgoing_direction, next_media =
+    montecarlo_sample
+      (Figures.get_figure fig)
+      ir
+      wi.ray_direction
+      current_media
+      roulette_result
+  in
+  (* compute current brdf *)
+  let current_brdf =
+    brdf
+      (Figures.get_figure fig)
+      ir.surface_normal
+      wi.ray_direction
+      outgoing_direction
+      (roulette_result, roulette_prob)
+      current_media
+  in
+  let direct_light_contribution =
+    if roulette_result = Diffuse then
+      direct_light scene (Light.sample_light light_sources) ir current_brdf
+    else
+      Rgb.zero ()
+  in
+  let global_light_contribution =
+    cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod current_brdf
+  in
+  Rgb.rgb_prod
+    global_light_contribution
+    (rec_path_tracing
+       scene
+       light_sources
+       (Figures.ray ir.intersection_point outgoing_direction)
+       next_media)
+  |> Rgb.sum direct_light_contribution
+  |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
 ;;
+
+(* Rgb.rgb_prod direct_light_contribution (Figures.get_figure fig |> Figures.emission) *)
+(* Rgb.rgb_of_values
+   (if Direction.z outgoing_direction >= 0. then
+   1.
+   else
+   0.)
+   (if Direction.z outgoing_direction < 0. then
+   1.
+   else
+   0.)
+   0.) *)
 
 (** Path tracing algorithm implementation *)
 let path_tracing scene light_sources camera_ray =
