@@ -10,7 +10,7 @@ open Computer_gfx.Geometry
 module Photon = Computer_gfx.Photon
 open Computer_gfx.Colorspace
 open Computer_gfx.Scene.Camera
-open Computer_gfx.Photonmap
+(* open Computer_gfx.Photonmap *)
 
 (* open Computer_gfx.Bvh *)
 open Computer_gfx.Scene.Light
@@ -137,7 +137,7 @@ let my_scene : scene =
          { emission = Rgb.rgb_of_values 1. 1. 1.
          ; coefficients =
              Rgb.zero (), Rgb.rgb_of_values 0. 0. 0., Rgb.rgb_of_values 0.7 0.7 0.7
-         ; refraction = 1.5
+         ; refraction = 0.67
          }
          (* ~coefficients:(Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ())) *))
   ]
@@ -201,10 +201,10 @@ let () =
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
-  let phmap = random_walk my_scene light_sources 1 in
-  List.iter
-    (fun photon -> Printf.printf "Photon -> %s" (Photon.Photon.to_string photon))
-    (PhotonMap.to_list phmap);
+  (* let phmap = random_walk my_scene light_sources 1 in *)
+  (* List.iter
+     (fun photon -> Printf.printf "Photon -> %s" (Photon.Photon.to_string photon))
+     (PhotonMap.to_list phmap); *)
   let pool = Task.setup_pool ~num_domains:7 () in
   let rec color_image row col reporter =
     match row, col with

@@ -27,7 +27,7 @@ let sample_specular wo normal =
 ;;
 
 let sample_refraction w0 normal media_in media_out =
-  let theta_zero = Direction.angle normal w0 in
+  let _theta_zero = Direction.angle normal w0 in
   let entrance = Direction.dot w0 normal < 0. in
   let media_out =
     if entrance then
@@ -41,16 +41,36 @@ let sample_refraction w0 normal media_in media_out =
     else
       Direction.inv normal
   in
-  let theta_critical = Float.asin @@ (media_out /. media_in) in
-  if theta_zero >= theta_critical then
+  let ratio =
+    if entrance then
+      1. /. media_out
+    else
+      media_in
+  in
+  let cosTh = min 1. (Direction.dot (Direction.inv w0) normal) in
+  let sinTh = sqrt (1. -. Common.square cosTh) in
+  (* let theta_critical = Float.asin (media_out /. media_in) in *)
+  if ratio *. sinTh > 1. then
     sample_specular w0 inv_normal, media_out
   else (
-    let incident = Direction.prod w0 (media_in /. media_out) in
-    let thetai = Float.asin @@ (media_in /. media_out *. Float.sin theta_zero) in
-    let out =
-      Direction.prod inv_normal ((media_in /. media_out *. cos theta_zero) -. cos thetai)
+    (* let incident = Direction.prod w0 (media_in /. media_out) in
+       let thetai = Float.asin (media_in /. media_out *. Float.sin theta_zero) in
+       let out =
+       Direction.prod inv_normal ((media_in /. media_out *. cos theta_zero) -. cos thetai)
+       in *)
+    let mycos = min 1. (Direction.dot inv_normal (Direction.inv w0)) in
+    let rPerp =
+      Direction.prod (Direction.prod inv_normal mycos |> Direction.sum w0) ratio
     in
-    Direction.sum incident out, media_out
+    let rPar =
+      Direction.dot rPerp rPerp
+      |> ( -. ) 1.
+      |> abs_float
+      |> sqrt
+      |> Direction.prod (Direction.inv inv_normal)
+    in
+    (* Direction.sum incident out, media_out *)
+    Direction.sum rPerp rPar, media_out
   )
 ;;
 
@@ -126,11 +146,11 @@ let brdf fig n w0 wi (rres, prob) scene_media =
   | Diffuse -> Rgb.normalize kd prob (* uniform cosine sampling *)
   | Specular ->
     let wr = sample_specular w0 n in
-    Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi)
+    Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi *. prob)
   | Refraction ->
     let media_out = refraction fig in
     let wr, _ = sample_refraction w0 n scene_media media_out in
-    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi)
+    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi *. prob)
 ;;
 
 let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =

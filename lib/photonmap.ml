@@ -26,7 +26,7 @@ let weight_scene_lights ls num_photons =
     ls
 ;;
 
-let rec scatter_photons scene current_photon (photons : Photon.t list) =
+let rec scatter_photons scene light current_photon (photons : Photon.t list) =
   let photon_ray =
     Figures.ray (Photon.position current_photon) (Photon.direction current_photon)
   in
@@ -58,11 +58,11 @@ let rec scatter_photons scene current_photon (photons : Photon.t list) =
            current_brdf
            (Brdf.cosine_norm ir.surface_normal outgoing_direction)
        in
-       let photon_radiance = Rgb.rgb_prod brdf_cosine (Photon.flux current_photon) in
+       let photon_radiance = Rgb.rgb_prod brdf_cosine (Light.power light) in
        let next_photon =
          Photon.photon photon_radiance ir.intersection_point outgoing_direction
        in
-       scatter_photons scene next_photon (photons @ [ next_photon ]))
+       scatter_photons scene light next_photon (photons @ [ next_photon ]))
   | _ -> photons
 ;;
 
@@ -87,7 +87,7 @@ let random_walk scene light_sources num_random_walks =
           (Light.sample_light_point next_light)
           init_direction
       in
-      let current_light_photons = scatter_photons scene initial_photon [] in
+      let current_light_photons = scatter_photons scene next_light initial_photon [] in
       rec_random_walk (photons @ current_light_photons) rest_lights
   in
   let scene_photons = rec_random_walk [] scene_lights_weights |> Array.of_list in
