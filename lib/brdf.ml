@@ -70,7 +70,7 @@ let sample_refraction w0 normal media_in media_out =
       |> Direction.prod (Direction.inv inv_normal)
     in
     (* Direction.sum incident out, media_out *)
-    Direction.sum rPerp rPar, media_out
+    Direction.sum rPerp rPar |> Direction.normalize |> Option.get, media_out
   )
 ;;
 
