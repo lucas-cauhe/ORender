@@ -26,51 +26,21 @@ let sample_specular wo normal =
   |> Option.get
 ;;
 
-let sample_refraction w0 normal media_in media_out =
-  let _theta_zero = Direction.angle normal w0 in
-  let entrance = Direction.dot w0 normal < 0. in
-  let media_out =
-    if entrance then
-      media_out
+let sample_refraction w0 normal media =
+  let theta_zero = Direction.angle normal w0 in
+  let inv_normal, ratio =
+    if Direction.dot w0 normal < 0. then
+      normal, 1. /. media
     else
-      1.
+      Direction.inv normal, media
   in
-  let inv_normal =
-    if entrance then
-      normal
-    else
-      Direction.inv normal
-  in
-  let ratio =
-    if entrance then
-      1. /. media_out
-    else
-      media_in
-  in
-  let cosTh = min 1. (Direction.dot (Direction.inv w0) normal) in
-  let sinTh = sqrt (1. -. Common.square cosTh) in
-  (* let theta_critical = Float.asin (media_out /. media_in) in *)
-  if ratio *. sinTh > 1. then
-    sample_specular w0 inv_normal, media_out
+  if ratio *. sin theta_zero >= 1. then
+    sample_specular w0 inv_normal
   else (
-    (* let incident = Direction.prod w0 (media_in /. media_out) in
-       let thetai = Float.asin (media_in /. media_out *. Float.sin theta_zero) in
-       let out =
-       Direction.prod inv_normal ((media_in /. media_out *. cos theta_zero) -. cos thetai)
-       in *)
-    let mycos = min 1. (Direction.dot inv_normal (Direction.inv w0)) in
-    let rPerp =
-      Direction.prod (Direction.prod inv_normal mycos |> Direction.sum w0) ratio
-    in
-    let rPar =
-      Direction.dot rPerp rPerp
-      |> ( -. ) 1.
-      |> abs_float
-      |> sqrt
-      |> Direction.prod (Direction.inv inv_normal)
-    in
-    (* Direction.sum incident out, media_out *)
-    Direction.sum rPerp rPar |> Direction.normalize |> Option.get, media_out
+    let incident = Direction.prod w0 ratio in
+    let thetai = Float.asin (ratio *. Float.sin theta_zero) in
+    let out = Direction.prod inv_normal ((ratio *. cos theta_zero) -. cos thetai) in
+    Direction.sum incident out
   )
 ;;
 
@@ -88,18 +58,12 @@ let sample_spherical_direction normal origin =
   |> Geometry.Transformations.direction_of_hc
 ;;
 
-let montecarlo_sample
-  fig
-  { surface_normal = normal; intersection_point = ip; _ }
-  wo
-  scene_media
+let montecarlo_sample fig { surface_normal = normal; intersection_point = ip; _ } wo
   = function
-  | Diffuse -> sample_spherical_direction normal ip, scene_media
-  | Specular -> sample_specular wo normal, scene_media
-  | Refraction ->
-    let media_out = refraction fig in
-    sample_refraction wo normal scene_media media_out
-  | Absorption -> normal, scene_media
+  | Diffuse -> sample_spherical_direction normal ip
+  | Specular -> sample_specular wo normal
+  | Refraction -> sample_refraction wo normal (refraction fig)
+  | Absorption -> normal
 ;;
 
 let random_choice (k1_type, k1) (k2_type, k2) =
@@ -139,7 +103,7 @@ let russian_roulette (fig : figure) =
     choice
 ;;
 
-let brdf fig n w0 wi (rres, prob) scene_media =
+let brdf fig n w0 wi (rres, prob) =
   let kd, ks, kt = coefficients fig in
   match rres with
   | Absorption -> Rgb.zero ()
@@ -148,8 +112,7 @@ let brdf fig n w0 wi (rres, prob) scene_media =
     let wr = sample_specular w0 n in
     Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi *. prob)
   | Refraction ->
-    let media_out = refraction fig in
-    let wr, _ = sample_refraction w0 n scene_media media_out in
+    let wr = sample_refraction w0 n (refraction fig) in
     Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi *. prob)
 ;;
 

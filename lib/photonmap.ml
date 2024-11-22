@@ -36,12 +36,11 @@ let rec scatter_photons scene light current_photon (photons : Photon.t list) =
     (match Brdf.russian_roulette (Figures.get_figure fig) with
      | Absorption, _ -> photons
      | roulette_result, roulette_prob ->
-       let outgoing_direction, _ =
+       let outgoing_direction =
          Brdf.montecarlo_sample
            (Figures.get_figure fig)
            ir
            photon_ray.ray_direction
-           1.
            roulette_result
        in
        let current_brdf =
@@ -51,16 +50,19 @@ let rec scatter_photons scene light current_photon (photons : Photon.t list) =
            photon_ray.ray_direction
            outgoing_direction
            (roulette_result, roulette_prob)
-           1.
        in
        let brdf_cosine =
          Rgb.value_prod
            current_brdf
            (Brdf.cosine_norm ir.surface_normal outgoing_direction)
        in
-       let photon_radiance = Rgb.rgb_prod brdf_cosine (Light.power light) in
+       let photon_radiance = Rgb.rgb_prod brdf_cosine (Photon.flux current_photon) in
        let next_photon =
-         Photon.photon photon_radiance ir.intersection_point outgoing_direction
+         Photon.photon
+           photon_radiance
+           ir.intersection_point
+           outgoing_direction
+           (Photon.num current_photon + 1)
        in
        scatter_photons scene light next_photon (photons @ [ next_photon ]))
   | _ -> photons
@@ -86,6 +88,7 @@ let random_walk scene light_sources num_random_walks =
           next_photon_flux
           (Light.sample_light_point next_light)
           init_direction
+          1
       in
       let current_light_photons = scatter_photons scene next_light initial_photon [] in
       rec_random_walk (photons @ current_light_photons) rest_lights

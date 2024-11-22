@@ -45,17 +45,12 @@ let direct_light
   Rgb.rgb_prod (List.fold_left point_ligth_shadow_ray (Rgb.zero ()) ls)
 ;;
 
-let rec rec_path_tracing scene light_sources wi current_media =
+let rec rec_path_tracing scene light_sources wi =
   let& fig, ir = trace_ray scene wi, List.hd light_sources in
   let* roulette_result, roulette_prob = russian_roulette (Figures.get_figure fig) in
   (* compute wi *)
-  let outgoing_direction, next_media =
-    montecarlo_sample
-      (Figures.get_figure fig)
-      ir
-      wi.ray_direction
-      current_media
-      roulette_result
+  let outgoing_direction =
+    montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction roulette_result
   in
   (* compute current brdf *)
   let current_brdf =
@@ -65,7 +60,6 @@ let rec rec_path_tracing scene light_sources wi current_media =
       wi.ray_direction
       outgoing_direction
       (roulette_result, roulette_prob)
-      current_media
   in
   let direct_light_contribution =
     if roulette_result = Diffuse then
@@ -81,8 +75,7 @@ let rec rec_path_tracing scene light_sources wi current_media =
     (rec_path_tracing
        scene
        light_sources
-       (Figures.ray ir.intersection_point outgoing_direction)
-       next_media)
+       (Figures.ray ir.intersection_point outgoing_direction))
   |> Rgb.sum direct_light_contribution
   |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
 ;;
@@ -103,6 +96,6 @@ let rec rec_path_tracing scene light_sources wi current_media =
 let path_tracing scene light_sources camera_ray =
   let ls_hd = List.hd light_sources in
   match Light.light_source_type_val ls_hd with
-  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources camera_ray 1.
-  | Light.Point _ -> rec_path_tracing scene light_sources camera_ray 1.
+  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources camera_ray
+  | Light.Point _ -> rec_path_tracing scene light_sources camera_ray
 ;;
