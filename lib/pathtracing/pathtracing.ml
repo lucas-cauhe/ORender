@@ -5,7 +5,6 @@ open Colorspace
 open Brdf
 module Bindings = Bindings
 
-(** Traces a ray [ray] accross the given [scene] to find which is the first figure that intersects with the ray, if any *)
 let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
   match Figures.find_closest_figure scene ray with
   | Some (fig, ir) ->
@@ -20,14 +19,7 @@ let trace_ray scene ray : Figures.scene_figure * Figures.intersection_result =
   | None -> Figures.Figure (Figures.empty ()), Zero
 ;;
 
-(** Compute the direct light given a [Light.light_source] and a [Figures.intersection].
-    Returns a function that expects the brdf value to finally compute value of the direct light *)
-let direct_light
-  (scene : Figures.scene)
-  (ls : Light.light_source list)
-  (x : Figures.intersection)
-  : Rgb.pixel -> Rgb.pixel
-  =
+let direct_light scene ls x =
   let point_ligth_shadow_ray acc light =
     match Light.light_source_type_val light with
     | Point ls_center ->

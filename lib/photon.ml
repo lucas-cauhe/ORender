@@ -6,7 +6,6 @@ module Photon = struct
     { flux : Rgb.pixel
     ; position : Point.point_t
     ; direction : Direction.direction_t
-    ; num : int
     }
 
   let ndims = 3
@@ -23,11 +22,10 @@ module Photon = struct
     { flux = Rgb.zero ()
     ; position = Point.from_coords coords.(0) coords.(1) coords.(2)
     ; direction = Direction.from_coords 0. 0. 0.
-    ; num = 0
     }
   ;;
 
-  let photon flux position direction num = { flux; position; direction; num }
+  let photon flux position direction = { flux; position; direction }
   let position ph = ph.position
   let direction ph = ph.direction
   let flux ph = ph.flux
@@ -38,8 +36,5 @@ module Photon = struct
       (Rgb.show ph.flux)
       (Point.string_of_point ph.position)
       (Direction.string_of_direction ph.direction)
-      ph.num
   ;;
-
-  let num ph = ph.num
 end
