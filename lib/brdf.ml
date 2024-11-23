@@ -103,6 +103,10 @@ let russian_roulette (fig : figure) =
     choice
 ;;
 
+let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
+  Direction.dot n wi |> abs_float
+;;
+
 let brdf fig n w0 wi (rres, prob) =
   let kd, ks, kt = coefficients fig in
   match rres with
@@ -110,12 +114,8 @@ let brdf fig n w0 wi (rres, prob) =
   | Diffuse -> Rgb.normalize kd prob (* uniform cosine sampling *)
   | Specular ->
     let wr = sample_specular w0 n in
-    Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi)
+    Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (cosine_norm n wi)
   | Refraction ->
     let wr = sample_refraction w0 n (refraction fig) in
-    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi)
-;;
-
-let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
-  Direction.dot n wi |> abs_float
+    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (cosine_norm n wi)
 ;;
