@@ -136,7 +136,7 @@ let my_scene : scene =
          (* (Rgb.rgb_of_values 0. 1. 0.5) *)
          { emission = Rgb.rgb_of_values 1. 1. 1.
          ; coefficients =
-             Rgb.zero (), Rgb.rgb_of_values 0. 0. 0., Rgb.rgb_of_values 1. 1. 1.
+             Rgb.zero (), Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.rgb_of_values 1. 1. 1.
              (* Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero () *)
          ; refraction = 0.667
          })
