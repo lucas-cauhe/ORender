@@ -1,5 +1,6 @@
 open Geometry
 open Scene
+open Scene.Figures
 open Bindings
 open Colorspace
 open Brdf

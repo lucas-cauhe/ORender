@@ -30,9 +30,9 @@ let sample_refraction w0 normal media =
   let theta_zero = Direction.angle normal w0 in
   let inv_normal, ratio =
     if Direction.dot w0 normal < 0. then
-      normal, 1. /. media
+      normal, media
     else
-      Direction.inv normal, media
+      Direction.inv normal, 1. /. media
   in
   if ratio *. sin theta_zero >= 1. then
     sample_specular w0 inv_normal
@@ -76,28 +76,28 @@ let random_choice (k1_type, k1) (k2_type, k2) =
 ;;
 
 let only_choice kd ks _ =
-  let ki_type =
+  let can_absorb, ki_type =
     if Rgb.max kd > 0. then
-      Diffuse
+      true, Diffuse
     else if Rgb.max ks > 0. then
-      Specular
+      false, Specular
     else
-      Refraction
+      false, Refraction
   in
-  ki_type, 1. -. !absorption_prob
+  can_absorb, (ki_type, 1. -. !absorption_prob)
 ;;
 
 let russian_roulette (fig : figure) =
   let kd, ks, kt = coefficients fig in
-  let choice =
+  let can_absorb, choice =
     if Rgb.max kd > 0. && Rgb.max ks > 0. then
-      random_choice (Diffuse, kd) (Specular, ks)
+      true, random_choice (Diffuse, kd) (Specular, ks)
     else if Rgb.max ks > 0. && Rgb.max kt > 0. then
-      random_choice (Specular, ks) (Refraction, kt)
+      false, random_choice (Specular, ks) (Refraction, kt)
     else
       only_choice kd ks kt
   in
-  if Random.float 1. < !absorption_prob then
+  if can_absorb && Random.float 1. < !absorption_prob then
     Absorption, !absorption_prob
   else
     choice
@@ -110,10 +110,10 @@ let brdf fig n w0 wi (rres, prob) =
   | Diffuse -> Rgb.normalize kd prob (* uniform cosine sampling *)
   | Specular ->
     let wr = sample_specular w0 n in
-    Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi *. prob)
+    Rgb.normalize (Rgb.value_prod ks (delta wr wi)) (Direction.dot n wi)
   | Refraction ->
     let wr = sample_refraction w0 n (refraction fig) in
-    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi *. prob)
+    Rgb.normalize (Rgb.value_prod kt (delta wr wi)) (Direction.dot n wi)
 ;;
 
 let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
