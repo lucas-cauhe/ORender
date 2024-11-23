@@ -51,6 +51,10 @@ let read_obj_file filename =
 
 let convert_to_scene (vertexs, faces) =
   let convert_vertex v = Geometry.Point.from_coords v.x v.y v.z in
+  (* Printf.printf
+     "Converting %d vertexs and %d faces\n"
+     (List.length vertexs)
+     (List.length faces); *)
   let convert_face f =
     let v1 = List.nth vertexs (f.v1 - 1) in
     let v2 = List.nth vertexs (f.v2 - 1) in
@@ -60,8 +64,8 @@ let convert_to_scene (vertexs, faces) =
          (convert_vertex v1)
          (convert_vertex v2)
          (convert_vertex v3)
-         { emission = Rgb.rgb_of_values 0.75 0.75 0.
-         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0., Rgb.zero (), Rgb.zero ()
+         { emission = Rgb.rgb_of_values 0.8 0.4 0.05
+         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.5
          }
        |> Option.get)

@@ -37,8 +37,4 @@ let tone_map_file in_file out_file =
   traverse_file 0
 ;;
 
-let () =
-  tone_map_file
-    "ppms/rendered/cornell.ppm"
-    "ppms/rendered/cornell_tonemapped_refraction.ppm"
-;;
+let () = tone_map_file "ppms/rendered/cornell.ppm" "ppms/rendered/cornell_tonemapped.ppm"

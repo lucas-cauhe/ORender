@@ -65,7 +65,7 @@ let rec scatter_photons scene light current_photon (photons : Photon.t list) =
   | _ -> photons
 ;;
 
-let _random_walk scene light_sources num_random_walks =
+let random_walk scene light_sources num_random_walks =
   let scene_lights_weights = weight_scene_lights light_sources num_random_walks in
   let rec rec_random_walk photons = function
     | [] -> photons
@@ -120,7 +120,7 @@ let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
   PhotonMap.search { lb; rb } photonmap
 ;;
 
-let _rec_photonmap scene photonmap wi =
+let rec rec_photonmap scene photonmap wi =
   let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
   let* roulette_result, roulette_prob = Brdf.russian_roulette (Figures.get_figure fig) in
   let outgoing_direction =
@@ -135,7 +135,7 @@ let _rec_photonmap scene photonmap wi =
       (roulette_result, roulette_prob)
   in
   let knn = photon_search photonmap ir.intersection_point in
-  let _direct_light_contribution =
+  let direct_light_contribution =
     List.fold_left
       (fun acc photon ->
         Rgb.value_prod (Photon.flux photon) (1. /. Float.pi /. 0.25)
@@ -150,15 +150,14 @@ let _rec_photonmap scene photonmap wi =
       (Rgb.rgb_of_values 0. 0. 0.)
       knn
   in
-  let _global_light_contribution =
+  let global_light_contribution =
     Brdf.cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod current_brdf
   in
-  Rgb.zero ()
+  Rgb.rgb_prod
+    global_light_contribution
+    (rec_photonmap scene photonmap (Figures.ray ir.intersection_point outgoing_direction))
+  |> Rgb.sum direct_light_contribution
+  |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
 ;;
 
-(*
-   let photonmap scene light_sources wi num_random_walks =
-   let photons = random_walk scene light_sources num_random_walks in
-   1 *)
-
-let photonmap _ _ _ _ = Rgb.zero ()
+let photonmap scene photons camera_ray = rec_photonmap scene photons camera_ray
