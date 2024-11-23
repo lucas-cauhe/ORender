@@ -59,16 +59,13 @@ let rec scatter_photons scene light current_photon (photons : Photon.t list) =
        in
        let photon_radiance = Rgb.rgb_prod brdf_cosine (Photon.flux current_photon) in
        let next_photon =
-         Photon.photon
-           photon_radiance
-           ir.intersection_point
-           outgoing_direction
+         Photon.photon photon_radiance ir.intersection_point outgoing_direction
        in
        scatter_photons scene light next_photon (photons @ [ next_photon ]))
   | _ -> photons
 ;;
 
-let random_walk scene light_sources num_random_walks =
+let _random_walk scene light_sources num_random_walks =
   let scene_lights_weights = weight_scene_lights light_sources num_random_walks in
   let rec rec_random_walk photons = function
     | [] -> photons
@@ -96,21 +93,34 @@ let random_walk scene light_sources num_random_walks =
   PhotonMap.create scene_photons
 ;;
 
-let impossible_ls = Light.light_source (Light.Point(Geometry.Point.from_coords 0. 0. 0.)) (Rgb.rgb_of_values 0. 0. 0.)
+let impossible_ls =
+  Light.light_source
+    (Light.Point (Geometry.Point.from_coords 0. 0. 0.))
+    (Rgb.rgb_of_values 0. 0. 0.)
+;;
 
-let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t) : Photon.t list =
+let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
+  : Photon.t list
+  =
   let pointx = Geometry.Point.x point in
   let pointy = Geometry.Point.y point in
   let pointz = Geometry.Point.z point in
-  let lb = Photon.photon (Rgb.rgb_of_values 0. 0. 0.) (Geometry.Point.from_coords (pointx -. 0.5) (pointy -. 0.5) (pointz -. 0.5)) (Direction.from_coords 0. 0. 0.) in
-  let rb = Photon.photon (Rgb.rgb_of_values 0. 0. 0.) (Geometry.Point.from_coords (pointx +. 0.5) (pointy +. 0.5) (pointz +. 0.5)) (Direction.from_coords 0. 0. 0.) in
-  PhotonMap.search {
-    lb;
-    rb;
-  } photonmap 
+  let lb =
+    Photon.photon
+      (Rgb.rgb_of_values 0. 0. 0.)
+      (Geometry.Point.from_coords (pointx -. 0.5) (pointy -. 0.5) (pointz -. 0.5))
+      (Direction.from_coords 0. 0. 0.)
+  in
+  let rb =
+    Photon.photon
+      (Rgb.rgb_of_values 0. 0. 0.)
+      (Geometry.Point.from_coords (pointx +. 0.5) (pointy +. 0.5) (pointz +. 0.5))
+      (Direction.from_coords 0. 0. 0.)
+  in
+  PhotonMap.search { lb; rb } photonmap
+;;
 
-
-let rec_photonmap scene photonmap wi = 
+let _rec_photonmap scene photonmap wi =
   let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
   let* roulette_result, roulette_prob = Brdf.russian_roulette (Figures.get_figure fig) in
   let outgoing_direction =
@@ -124,12 +134,31 @@ let rec_photonmap scene photonmap wi =
       outgoing_direction
       (roulette_result, roulette_prob)
   in
-  let knn = photon_search photonmap ir.intersection_point in 
-  let direct_light_contribution = List.fold_left (fun acc photon -> Rgb.value_prod (Photon.flux photon) (1. /. Float.pi /. 0.25) |> Rgb.rgb_prod (Brdf.brdf (Figures.get_figure fig) ir.surface_normal wi.ray_direction (Photon.direction photon) (roulette_result, roulette_prob) ) |> Rgb.sum acc) (Rgb.rgb_of_values 0. 0. 0.) knn  in
-  let global_light_contribution =
+  let knn = photon_search photonmap ir.intersection_point in
+  let _direct_light_contribution =
+    List.fold_left
+      (fun acc photon ->
+        Rgb.value_prod (Photon.flux photon) (1. /. Float.pi /. 0.25)
+        |> Rgb.rgb_prod
+             (Brdf.brdf
+                (Figures.get_figure fig)
+                ir.surface_normal
+                wi.ray_direction
+                (Photon.direction photon)
+                (roulette_result, roulette_prob))
+        |> Rgb.sum acc)
+      (Rgb.rgb_of_values 0. 0. 0.)
+      knn
+  in
+  let _global_light_contribution =
     Brdf.cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod current_brdf
   in
+  Rgb.zero ()
+;;
 
-let photonmap scene light_sources wi num_random_walks = 
-  let photons = random_walk scene light_sources num_random_walks in
-  1
+(*
+   let photonmap scene light_sources wi num_random_walks =
+   let photons = random_walk scene light_sources num_random_walks in
+   1 *)
+
+let photonmap _ _ _ _ = Rgb.zero ()
