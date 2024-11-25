@@ -23,7 +23,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 1. 0. 0.)
-         (Point.from_coords (-10.) 0. 0.)
+         (Point.from_coords (-1.) 0. 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -32,7 +32,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords (-1.) 0. 0.)
-         (Point.from_coords 10. 0. 0.)
+         (Point.from_coords 1. 0. 0.)
          { emission = Rgb.rgb_of_values 0. 1. 0.
          ; coefficients = Rgb.rgb_of_values 0.0 0.8 0.0, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -41,7 +41,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 1. 0.)
-         (Point.from_coords 0. (-10.) 0.)
+         (Point.from_coords 0. (-1.) 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -50,7 +50,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. (-1.) 0.)
-         (Point.from_coords 0. 20. 0.)
+         (Point.from_coords 0. 1. 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -59,13 +59,13 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 0. (-1.))
-         (Point.from_coords 0. 0. 10.)
+         (Point.from_coords 0. 0. 1.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
     (* triangle_box; *)
-    (* Figure
+  ; Figure
       (sphere
          (Point.from_coords (-0.5) (-0.7) 0.25)
          0.3
@@ -74,24 +74,22 @@ let my_scene : scene =
              Rgb.rgb_of_values 0.2 0.7 0.75, Rgb.rgb_of_values 0.6 0.2 0.15, Rgb.zero ()
          ; refraction = 1.
          })
-    (*|> transform (Translation(0.5, 0.4, (-0.25))) |> Option.get*)
   ; Figure
       (sphere
          (Point.from_coords 0.5 (-0.7) (-0.25))
          0.3
-         (* (Rgb.rgb_of_values 0. 1. 0.5) *)
-         { emission = Rgb.rgb_of_values 1. 1. 1.
+         { emission = Rgb.rgb_of_values 0. 1. 0.5 (* Rgb.rgb_of_values 1. 1. 1. *)
          ; coefficients =
-             Rgb.zero (), Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.rgb_of_values 1. 1. 1.
-             (* Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero () *)
-         ; refraction = 0.667
-         }) *)
+             (* Rgb.zero (), Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.rgb_of_values 1. 1. 1. *)
+             Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ()
+         ; refraction = 0.66
+         })
   ]
 ;;
 
 let light_sources : light_source list =
-  (* [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.) *)
-  [ light_source
+  [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.)
+    (* [ light_source
       (Area
          (Figure
             (plane
@@ -101,15 +99,15 @@ let light_sources : light_source list =
                ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
                ; refraction = 1.
                })))
-      (Rgb.rgb_of_values 1. 1. 1.)
+      (Rgb.rgb_of_values 1. 1. 1.) *)
     (* light_source (Point(Point.from_coords 0.9 (-0.9) (-0.5))) (Rgb.rgb_of_values 1. 1. 1.) *)
   ]
 ;;
 
-let left = ref (Direction.from_coords (-20.) 0. 0.)
-let up = ref (Direction.from_coords 0. 20. 0.)
-let forward = ref (Direction.from_coords 0. 0. 10.)
-let origin = ref (Point.from_coords 0. 0. (-10.5))
+let left = ref (Direction.from_coords (-2.) 0. 0.)
+let up = ref (Direction.from_coords 0. 2. 0.)
+let forward = ref (Direction.from_coords 0. 0. 3.)
+let origin = ref (Point.from_coords 0. 0. (-4.5))
 (* let width, height = ref 1024, ref 576 *)
 
 let width, height = ref 512, ref 512
@@ -128,14 +126,14 @@ let _load_camel obj_file =
   triangles @ my_scene
 ;;
 
-let photonmap_pixel_color cam (row, col) scene photons pool =
+let photonmap_pixel_color cam (row, col) ls scene photons pool =
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
   let compute_pixel_color ind =
     Direction.between_points pip_arr.(ind) (cam_origin cam)
     |> Direction.normalize
     |> Option.get
     |> ray (cam_origin cam)
-    |> photonmap scene photons
+    |> photonmap scene ls photons
   in
   let color_sum () =
     Task.parallel_for_reduce
@@ -176,7 +174,11 @@ let () =
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
-  let photons = random_walk my_scene light_sources 10 in
+  (************************************************************************)
+  (* PARA LUZ DE AREA EN PHOTONMAPPING *)
+  (* SAMPLEAS X PUNTOS DE LA LUZ Y LO TRATAS COMO X LUCES PUNTUALES O QUÉ *)
+  (************************************************************************)
+  let photons = random_walk my_scene light_sources 100 in
   let pool = Task.setup_pool ~num_domains:7 () in
   (* let my_scene = load_camel "obj_files/camel.obj" in *)
   let rec color_image row col reporter =
@@ -184,7 +186,9 @@ let () =
     | r, _ when r = !height -> close_out oc
     | _, _ ->
       (* let color = pathtracing_pixel_color camera (row, col) my_scene light_sources pool in *)
-      let color = photonmap_pixel_color camera (row, col) my_scene photons pool in
+      let color =
+        photonmap_pixel_color camera (row, col) light_sources my_scene photons pool
+      in
       reporter 1;
       PpmDb.write_pixel oc out_conf color;
       if col >= !width - 1 then (

@@ -27,7 +27,13 @@ let weight_scene_lights ls num_photons =
     ls
 ;;
 
-let rec scatter_photons scene light current_photon (photons : Photon.t list) =
+let rec scatter_photons
+  scene
+  light
+  current_photon
+  (photons : Photon.t list)
+  is_first_photon
+  =
   let photon_ray =
     Figures.ray (Photon.position current_photon) (Photon.direction current_photon)
   in
@@ -61,7 +67,10 @@ let rec scatter_photons scene light current_photon (photons : Photon.t list) =
        let next_photon =
          Photon.photon photon_radiance ir.intersection_point outgoing_direction
        in
-       scatter_photons scene light next_photon (photons @ [ next_photon ]))
+       if is_first_photon then
+         scatter_photons scene light next_photon photons false
+       else
+         scatter_photons scene light next_photon (photons @ [ next_photon ]) false)
   | _ -> photons
 ;;
 
@@ -86,7 +95,9 @@ let random_walk scene light_sources num_random_walks =
           (Light.sample_light_point next_light)
           init_direction
       in
-      let current_light_photons = scatter_photons scene next_light initial_photon [] in
+      let current_light_photons =
+        scatter_photons scene next_light initial_photon [] true
+      in
       rec_random_walk (photons @ current_light_photons) rest_lights
   in
   let scene_photons = rec_random_walk [] scene_lights_weights |> Array.of_list in
@@ -120,9 +131,34 @@ let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
   PhotonMap.search { lb; rb } photonmap
 ;;
 
-let rec rec_photonmap scene photonmap wi =
-  let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
-  let* roulette_result, roulette_prob = Brdf.russian_roulette (Figures.get_figure fig) in
+let photon_brdf
+  ((fig, ir) : Figures.scene_figure * Figures.intersection)
+  (wi : Figures.ray_type)
+  ((roulette_result, roulette_prob) : Brdf.russian_roulette_result * float)
+  (photon : Photon.t)
+  =
+  Brdf.brdf
+    (Figures.get_figure fig)
+    ir.surface_normal
+    wi.ray_direction
+    (Photon.direction photon)
+    (roulette_result, roulette_prob)
+;;
+
+let density_estimation (brdf : Photon.t -> Rgb.pixel) : Photon.t list -> Rgb.pixel =
+  let photon_acc_sum acc photon =
+    Rgb.value_prod (Photon.flux photon) (1. /. Float.pi /. 0.25)
+    |> Rgb.rgb_prod (brdf photon)
+    |> Rgb.sum acc
+  in
+  List.fold_left photon_acc_sum (Rgb.rgb_of_values 0. 0. 0.)
+;;
+
+let photonmap scene ls photonmap wi =
+  let& ((fig, ir) as inter_params) = Pathtracing.trace_ray scene wi, impossible_ls in
+  let* ((roulette_result, roulette_prob) as roulette_values) =
+    Brdf.russian_roulette (Figures.get_figure fig)
+  in
   let outgoing_direction =
     Brdf.montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction roulette_result
   in
@@ -135,29 +171,10 @@ let rec rec_photonmap scene photonmap wi =
       (roulette_result, roulette_prob)
   in
   let knn = photon_search photonmap ir.intersection_point in
-  let direct_light_contribution =
-    List.fold_left
-      (fun acc photon ->
-        Rgb.value_prod (Photon.flux photon) (1. /. Float.pi /. 0.25)
-        |> Rgb.rgb_prod
-             (Brdf.brdf
-                (Figures.get_figure fig)
-                ir.surface_normal
-                wi.ray_direction
-                (Photon.direction photon)
-                (roulette_result, roulette_prob))
-        |> Rgb.sum acc)
-      (Rgb.rgb_of_values 0. 0. 0.)
-      knn
-  in
+  let direct_light_contribution = Pathtracing.direct_light scene ls ir current_brdf in
   let global_light_contribution =
-    Brdf.cosine_norm ir.surface_normal outgoing_direction |> Rgb.value_prod current_brdf
+    density_estimation (photon_brdf inter_params wi roulette_values) knn
   in
-  Rgb.rgb_prod
-    global_light_contribution
-    (rec_photonmap scene photonmap (Figures.ray ir.intersection_point outgoing_direction))
-  |> Rgb.sum direct_light_contribution
+  Rgb.sum direct_light_contribution global_light_contribution
   |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
 ;;
-
-let photonmap scene photons camera_ray = rec_photonmap scene photons camera_ray
