@@ -145,9 +145,41 @@ let photon_brdf
     (roulette_result, roulette_prob)
 ;;
 
-let density_estimation (brdf : Photon.t -> Rgb.pixel) : Photon.t list -> Rgb.pixel =
+type gaussian_kernel =
+  { photon_position : Geometry.Point.point_t
+  ; intersection_position : Geometry.Point.point_t
+  ; smooth : float
+  }
+
+type kernel_type =
+  | Box of float
+  | Gaussian of gaussian_kernel
+
+let _ga =
+  Gaussian
+    { photon_position = Point.from_coords 0. 0. 0.
+    ; intersection_position = Point.from_coords 0. 0. 0.
+    ; smooth = 1.
+    }
+;;
+
+let kernel_fun = function
+  | Box radius -> 1. /. Float.pi /. Common.square radius
+  | Gaussian { photon_position; intersection_position; smooth } ->
+    (Float.exp
+     @@ -.Common.square
+            ((Direction.between_points intersection_position photon_position
+              |> Direction.modulus)
+             /. smooth))
+    /. Float.pi
+    /. Common.square smooth
+;;
+
+let density_estimation (brdf : Photon.t -> Rgb.pixel) (kernel : kernel_type)
+  : Photon.t list -> Rgb.pixel
+  =
   let photon_acc_sum acc photon =
-    Rgb.value_prod (Photon.flux photon) (1. /. Float.pi /. 0.25)
+    Rgb.value_prod (Photon.flux photon) (kernel_fun kernel)
     |> Rgb.rgb_prod (brdf photon)
     |> Rgb.sum acc
   in
@@ -173,7 +205,11 @@ let photonmap scene ls photonmap wi =
   let knn = photon_search photonmap ir.intersection_point in
   let direct_light_contribution = Pathtracing.direct_light scene ls ir current_brdf in
   let global_light_contribution =
-    density_estimation (photon_brdf inter_params wi roulette_values) knn
+    density_estimation
+      (photon_brdf inter_params wi roulette_values)
+      (* { intersection_position = ir.intersection_position } *)
+      (Box 1.)
+      knn
   in
   Rgb.sum direct_light_contribution global_light_contribution
   |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
