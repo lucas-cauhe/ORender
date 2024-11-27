@@ -242,39 +242,34 @@ let density_estimation (brdf : Photon.t -> Rgb.pixel) (kernel : kernel_type)
 
 let rec rec_photonmap scene ls photonmap wi =
   let& ((fig, ir) as inter_params) = Pathtracing.trace_ray scene wi, impossible_ls in
-  let* ((roulette_result, roulette_prob) as roulette_values) =
-    Brdf.russian_roulette (Figures.get_figure fig)
-  in
-  let outgoing_direction =
-    Brdf.montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction roulette_result
-  in
-  let current_brdf =
-    Brdf.brdf
-      (Figures.get_figure fig)
-      ir.surface_normal
-      wi.ray_direction
-      outgoing_direction
-      (roulette_result, roulette_prob)
-  in
-  match roulette_result with
-  | Absorption -> Rgb.zero ()
-  | Specular | Refraction ->
-    Rgb.rgb_prod
-      current_brdf
-      (rec_photonmap
-         scene
-         ls
-         photonmap
-         (Figures.ray ir.intersection_point outgoing_direction))
-  | Diffuse ->
+  let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
+  if is_delta then (
+    let outgoing_direction =
+      Brdf.montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction material
+    in
+    rec_photonmap
+      scene
+      ls
+      photonmap
+      (Figures.ray ir.intersection_point outgoing_direction)
+  ) else (
     let knn = photon_search photonmap ir.intersection_point 6 in
-    let direct_light_contribution = Pathtracing.direct_light scene ls ir current_brdf in
+    let diffuse_brdf =
+      Brdf.brdf
+        (Figures.get_figure fig)
+        ir.surface_normal
+        wi.ray_direction
+        (Direction.from_coords 0. 0. 0.) (* Not used for computing diffuse brdf *)
+        (Diffuse, prob)
+    in
+    let direct_light_contribution = Pathtracing.direct_light scene ls ir diffuse_brdf in
     let global_light_contribution =
       density_estimation
-        (photon_brdf inter_params wi roulette_values)
+        (photon_brdf inter_params wi (Diffuse, prob))
         (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 })
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution
     |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
+  )
 ;;

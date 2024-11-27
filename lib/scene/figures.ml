@@ -623,5 +623,3 @@ let is_plane = function
   | Figure { fig_type = Plane _; _ } -> true
   | _ -> false
 ;;
-
-(*(Rgb fig.coefficients) *. (delta_refraction /. Direction.dot surface_normal wi) *)

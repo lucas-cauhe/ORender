@@ -87,16 +87,17 @@ let only_choice kd ks _ =
   can_absorb, (ki_type, 1. -. !absorption_prob)
 ;;
 
+let choose_from_coeffs ((kd, ks, kt) : Rgb.pixel * Rgb.pixel * Rgb.pixel) =
+  if Rgb.max kd > 0. && Rgb.max ks > 0. then
+    true, random_choice (Diffuse, kd) (Specular, ks)
+  else if Rgb.max ks > 0. && Rgb.max kt > 0. then
+    false, random_choice (Specular, ks) (Refraction, kt)
+  else
+    only_choice kd ks kt
+;;
+
 let russian_roulette (fig : figure) =
-  let kd, ks, kt = coefficients fig in
-  let can_absorb, choice =
-    if Rgb.max kd > 0. && Rgb.max ks > 0. then
-      true, random_choice (Diffuse, kd) (Specular, ks)
-    else if Rgb.max ks > 0. && Rgb.max kt > 0. then
-      false, random_choice (Specular, ks) (Refraction, kt)
-    else
-      only_choice kd ks kt
-  in
+  let can_absorb, choice = choose_from_coeffs (coefficients fig) in
   if can_absorb && Random.float 1. < !absorption_prob then
     Absorption, !absorption_prob
   else
@@ -105,6 +106,11 @@ let russian_roulette (fig : figure) =
 
 let cosine_norm (n : Direction.direction_t) (wi : Direction.direction_t) =
   Direction.dot n wi |> abs_float
+;;
+
+let is_delta fig =
+  let _, ((choice, _) as result) = choose_from_coeffs (coefficients fig) in
+  result, choice = Specular || choice = Refraction
 ;;
 
 let brdf fig n w0 wi (rres, prob) =

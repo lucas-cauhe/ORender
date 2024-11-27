@@ -23,5 +23,7 @@ val brdf :
     russian_roulette_result * float -> 
     Colorspace.Rgb.pixel 
 
+val is_delta : Scene.Figures.figure -> (russian_roulette_result*float) * bool
+
 val cosine_norm : Geometry.Direction.direction_t -> Geometry.Direction.direction_t -> float
 (** Cosine norm given a figure's intersection point surface normal and the outgoing direction wi. *)

@@ -110,8 +110,8 @@ let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-4.5))
 (* let width, height = ref 1024, ref 576 *)
 
-let width, height = ref 512, ref 512
-let num_points = ref 16
+let width, height = ref 256, ref 256
+let num_points = ref 8
 
 let bar ~total =
   let open Progress.Line in
@@ -178,7 +178,7 @@ let () =
   (*                   PARA LUZ DE AREA EN PHOTONMAPPING                  *)
   (* SAMPLEAS X PUNTOS DE LA LUZ Y LO TRATAS COMO X LUCES PUNTUALES O QUÉ *)
   (************************************************************************)
-  let photons = random_walk my_scene light_sources 100 in
+  let photons = random_walk my_scene light_sources 1000 in
   let pool = Task.setup_pool ~num_domains:7 () in
   (* let my_scene = load_camel "obj_files/camel.obj" in *)
   let rec color_image row col reporter =
