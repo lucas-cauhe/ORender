@@ -257,4 +257,10 @@ functor
       let max_box = Range.max_box () in
       loop 0 [] max_box t
     ;;
+
+    (* let nearest_neighbors center radius t =
+       let rec loop depth acc curr_box = function
+       | Empty -> acc
+       | Leaf p ->
+       if *)
   end

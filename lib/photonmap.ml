@@ -7,6 +7,8 @@ open Photon
 open Colorspace
 module PhotonMap = Kdtree.Make (Photon)
 
+let _knn_radius = ref 0.3
+
 let weight_scene_lights ls num_photons =
   let total_power =
     List.fold_left
@@ -42,7 +44,7 @@ let rec scatter_photons
   | fig, Figures.Intersects (ir :: _) ->
     (match Brdf.russian_roulette (Figures.get_figure fig) with
      | Absorption, _ -> photons
-     | roulette_result, roulette_prob ->
+     | ((Specular | Refraction) as roulette_result), _ ->
        let outgoing_direction =
          Brdf.montecarlo_sample
            (Figures.get_figure fig)
@@ -50,13 +52,28 @@ let rec scatter_photons
            photon_ray.ray_direction
            roulette_result
        in
+       let next_photon =
+         Photon.photon
+           (Photon.flux current_photon)
+           ir.intersection_point
+           outgoing_direction
+       in
+       scatter_photons scene light next_photon photons false
+     | Diffuse, roulette_prob ->
+       let outgoing_direction =
+         Brdf.montecarlo_sample
+           (Figures.get_figure fig)
+           ir
+           photon_ray.ray_direction
+           Diffuse
+       in
        let current_brdf =
          Brdf.brdf
            (Figures.get_figure fig)
            ir.surface_normal
            photon_ray.ray_direction
            outgoing_direction
-           (roulette_result, roulette_prob)
+           (Diffuse, roulette_prob)
        in
        let brdf_cosine =
          Rgb.value_prod
@@ -100,8 +117,9 @@ let random_walk scene light_sources num_random_walks =
       in
       rec_random_walk (photons @ current_light_photons) rest_lights
   in
-  let scene_photons = rec_random_walk [] scene_lights_weights |> Array.of_list in
-  PhotonMap.create scene_photons
+  let scene_photons = rec_random_walk [] scene_lights_weights in
+  (* PhotonMap.create scene_photons *)
+  scene_photons
 ;;
 
 let impossible_ls =
@@ -110,7 +128,7 @@ let impossible_ls =
     (Rgb.rgb_of_values 0. 0. 0.)
 ;;
 
-let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
+(* let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
   : Photon.t list
   =
   let pointx = Geometry.Point.x point in
@@ -119,16 +137,59 @@ let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
   let lb =
     Photon.photon
       (Rgb.rgb_of_values 0. 0. 0.)
-      (Geometry.Point.from_coords (pointx -. 0.5) (pointy -. 0.5) (pointz -. 0.5))
+      (Geometry.Point.from_coords
+         (pointx -. !knn_radius)
+         (pointy -. !knn_radius)
+         (pointz -. !knn_radius))
       (Direction.from_coords 0. 0. 0.)
   in
   let rb =
     Photon.photon
       (Rgb.rgb_of_values 0. 0. 0.)
-      (Geometry.Point.from_coords (pointx +. 0.5) (pointy +. 0.5) (pointz +. 0.5))
+      (Geometry.Point.from_coords
+         (pointx +. !knn_radius)
+         (pointy +. !knn_radius)
+         (pointz +. !knn_radius))
       (Direction.from_coords 0. 0. 0.)
   in
   PhotonMap.search { lb; rb } photonmap
+;; *)
+
+let photon_search (photonmap : Photon.t list) (point : Geometry.Point.point_t) (k : int)
+  : Photon.t list
+  =
+  let rec search_nearest nearest photons =
+    match photons with
+    | [] -> nearest
+    | photon :: rest_photons ->
+      let dist_to_point =
+        Direction.between_points point (Photon.position photon) |> Direction.modulus
+      in
+      let current_max, curr_max_ind, _ =
+        List.fold_left
+          (fun (acc, max_ind, curr_ind) p ->
+            let curr_dist =
+              Direction.between_points point (Photon.position p) |> Direction.modulus
+            in
+            if acc > curr_dist then
+              acc, max_ind, curr_ind + 1
+            else
+              curr_dist, curr_ind, curr_ind + 1)
+          (0., 0, 0)
+          nearest
+      in
+      if current_max > dist_to_point then
+        search_nearest
+          (List.init curr_max_ind (fun i -> List.nth nearest i)
+           @ [ photon ]
+           @ List.init
+               (k - 1 - curr_max_ind)
+               (fun i -> List.nth nearest (curr_max_ind + 1 + i)))
+          rest_photons
+      else
+        search_nearest nearest rest_photons
+  in
+  search_nearest (List.init k (fun i -> List.nth photonmap i)) photonmap
 ;;
 
 let photon_brdf
@@ -146,8 +207,7 @@ let photon_brdf
 ;;
 
 type gaussian_kernel =
-  { photon_position : Geometry.Point.point_t
-  ; intersection_position : Geometry.Point.point_t
+  { intersection_position : Geometry.Point.point_t
   ; smooth : float
   }
 
@@ -155,20 +215,14 @@ type kernel_type =
   | Box of float
   | Gaussian of gaussian_kernel
 
-let _ga =
-  Gaussian
-    { photon_position = Point.from_coords 0. 0. 0.
-    ; intersection_position = Point.from_coords 0. 0. 0.
-    ; smooth = 1.
-    }
-;;
+let _build = Box 1.
 
-let kernel_fun = function
+let kernel_fun (photon : Photon.t) = function
   | Box radius -> 1. /. Float.pi /. Common.square radius
-  | Gaussian { photon_position; intersection_position; smooth } ->
+  | Gaussian { intersection_position; smooth } ->
     (Float.exp
      @@ -.Common.square
-            ((Direction.between_points intersection_position photon_position
+            ((Direction.between_points intersection_position (Photon.position photon)
               |> Direction.modulus)
              /. smooth))
     /. Float.pi
@@ -179,14 +233,14 @@ let density_estimation (brdf : Photon.t -> Rgb.pixel) (kernel : kernel_type)
   : Photon.t list -> Rgb.pixel
   =
   let photon_acc_sum acc photon =
-    Rgb.value_prod (Photon.flux photon) (kernel_fun kernel)
+    Rgb.value_prod (Photon.flux photon) (kernel_fun photon kernel)
     |> Rgb.rgb_prod (brdf photon)
     |> Rgb.sum acc
   in
   List.fold_left photon_acc_sum (Rgb.rgb_of_values 0. 0. 0.)
 ;;
 
-let photonmap scene ls photonmap wi =
+let rec rec_photonmap scene ls photonmap wi =
   let& ((fig, ir) as inter_params) = Pathtracing.trace_ray scene wi, impossible_ls in
   let* ((roulette_result, roulette_prob) as roulette_values) =
     Brdf.russian_roulette (Figures.get_figure fig)
@@ -202,15 +256,25 @@ let photonmap scene ls photonmap wi =
       outgoing_direction
       (roulette_result, roulette_prob)
   in
-  let knn = photon_search photonmap ir.intersection_point in
-  let direct_light_contribution = Pathtracing.direct_light scene ls ir current_brdf in
-  let global_light_contribution =
-    density_estimation
-      (photon_brdf inter_params wi roulette_values)
-      (* { intersection_position = ir.intersection_position } *)
-      (Box 1.)
-      knn
-  in
-  Rgb.sum direct_light_contribution global_light_contribution
-  |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
+  match roulette_result with
+  | Absorption -> Rgb.zero ()
+  | Specular | Refraction ->
+    Rgb.rgb_prod
+      current_brdf
+      (rec_photonmap
+         scene
+         ls
+         photonmap
+         (Figures.ray ir.intersection_point outgoing_direction))
+  | Diffuse ->
+    let knn = photon_search photonmap ir.intersection_point 6 in
+    let direct_light_contribution = Pathtracing.direct_light scene ls ir current_brdf in
+    let global_light_contribution =
+      density_estimation
+        (photon_brdf inter_params wi roulette_values)
+        (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 })
+        knn
+    in
+    Rgb.sum direct_light_contribution global_light_contribution
+    |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
 ;;

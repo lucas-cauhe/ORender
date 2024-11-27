@@ -24,7 +24,7 @@ let my_scene : scene =
       (plane
          (Direction.from_coords 1. 0. 0.)
          (Point.from_coords (-1.) 0. 0.)
-         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         { emission = Rgb.rgb_of_values 0.75 0. 0.
          ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
@@ -78,10 +78,10 @@ let my_scene : scene =
       (sphere
          (Point.from_coords 0.5 (-0.7) (-0.25))
          0.3
-         { emission = Rgb.rgb_of_values 0. 1. 0.5 (* Rgb.rgb_of_values 1. 1. 1. *)
+         { emission = (* Rgb.rgb_of_values 0. 1. 0.5 *) Rgb.rgb_of_values 1. 1. 1.
          ; coefficients =
-             (* Rgb.zero (), Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.rgb_of_values 1. 1. 1. *)
-             Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ()
+             Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero ()
+             (* Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero () *)
          ; refraction = 0.66
          })
   ]
@@ -133,7 +133,7 @@ let photonmap_pixel_color cam (row, col) ls scene photons pool =
     |> Direction.normalize
     |> Option.get
     |> ray (cam_origin cam)
-    |> photonmap scene ls photons
+    |> rec_photonmap scene ls photons
   in
   let color_sum () =
     Task.parallel_for_reduce
@@ -175,7 +175,7 @@ let () =
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
   (************************************************************************)
-  (* PARA LUZ DE AREA EN PHOTONMAPPING *)
+  (*                   PARA LUZ DE AREA EN PHOTONMAPPING                  *)
   (* SAMPLEAS X PUNTOS DE LA LUZ Y LO TRATAS COMO X LUCES PUNTUALES O QUÉ *)
   (************************************************************************)
   let photons = random_walk my_scene light_sources 100 in
