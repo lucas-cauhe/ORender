@@ -168,7 +168,7 @@ let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
   : Photon.t list * float
   =
   let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) in
-  BatList.take 6 knn, radius
+  BatList.take 3 knn, radius
 ;;
 
 let photon_brdf

@@ -78,10 +78,10 @@ let my_scene : scene =
       (sphere
          (Point.from_coords 0.5 (-0.7) (-0.25))
          0.3
-         { emission = (* Rgb.rgb_of_values 0. 1. 0.5 *) Rgb.rgb_of_values 1. 1. 1.
+         { emission = Rgb.rgb_of_values 0. 1. 0.5 (*Rgb.rgb_of_values 1. 1. 1.*)
          ; coefficients =
-             Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 1. 1. 1.
-             (* Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero () *)
+             (* Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 1. 1. 1. *)
+             Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ()
          ; refraction = 0.66
          })
   ]
