@@ -7,8 +7,6 @@ open Photon
 open Colorspace
 module PhotonMap = Kdtree.Make (Photon)
 
-let knn_radius = ref 0.1
-
 let weight_scene_lights ls num_photons =
   let total_power =
     List.fold_left
@@ -119,7 +117,8 @@ let random_walk scene light_sources num_random_walks =
   in
   let scene_photons = rec_random_walk [] scene_lights_weights in
   (* PhotonMap.create scene_photons *)
-  scene_photons
+  (* scene_photons *)
+  PhotonMap.make scene_photons
 ;;
 
 let impossible_ls =
@@ -128,34 +127,7 @@ let impossible_ls =
     (Rgb.rgb_of_values 0. 0. 0.)
 ;;
 
-(* let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
-  : Photon.t list
-  =
-  let pointx = Geometry.Point.x point in
-  let pointy = Geometry.Point.y point in
-  let pointz = Geometry.Point.z point in
-  let lb =
-    Photon.photon
-      (Rgb.rgb_of_values 0. 0. 0.)
-      (Geometry.Point.from_coords
-         (pointx -. !knn_radius)
-         (pointy -. !knn_radius)
-         (pointz -. !knn_radius))
-      (Direction.from_coords 0. 0. 0.)
-  in
-  let rb =
-    Photon.photon
-      (Rgb.rgb_of_values 0. 0. 0.)
-      (Geometry.Point.from_coords
-         (pointx +. !knn_radius)
-         (pointy +. !knn_radius)
-         (pointz +. !knn_radius))
-      (Direction.from_coords 0. 0. 0.)
-  in
-  PhotonMap.search { lb; rb } photonmap
-;; *)
-
-let photon_search (photonmap : Photon.t list) (point : Geometry.Point.point_t) (k : int)
+(* let photon_search (photonmap : Photon.t list) (point : Geometry.Point.point_t) (k : int)
   : Photon.t list
   =
   let rec search_nearest nearest photons =
@@ -190,6 +162,13 @@ let photon_search (photonmap : Photon.t list) (point : Geometry.Point.point_t) (
         search_nearest nearest rest_photons
   in
   search_nearest (List.init k (fun i -> List.nth photonmap i)) photonmap
+;; *)
+
+let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
+  : Photon.t list * float
+  =
+  let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) in
+  BatList.take 6 knn, radius
 ;;
 
 let photon_brdf
@@ -222,7 +201,7 @@ let _build_gaussian =
 ;;
 
 let kernel_fun (photon : Photon.t) = function
-  | Box radius -> 1. /. Float.pi /. Common.square radius
+  | Box radius -> 1. /. Float.pi /. radius
   | Gaussian { intersection_position; smooth } ->
     (Float.exp
      @@ -.Common.square
@@ -257,7 +236,7 @@ let rec rec_photonmap scene ls photonmap wi =
       photonmap
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn = photon_search photonmap ir.intersection_point 6 in
+    let knn, knn_radius = photon_search photonmap ir.intersection_point in
     let diffuse_brdf =
       Brdf.brdf
         (Figures.get_figure fig)
@@ -271,7 +250,7 @@ let rec rec_photonmap scene ls photonmap wi =
       density_estimation
         (photon_brdf inter_params wi (Diffuse, prob))
         (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 }) *)
-        (Box !knn_radius)
+        (Box knn_radius)
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution
