@@ -23,10 +23,10 @@ let ( + ) = sum
 let ( - ) = sub
 
 let distance p1 p2 =
-  sqrt
-    (((p1.x -. p2.x) *. (p1.x -. p2.x))
-     +. ((p1.y -. p2.y) *. (p1.y -. p2.y))
-     +. ((p1.z -. p2.z) *. (p1.z -. p2.z)))
+  let dx = p1.x -. p2.x in
+  let dy = p1.y -. p2.y in
+  let dz = p1.z -. p2.z in
+  sqrt (Common.square dx +. Common.square dy +. Common.square dz)
 ;;
 
 let mean plist =

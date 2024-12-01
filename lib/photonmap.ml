@@ -7,7 +7,7 @@ open Photon
 open Colorspace
 module PhotonMap = Kdtree.Make (Photon)
 
-let _knn_radius = ref 0.3
+let knn_radius = ref 0.1
 
 let weight_scene_lights ls num_photons =
   let total_power =
@@ -98,7 +98,7 @@ let random_walk scene light_sources num_random_walks =
     | (next_light, emitted_photons) :: rest_lights ->
       let init_direction =
         Brdf.sample_spherical_direction
-          (Direction.from_coords 0. 1. 0.)
+          (Direction.from_coords (-1.) 0. 0.)
           (Light.sample_light_point next_light)
       in
       let next_photon_flux =
@@ -215,7 +215,11 @@ type kernel_type =
   | Box of float
   | Gaussian of gaussian_kernel
 
-let _build = Box 1.
+let _build_box = Box 1.
+
+let _build_gaussian =
+  Gaussian { intersection_position = Point.from_coords 0. 0. 0.; smooth = 0.5 }
+;;
 
 let kernel_fun (photon : Photon.t) = function
   | Box radius -> 1. /. Float.pi /. Common.square radius
@@ -266,7 +270,8 @@ let rec rec_photonmap scene ls photonmap wi =
     let global_light_contribution =
       density_estimation
         (photon_brdf inter_params wi (Diffuse, prob))
-        (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 })
+        (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 }) *)
+        (Box !knn_radius)
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution
