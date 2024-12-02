@@ -1,4 +1,5 @@
 open Scene
+open Domainslib
 open Pathtracing.Bindings
 open Geometry
 open Photon
@@ -25,6 +26,7 @@ let weight_scene_lights ls num_photons =
       acc @ List.init s (fun _ -> Light.sample_light_source light_source, s))
     []
     ls
+  |> Array.of_list
 ;;
 
 let rec scatter_photons
@@ -89,36 +91,35 @@ let rec scatter_photons
   | _ -> photons
 ;;
 
-let random_walk scene light_sources num_random_walks =
+let random_walk scene light_sources num_random_walks pool =
   let scene_lights_weights = weight_scene_lights light_sources num_random_walks in
-  let rec rec_random_walk photons = function
-    | [] -> photons
-    | (next_light, emitted_photons) :: rest_lights ->
-      let init_direction =
-        Brdf.sample_spherical_direction
-          (Direction.from_coords (-1.) 0. 0.)
-          (Light.sample_light_point next_light)
-      in
-      let next_photon_flux =
-        Rgb.value_prod
-          (Light.power next_light)
-          (4. *. Float.pi /. float_of_int emitted_photons)
-      in
-      let initial_photon =
-        Photon.photon
-          next_photon_flux
-          (Light.sample_light_point next_light)
-          init_direction
-      in
-      let current_light_photons =
-        scatter_photons scene next_light initial_photon [] true
-      in
-      rec_random_walk (photons @ current_light_photons) rest_lights
+  let internal_random_walk ind =
+    let next_light, emitted_photons = scene_lights_weights.(ind) in
+    let init_direction =
+      Brdf.sample_spherical_direction
+        (Direction.from_coords (-1.) 0. 0.)
+        (Light.sample_light_point next_light)
+    in
+    let next_photon_flux =
+      Rgb.value_prod
+        (Light.power next_light)
+        (4. *. Float.pi /. float_of_int emitted_photons)
+    in
+    let initial_photon =
+      Photon.photon next_photon_flux (Light.sample_light_point next_light) init_direction
+    in
+    scatter_photons scene next_light initial_photon [] true
   in
-  let scene_photons = rec_random_walk [] scene_lights_weights in
-  (* PhotonMap.create scene_photons *)
-  (* scene_photons *)
-  PhotonMap.make scene_photons
+  let scene_photons () =
+    Task.parallel_for_reduce
+      ~start:0
+      ~finish:(Array.length scene_lights_weights - 1)
+      ~body:internal_random_walk
+      pool
+      (fun acc photons -> acc @ photons)
+      []
+  in
+  PhotonMap.make (Task.run pool (fun _ -> scene_photons ()))
 ;;
 
 let impossible_ls =
@@ -168,7 +169,8 @@ let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
   : Photon.t list * float
   =
   let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) in
-  BatList.take 3 knn, radius
+  (* BatList.take 3 knn, radius *)
+  knn, radius
 ;;
 
 let photon_brdf
