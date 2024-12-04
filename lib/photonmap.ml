@@ -67,6 +67,12 @@ let rec scatter_photons
            photon_ray.ray_direction
            Diffuse
        in
+       let incident_photon =
+         Photon.photon
+           (Photon.flux current_photon)
+           ir.intersection_point
+           outgoing_direction
+       in
        let current_brdf =
          Brdf.brdf
            (Figures.get_figure fig)
@@ -87,7 +93,7 @@ let rec scatter_photons
        if is_first_photon then
          scatter_photons scene light next_photon photons false
        else
-         scatter_photons scene light next_photon (photons @ [ next_photon ]) false)
+         scatter_photons scene light next_photon (photons @ [ incident_photon ]) false)
   | _ -> photons
 ;;
 
@@ -96,8 +102,8 @@ let random_walk scene light_sources num_random_walks pool =
   let internal_random_walk ind =
     let next_light, emitted_photons = scene_lights_weights.(ind) in
     let init_direction =
-      Brdf.sample_spherical_direction
-        (Direction.from_coords 0. 1. 0.)
+      Brdf.sample_spherical_direction_solid
+        (Direction.from_coords 0. (-1.) 0.)
         (Light.sample_light_point next_light)
     in
     let next_photon_flux =
@@ -175,17 +181,8 @@ let photon_search
   =
   (* let squared_radius = Common.square radius in *)
   let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) in
-  (* Printf.printf "knn: %d\n" (List.length knn); *)
-  knn, radius
+  BatList.take 1000 knn, radius
 ;;
-
-(* ( List.filter
-   (fun k ->
-   Photon.squared_distance (Photon.to_point k) (Photon.point point) <= squared_radius)
-   knn
-   , radius ) *)
-
-(* knn, radius *)
 
 let photon_brdf
   ((fig, ir) : Figures.scene_figure * Figures.intersection)

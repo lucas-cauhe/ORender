@@ -44,8 +44,10 @@ let sample_refraction w0 normal media =
   )
 ;;
 
-let sample_spherical_direction normal origin =
-  let rand_lat = 1. -. Random.float 1. |> sqrt |> Float.acos in
+let uniform_solid_angle () = (2. *. Random.float 1.) -. 1. |> Float.acos
+let uniform_cosine () = 1. -. Random.float 1. |> sqrt |> Float.acos
+
+let sample_spherical normal origin rand_lat =
   let rand_azimut = 2. *. Float.pi *. Random.float 1. in
   (* It is impossible that the modulus of the global coords' direction is ever 0, hence can do Option.get *)
   let normal_normalized = Direction.normalize normal |> Option.get in
@@ -56,6 +58,16 @@ let sample_spherical_direction normal origin =
   let cb_mat = Geometry.cb_matrix_tangent normal_normalized origin in
   Geometry.Transformations.change_basis cb_mat wi_prime
   |> Geometry.Transformations.direction_of_hc
+;;
+
+let sample_spherical_direction normal origin =
+  let rand_lat = uniform_cosine () in
+  sample_spherical normal origin rand_lat
+;;
+
+let sample_spherical_direction_solid normal origin =
+  let rand_lat = uniform_solid_angle () in
+  sample_spherical normal origin rand_lat
 ;;
 
 let montecarlo_sample fig { surface_normal = normal; intersection_point = ip; _ } wo

@@ -5,6 +5,7 @@ type russian_roulette_result =
   | Refraction
 
 val sample_spherical_direction : Geometry.Direction.direction_t -> Geometry.Point.point_t -> Geometry.Direction.direction_t
+val sample_spherical_direction_solid : Geometry.Direction.direction_t -> Geometry.Point.point_t -> Geometry.Direction.direction_t
 
 val russian_roulette : Scene.Figures.figure -> russian_roulette_result * float
 
