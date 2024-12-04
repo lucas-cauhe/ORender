@@ -136,43 +136,6 @@ let impossible_ls =
     (Rgb.rgb_of_values 0. 0. 0.)
 ;;
 
-(* let photon_search (photonmap : Photon.t list) (point : Geometry.Point.point_t) (k : int)
-  : Photon.t list
-  =
-  let rec search_nearest nearest photons =
-    match photons with
-    | [] -> nearest
-    | photon :: rest_photons ->
-      let dist_to_point =
-        Direction.between_points point (Photon.position photon) |> Direction.modulus
-      in
-      let current_max, curr_max_ind, _ =
-        List.fold_left
-          (fun (acc, max_ind, curr_ind) p ->
-            let curr_dist =
-              Direction.between_points point (Photon.position p) |> Direction.modulus
-            in
-            if acc > curr_dist then
-              acc, max_ind, curr_ind + 1
-            else
-              curr_dist, curr_ind, curr_ind + 1)
-          (0., 0, 0)
-          nearest
-      in
-      if current_max > dist_to_point then
-        search_nearest
-          (List.init curr_max_ind (fun i -> List.nth nearest i)
-           @ [ photon ]
-           @ List.init
-               (k - 1 - curr_max_ind)
-               (fun i -> List.nth nearest (curr_max_ind + 1 + i)))
-          rest_photons
-      else
-        search_nearest nearest rest_photons
-  in
-  search_nearest (List.init k (fun i -> List.nth photonmap i)) photonmap
-;; *)
-
 let photon_search
   (photonmap : PhotonMap.t)
   (point : Geometry.Point.point_t)
@@ -236,21 +199,44 @@ let density_estimation (brdf : Photon.t -> Rgb.pixel) (kernel : kernel_type)
   List.fold_left photon_acc_sum (Rgb.rgb_of_values 0. 0. 0.)
 ;;
 
-let rec rec_photonmap scene ls photonmap wi =
+let rec photonmap scene ls pmap wi =
   let& ((fig, ir) as inter_params) = Pathtracing.trace_ray scene wi, impossible_ls in
   let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
   if is_delta then (
     let outgoing_direction =
       Brdf.montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction material
     in
-    rec_photonmap
+    photonmap scene ls pmap (Figures.ray ir.intersection_point outgoing_direction)
+  ) else (
+    let knn, knn_radius = photon_search pmap ir.intersection_point 1. in
+    let direct_light_contribution = Rgb.zero () in
+    let global_light_contribution =
+      density_estimation
+        (photon_brdf inter_params wi (Diffuse, prob))
+        (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 }) *)
+        (Box knn_radius)
+        knn
+    in
+    Rgb.sum direct_light_contribution global_light_contribution
+    |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
+  )
+;;
+
+let rec nee_photonmap scene ls photonmap wi =
+  let& ((fig, ir) as inter_params) = Pathtracing.trace_ray scene wi, impossible_ls in
+  let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
+  if is_delta then (
+    let outgoing_direction =
+      Brdf.montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction material
+    in
+    nee_photonmap
       scene
       ls
       photonmap
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
     let knn, knn_radius = photon_search photonmap ir.intersection_point 1. in
-    let _diffuse_brdf =
+    let diffuse_brdf =
       Brdf.brdf
         (Figures.get_figure fig)
         ir.surface_normal
@@ -258,8 +244,7 @@ let rec rec_photonmap scene ls photonmap wi =
         (Direction.from_coords 0. 0. 0.) (* Not used for computing diffuse brdf *)
         (Diffuse, prob)
     in
-    (* let direct_light_contribution = Pathtracing.direct_light scene ls ir diffuse_brdf in *)
-    let direct_light_contribution = Rgb.zero () in
+    let direct_light_contribution = Pathtracing.direct_light scene ls ir diffuse_brdf in
     let global_light_contribution =
       density_estimation
         (photon_brdf inter_params wi (Diffuse, prob))

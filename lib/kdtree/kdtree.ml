@@ -44,27 +44,7 @@ module Make (M : Multidim.S) :
     | Leaf of elt
     | Branch of int * point * range * t * t
 
-  let _iota n =
-    let rec loop curr accum =
-      if curr <= 0 then
-        accum
-      else
-        loop (pred curr) (curr :: accum)
-    in
-    loop n []
-  ;;
-
   let list_split_at l n = BatList.take n l, BatList.drop n l
-  (* let rec loop l n accum =
-     match l with
-     | [] -> failwith "Kd_tree.list_split_at"
-     | x :: xs ->
-     if n = 0 then
-     List.rev accum, l
-     else
-     loop xs (n - 1) (x :: accum)
-     in
-     loop l n [] *)
 
   let split (depth : int) (elts : elt list) : elt * range * elt list * elt list =
     let axis = depth mod M.dim in
@@ -76,11 +56,6 @@ module Make (M : Multidim.S) :
     List.hd gte, range, lt, gte
   ;;
 
-  (*
-     let median = List.nth sorted (len/2) in
-     let (lt,gte) = List.partition (fun elt-> cmpf elt median < 0) sorted in
-     (median, range, lt, gte)
-  *)
   let make elts =
     let rec mk depth es =
       match es with
@@ -156,27 +131,3 @@ module Make (M : Multidim.S) :
     search t []
   ;;
 end
-(*
-   let elts0 = [(2.,3.); (5.,4.); (9.,6.); (4.,7.); (8.,1.); (7.,2.)];;
-   let kd0 = M.make elts0;;
-
-   M.nearest_neighbors kd0 (0.5,0.5) ;;
-   (* should be ([(2.,3.], 8.5) *)
-   M.nearest_neighbors kd0 (7.,4.) ;;
-   (* should be ([(5., 4.); (7., 2.)], 4.) *)
-
-   let elts1 =
-   [(35., 90.);
-   (70., 80.);
-   (10., 75.);
-   (80., 40.);
-   (50., 90.);
-   (70., 30.);
-   (90., 60.);
-   (50., 25.);
-   (25., 10.);
-   (20., 50.);
-   (60., 10.)];;
-
-   let kd1 = M.make elts1;;
-*)
