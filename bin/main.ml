@@ -25,7 +25,7 @@ let my_scene : scene =
          (Direction.from_coords 1. 0. 0.)
          (Point.from_coords (-1.) 0. 0.)
          { emission = Rgb.rgb_of_values 0.75 0. 0.
-         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+         ; coefficients = Rgb.rgb_of_values 0.8 0. 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
   ; (* right *)
@@ -34,7 +34,7 @@ let my_scene : scene =
          (Direction.from_coords (-1.) 0. 0.)
          (Point.from_coords 1. 0. 0.)
          { emission = Rgb.rgb_of_values 0. 1. 0.
-         ; coefficients = Rgb.rgb_of_values 0.0 0.8 0.0, Rgb.zero (), Rgb.zero ()
+         ; coefficients = Rgb.rgb_of_values 0. 0.8 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
   ; (* down *)
@@ -110,8 +110,8 @@ let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-4.5))
 (* let width, height = ref 1024, ref 576 *)
 
-let width, height = ref 512, ref 512
-let num_points = ref 64
+let width, height = ref 256, ref 256
+let num_points = ref 16
 
 let bar ~total =
   let open Progress.Line in
@@ -179,7 +179,7 @@ let () =
   (* SAMPLEAS X PUNTOS DE LA LUZ Y LO TRATAS COMO X LUCES PUNTUALES O QUÉ *)
   (************************************************************************)
   let pool = Task.setup_pool ~num_domains:7 () in
-  let photons = random_walk my_scene light_sources 100000 pool in
+  let photons = random_walk my_scene light_sources 5000 pool in
   (* let my_scene = load_camel "obj_files/camel.obj" in *)
   let rec color_image row col reporter =
     match row, col with

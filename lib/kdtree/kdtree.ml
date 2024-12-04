@@ -54,35 +54,26 @@ module Make (M : Multidim.S) :
     loop n []
   ;;
 
-  let list_split_at l n =
-    if n < 0 then
-      invalid_arg "Kd_tree.list_split_at"
-    else (
-      let rec loop l n accum =
-        match l with
-        | [] -> failwith "Kd_tree.list_split_at"
-        | x :: xs ->
-          if n = 0 then
-            List.rev accum, l
-          else
-            loop xs (n - 1) (x :: accum)
-      in
-      loop l n []
-    )
-  ;;
+  let list_split_at l n = BatList.take n l, BatList.drop n l
+  (* let rec loop l n accum =
+     match l with
+     | [] -> failwith "Kd_tree.list_split_at"
+     | x :: xs ->
+     if n = 0 then
+     List.rev accum, l
+     else
+     loop xs (n - 1) (x :: accum)
+     in
+     loop l n [] *)
 
   let split (depth : int) (elts : elt list) : elt * range * elt list * elt list =
     let axis = depth mod M.dim in
-    match elts with
-    | [] -> invalid_arg "split: empty list"
-    | [ _ ] -> invalid_arg "split: singleton list"
-    | _ ->
-      let cmpf e0 e1 = M.axial_compare axis (M.to_point e0) (M.to_point e1) in
-      let len = List.length elts in
-      let range = List.fold_left M.range_maker M.null_range elts in
-      let sorted = List.sort cmpf elts in
-      let lt, gte = list_split_at sorted (len / 2) in
-      List.hd gte, range, lt, gte
+    let cmpf e0 e1 = M.axial_compare axis (M.to_point e0) (M.to_point e1) in
+    let len = List.length elts in
+    let range = List.fold_left M.range_maker M.null_range elts in
+    let sorted = List.sort cmpf elts in
+    let lt, gte = list_split_at sorted (len / 2) in
+    List.hd gte, range, lt, gte
   ;;
 
   (*
@@ -93,14 +84,6 @@ module Make (M : Multidim.S) :
   let make elts =
     let rec mk depth es =
       match es with
-      | [] ->
-        let err_msg =
-          Printf.sprintf
-            "Kd_tree.make: num_elts=%d, depth=%d, null list "
-            (List.length elts)
-            depth
-        in
-        invalid_arg err_msg
       | [ elt ] -> Leaf elt
       | _ ->
         let depth' = depth + 1 in
@@ -114,13 +97,17 @@ module Make (M : Multidim.S) :
     let update elt ((curr_closest, curr_distance) as curr) =
       let p = M.to_point elt in
       let d_2 = M.squared_distance q p in
-      if d_2 < curr_distance then
-        [ elt ], d_2
-      else if d_2 > curr_distance then
-        curr
+      if d_2 <= curr_distance then
+        elt :: curr_closest, curr_distance
       else
-        (* d_2 = curr_distance, so merge *)
-        elt :: curr_closest, d_2
+        curr
+      (* if d_2 < curr_distance then
+         [ elt ], d_2
+         else if d_2 > curr_distance then
+         curr
+         else
+         (* d_2 = curr_distance, so merge *)
+         elt :: curr_closest, d_2 *)
     in
     let rec descend node path curr =
       match node, path with
@@ -147,7 +134,7 @@ module Make (M : Multidim.S) :
           descend gte path curr
       | _ -> curr
     in
-    descend root [] ([], max_float)
+    descend root [] ([], 0.1)
   ;;
 
   let range_search t r =

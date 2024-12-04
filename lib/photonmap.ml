@@ -97,7 +97,7 @@ let random_walk scene light_sources num_random_walks pool =
     let next_light, emitted_photons = scene_lights_weights.(ind) in
     let init_direction =
       Brdf.sample_spherical_direction
-        (Direction.from_coords (-1.) 0. 0.)
+        (Direction.from_coords 0. 1. 0.)
         (Light.sample_light_point next_light)
     in
     let next_photon_flux =
@@ -108,7 +108,7 @@ let random_walk scene light_sources num_random_walks pool =
     let initial_photon =
       Photon.photon next_photon_flux (Light.sample_light_point next_light) init_direction
     in
-    scatter_photons scene next_light initial_photon [] true
+    scatter_photons scene next_light initial_photon [] false
   in
   let scene_photons () =
     Task.parallel_for_reduce
@@ -119,7 +119,9 @@ let random_walk scene light_sources num_random_walks pool =
       (fun acc photons -> acc @ photons)
       []
   in
-  PhotonMap.make (Task.run pool (fun _ -> scene_photons ()))
+  let scattered_photons = Task.run pool (fun _ -> scene_photons ()) in
+  Printf.printf "Number of total photons: %d\n" (List.length scattered_photons);
+  PhotonMap.make scattered_photons
 ;;
 
 let impossible_ls =
@@ -165,13 +167,25 @@ let impossible_ls =
   search_nearest (List.init k (fun i -> List.nth photonmap i)) photonmap
 ;; *)
 
-let photon_search (photonmap : PhotonMap.t) (point : Geometry.Point.point_t)
+let photon_search
+  (photonmap : PhotonMap.t)
+  (point : Geometry.Point.point_t)
+  (_radius : float)
   : Photon.t list * float
   =
+  (* let squared_radius = Common.square radius in *)
   let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) in
-  (* BatList.take 3 knn, radius *)
+  (* Printf.printf "knn: %d\n" (List.length knn); *)
   knn, radius
 ;;
+
+(* ( List.filter
+   (fun k ->
+   Photon.squared_distance (Photon.to_point k) (Photon.point point) <= squared_radius)
+   knn
+   , radius ) *)
+
+(* knn, radius *)
 
 let photon_brdf
   ((fig, ir) : Figures.scene_figure * Figures.intersection)
@@ -238,8 +252,8 @@ let rec rec_photonmap scene ls photonmap wi =
       photonmap
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn, knn_radius = photon_search photonmap ir.intersection_point in
-    let diffuse_brdf =
+    let knn, knn_radius = photon_search photonmap ir.intersection_point 1. in
+    let _diffuse_brdf =
       Brdf.brdf
         (Figures.get_figure fig)
         ir.surface_normal
@@ -247,7 +261,8 @@ let rec rec_photonmap scene ls photonmap wi =
         (Direction.from_coords 0. 0. 0.) (* Not used for computing diffuse brdf *)
         (Diffuse, prob)
     in
-    let direct_light_contribution = Pathtracing.direct_light scene ls ir diffuse_brdf in
+    (* let direct_light_contribution = Pathtracing.direct_light scene ls ir diffuse_brdf in *)
+    let direct_light_contribution = Rgb.zero () in
     let global_light_contribution =
       density_estimation
         (photon_brdf inter_params wi (Diffuse, prob))

@@ -8,7 +8,7 @@ type russian_roulette_result =
   | Specular
   | Refraction
 
-let absorption_prob = ref 0.2
+let absorption_prob = ref 0.1
 
 let delta wr wi =
   if Direction.cross_product wr wi |> Direction.modulus < 0.001 then
