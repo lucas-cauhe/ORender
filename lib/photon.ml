@@ -1,4 +1,5 @@
 open Colorspace
+open Scene
 open Geometry
 
 module Photon = struct
@@ -13,12 +14,14 @@ module Photon = struct
     { flux : Rgb.pixel
     ; position : Point.point_t
     ; direction : Direction.direction_t
+    ; surface : Figures.figure
     }
 
-  let photon flux position direction = { flux; position; direction }
+  let photon flux position direction surface = { flux; position; direction; surface }
   let position ph = ph.position
   let direction ph = ph.direction
   let flux ph = ph.flux
+  let surface ph = ph.surface
 
   let to_string ph =
     Printf.sprintf

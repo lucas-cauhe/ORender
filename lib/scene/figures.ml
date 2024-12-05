@@ -623,3 +623,36 @@ let is_plane = function
   | Figure { fig_type = Plane _; _ } -> true
   | _ -> false
 ;;
+
+let is_same_plane
+  ({ plane_normal = pn1; _ } as plane1)
+  { plane_normal = pn2; plane_origin = po2 }
+  =
+  (* normals are equal and either point belongs to the other plane *)
+  Direction.eq pn1 pn2 && point_belongs_to_plane po2 plane1
+;;
+
+let is_same_sphere
+  { sphere_radius = sr1; sphere_center = sc1 }
+  { sphere_radius = sr2; sphere_center = sc2 }
+  =
+  (* same radius and center point *)
+  sr1 = sr2 && Point.eq sc1 sc2
+;;
+
+let is_same_triangle
+  { vert_a = va1; vert_b = vb1; vert_c = vc1; _ }
+  { vert_a = va2; vert_b = vb2; vert_c = vc2; _ }
+  =
+  (* three vertices are the same & in the same order *)
+  Point.eq va1 va2 && Point.eq vb1 vb2 && Point.eq vc1 vc2
+;;
+
+let is_same_figure fig1 fig2 =
+  match fig1.fig_type, fig2.fig_type with
+  | Empty, Empty -> true
+  | Plane plane1, Plane plane2 -> is_same_plane plane1 plane2
+  | Sphere sphere1, Sphere sphere2 -> is_same_sphere sphere1 sphere2
+  | Triangle triangle1, Triangle triangle2 -> is_same_triangle triangle1 triangle2
+  | _, _ -> false
+;;

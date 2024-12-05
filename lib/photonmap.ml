@@ -57,6 +57,7 @@ let rec scatter_photons
            (Photon.flux current_photon)
            ir.intersection_point
            outgoing_direction
+           (Figures.get_figure fig)
        in
        scatter_photons scene light next_photon photons false
      | Diffuse, roulette_prob ->
@@ -72,6 +73,7 @@ let rec scatter_photons
            (Photon.flux current_photon)
            ir.intersection_point
            outgoing_direction
+           (Figures.get_figure fig)
        in
        let current_brdf =
          Brdf.brdf
@@ -88,7 +90,11 @@ let rec scatter_photons
        in
        let photon_radiance = Rgb.rgb_prod brdf_cosine (Photon.flux current_photon) in
        let next_photon =
-         Photon.photon photon_radiance ir.intersection_point outgoing_direction
+         Photon.photon
+           photon_radiance
+           ir.intersection_point
+           outgoing_direction
+           (Figures.get_figure fig)
        in
        if is_first_photon then
          scatter_photons scene light next_photon photons false
@@ -112,7 +118,11 @@ let random_walk scene light_sources num_random_walks pool =
         (4. *. Float.pi /. float_of_int emitted_photons)
     in
     let initial_photon =
-      Photon.photon next_photon_flux (Light.sample_light_point next_light) init_direction
+      Photon.photon
+        next_photon_flux
+        (Light.sample_light_point next_light)
+        init_direction
+        (Figures.empty ())
     in
     scatter_photons scene next_light initial_photon [] false
   in
@@ -140,11 +150,15 @@ let photon_search
   (photonmap : PhotonMap.t)
   (point : Geometry.Point.point_t)
   (radius : float)
+  (surface : Figures.figure)
   : Photon.t list * float
   =
   (* let squared_radius = Common.square radius in *)
   let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) radius in
-  BatList.take 1000 knn, radius
+  (* BatList.take 1000 knn, radius *)
+  ( List.filter (fun photon -> Figures.is_same_figure surface (Photon.surface photon)) knn
+    |> BatList.take 1000
+  , radius )
 ;;
 
 let photon_brdf
@@ -208,7 +222,9 @@ let rec photonmap scene ls pmap wi =
     in
     photonmap scene ls pmap (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn, knn_radius = photon_search pmap ir.intersection_point 0.1 in
+    let knn, knn_radius =
+      photon_search pmap ir.intersection_point 0.1 (Figures.get_figure fig)
+    in
     let direct_light_contribution = Rgb.zero () in
     let global_light_contribution =
       density_estimation
@@ -235,7 +251,9 @@ let rec nee_photonmap scene ls photonmap wi =
       photonmap
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn, knn_radius = photon_search photonmap ir.intersection_point 0.1 in
+    let knn, knn_radius =
+      photon_search photonmap ir.intersection_point 0.1 (Figures.get_figure fig)
+    in
     let diffuse_brdf =
       Brdf.brdf
         (Figures.get_figure fig)
