@@ -1,3 +1,9 @@
+## Render a scene
+`dune exec render`
+
+## Run the tonemapper
+`dune exec tonemapper`
+
 ## Build docs
 `dune build @doc`
 

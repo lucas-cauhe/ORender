@@ -1,9 +1,9 @@
 (* Purely functional, functorized kd-tree algorithm from Overmars (2008).
 
-   Note the use of a special comparison function to achieve the effect of having
-   all of the points in general position.
-
-   TODO: range query, versions in other languages (Scala, Clojure, Haskell)
+   Credits to https://github.com/bpr/kd_tree
+   Revisited by: Lucas Cauhé Viñao, 844665
+   Andrei Dumbrava Luca, 844417
+   Slightly modified version from source to implement KNN
 *)
 module type Multidim = Multidim.S
 

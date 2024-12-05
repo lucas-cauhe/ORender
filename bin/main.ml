@@ -7,7 +7,6 @@
 open Domainslib
 open Computer_gfx.Scene.Figures
 open Computer_gfx.Geometry
-module Photon = Computer_gfx.Photon
 open Computer_gfx.Colorspace
 open Computer_gfx.Scene.Camera
 open Computer_gfx.Obj_parser
