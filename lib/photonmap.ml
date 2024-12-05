@@ -139,11 +139,11 @@ let impossible_ls =
 let photon_search
   (photonmap : PhotonMap.t)
   (point : Geometry.Point.point_t)
-  (_radius : float)
+  (radius : float)
   : Photon.t list * float
   =
   (* let squared_radius = Common.square radius in *)
-  let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) in
+  let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) radius in
   BatList.take 1000 knn, radius
 ;;
 
@@ -208,7 +208,7 @@ let rec photonmap scene ls pmap wi =
     in
     photonmap scene ls pmap (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn, knn_radius = photon_search pmap ir.intersection_point 1. in
+    let knn, knn_radius = photon_search pmap ir.intersection_point 0.1 in
     let direct_light_contribution = Rgb.zero () in
     let global_light_contribution =
       density_estimation
@@ -235,7 +235,7 @@ let rec nee_photonmap scene ls photonmap wi =
       photonmap
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn, knn_radius = photon_search photonmap ir.intersection_point 1. in
+    let knn, knn_radius = photon_search photonmap ir.intersection_point 0.1 in
     let diffuse_brdf =
       Brdf.brdf
         (Figures.get_figure fig)

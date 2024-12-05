@@ -23,7 +23,7 @@ module type S = sig
 
   (* kd tree functionality *)
 
-  val nearest_neighbors : t -> point -> elt list * float
+  val nearest_neighbors : t -> point -> float -> elt list * float
   val range_search : t -> range -> elt list
 end
 
@@ -68,12 +68,13 @@ module Make (M : Multidim.S) :
     mk 0 elts
   ;;
 
-  let nearest_neighbors root q =
-    let update elt ((curr_closest, curr_distance) as curr) =
+  let nearest_neighbors root q radius =
+    let squared_radius = Common.square radius in
+    let update elt ((curr_closest, max_distance) as curr) =
       let p = M.to_point elt in
       let d_2 = M.squared_distance q p in
-      if d_2 <= curr_distance then
-        elt :: curr_closest, curr_distance
+      if d_2 <= squared_radius then
+        elt :: curr_closest, max max_distance d_2
       else
         curr
       (* if d_2 < curr_distance then
@@ -99,17 +100,17 @@ module Make (M : Multidim.S) :
       match path with
       | [] -> curr
       | node :: nodes -> ascend nodes (check_other_side node [] curr)
-    and check_other_side node path ((_, curr_distance) as curr) =
+    and check_other_side node path curr =
       match node with
       | Branch (axis, median, _, lt, gte)
-        when M.squared_axial_distance axis q median <= curr_distance ->
+        when M.squared_axial_distance axis q median <= squared_radius ->
         if M.axial_compare axis q median >= 0 then
           descend lt path curr
         else
           descend gte path curr
       | _ -> curr
     in
-    descend root [] ([], 0.1)
+    descend root [] ([], 0.)
   ;;
 
   let range_search t r =

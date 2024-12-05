@@ -133,7 +133,7 @@ let photonmap_pixel_color cam (row, col) ls scene photons pool =
     |> Direction.normalize
     |> Option.get
     |> ray (cam_origin cam)
-    |> rec_photonmap scene ls photons
+    |> photonmap scene ls photons
   in
   let color_sum () =
     Task.parallel_for_reduce
