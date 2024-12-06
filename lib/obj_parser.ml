@@ -36,9 +36,9 @@ let read_obj_file filename =
       let line = input_line ic in
       if String.length line >= 2 then (
         match String.sub line 0 2 with
-        | "v " -> vertices := parse_vertex line :: !vertices
-        | "vn" -> normals := parse_normal line :: !normals
-        | "f " -> faces := parse_face line :: !faces
+        | "v " -> vertices := !vertices @ [ parse_vertex line ]
+        | "vn" -> normals := !normals @ [ parse_normal line ]
+        | "f " -> faces := !faces @ [ parse_face line ]
         | _ -> ()
       )
     done;

@@ -22,7 +22,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 1. 0. 0.)
-         (Point.from_coords (-1.) 0. 0.)
+         (Point.from_coords (-20.) 0. 0.)
          { emission = Rgb.rgb_of_values 0.75 0. 0.
          ; coefficients = Rgb.rgb_of_values 0.8 0. 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -31,7 +31,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords (-1.) 0. 0.)
-         (Point.from_coords 1. 0. 0.)
+         (Point.from_coords 20. 0. 0.)
          { emission = Rgb.rgb_of_values 0. 1. 0.
          ; coefficients = Rgb.rgb_of_values 0. 0.8 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -40,7 +40,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 1. 0.)
-         (Point.from_coords 0. (-1.) 0.)
+         (Point.from_coords 0. (-20.) 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -49,7 +49,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. (-1.) 0.)
-         (Point.from_coords 0. 1. 0.)
+         (Point.from_coords 0. 20. 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -58,13 +58,13 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 0. (-1.))
-         (Point.from_coords 0. 0. 1.)
+         (Point.from_coords 0. 0. 20.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
     (* triangle_box; *)
-  ; Figure
+    (* ; Figure
       (sphere
          (Point.from_coords (-0.5) (-0.7) 0.25)
          0.3
@@ -82,12 +82,12 @@ let my_scene : scene =
              Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 1. 1. 1.
              (* Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero () *)
          ; refraction = 0.66
-         })
+         }) *)
   ]
 ;;
 
 let light_sources : light_source list =
-  [ light_source (Point (Point.from_coords 0. 0.5 0.)) (Rgb.rgb_of_values 1. 1. 1.)
+  [ light_source (Point (Point.from_coords 0. 0.5 (-0.5))) (Rgb.rgb_of_values 1. 1. 1.)
     (* [ light_source
       (Area
          (Figure
@@ -103,10 +103,11 @@ let light_sources : light_source list =
   ]
 ;;
 
-let left = ref (Direction.from_coords (-2.) 0. 0.)
-let up = ref (Direction.from_coords 0. 2. 0.)
-let forward = ref (Direction.from_coords 0. 0. 3.)
-let origin = ref (Point.from_coords 0. 0. (-4.5))
+let left = ref (Direction.from_coords (-20.) 0. 0.)
+let up = ref (Direction.from_coords 0. 20. 0.)
+let forward = ref (Direction.from_coords 0. 0. 30.)
+let origin = ref (Point.from_coords 0. 0. (-30.5))
+(* let origin = ref (Point.from_coords 0. 0. (-4.5)) *)
 (* let width, height = ref 1024, ref 576 *)
 
 let width, height = ref 256, ref 256
@@ -117,7 +118,7 @@ let bar ~total =
   list [ spinner (); bar total; count_to total ]
 ;;
 
-let _load_camel obj_file =
+let load_camel obj_file =
   let vertices, _, faces = read_obj_file obj_file in
   (* List.iter (fun face -> Printf.printf "Face -> %d %d %d\n" face.v1 face.v2 face.v3) faces; *)
   let triangles = convert_to_scene (vertices, faces) in
@@ -132,7 +133,7 @@ let photonmap_pixel_color cam (row, col) ls scene photons pool =
     |> Direction.normalize
     |> Option.get
     |> ray (cam_origin cam)
-    |> photonmap scene ls photons
+    |> nee_photonmap scene ls photons
   in
   let color_sum () =
     Task.parallel_for_reduce
@@ -179,7 +180,7 @@ let () =
   (************************************************************************)
   let pool = Task.setup_pool ~num_domains:7 () in
   let photons = random_walk my_scene light_sources 100000 pool in
-  (* let my_scene = load_camel "obj_files/camel.obj" in *)
+  let my_scene = load_camel "obj_files/camel.obj" in
   let rec color_image row col reporter =
     match row, col with
     | r, _ when r = !height -> close_out oc

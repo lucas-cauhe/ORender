@@ -118,7 +118,7 @@ let random_walk scene light_sources num_random_walks pool =
         init_direction
         (Figures.empty ())
     in
-    scatter_photons scene next_light initial_photon [] false
+    scatter_photons scene next_light initial_photon [] true
   in
   let scene_photons () =
     Task.parallel_for_reduce
