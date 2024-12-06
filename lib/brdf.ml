@@ -60,19 +60,19 @@ let sample_spherical normal origin rand_lat =
   |> Geometry.Transformations.direction_of_hc
 ;;
 
-let sample_spherical_direction normal origin =
+let uniform_cosine_sample normal origin =
   let rand_lat = uniform_cosine () in
   sample_spherical normal origin rand_lat
 ;;
 
-let sample_spherical_direction_solid normal origin =
+let uniform_solid_angle_sample normal origin =
   let rand_lat = uniform_solid_angle () in
   sample_spherical normal origin rand_lat
 ;;
 
 let montecarlo_sample fig { surface_normal = normal; intersection_point = ip; _ } wo
   = function
-  | Diffuse -> sample_spherical_direction normal ip
+  | Diffuse -> uniform_cosine_sample normal ip
   | Specular -> sample_specular wo normal
   | Refraction -> sample_refraction wo normal (refraction fig)
   | Absorption -> normal

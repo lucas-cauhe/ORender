@@ -73,18 +73,6 @@ let rec rec_path_tracing scene light_sources wi =
   |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
 ;;
 
-(* Rgb.rgb_prod direct_light_contribution (Figures.get_figure fig |> Figures.emission) *)
-(* Rgb.rgb_of_values
-   (if Direction.z outgoing_direction >= 0. then
-   1.
-   else
-   0.)
-   (if Direction.z outgoing_direction < 0. then
-   1.
-   else
-   0.)
-   0.) *)
-
 (** Path tracing algorithm implementation *)
 let path_tracing scene light_sources camera_ray =
   let ls_hd = List.hd light_sources in

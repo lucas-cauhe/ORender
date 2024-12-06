@@ -102,7 +102,7 @@ let random_walk scene light_sources num_random_walks pool =
   let internal_random_walk ind =
     let next_light, emitted_photons = scene_lights_weights.(ind) in
     let init_direction =
-      Brdf.sample_spherical_direction_solid
+      Brdf.uniform_solid_angle_sample
         (Direction.from_coords 0. (-1.) 0.)
         (Light.sample_light_point next_light)
     in
