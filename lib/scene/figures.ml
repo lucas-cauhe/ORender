@@ -487,6 +487,38 @@ let point_belongs_to_cuboid (p : Point.point_t) (cuboid : cuboid_type) =
   && pz <= cubzmax
 ;;
 
+let transform_cuboid (transform : transformation) (figure : cuboid_type)
+  : figure_properties -> figure option
+  =
+  let complete_transform fig props = Some (cuboid fig.cuboid_min fig.cuboid_max props) in
+  match transform with
+  | Translation (tx, ty, tz) ->
+    let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
+    let translated_points =
+      Array.map
+        (fun point ->
+          Transformations.hc_of_point point
+          |> Transformations.translate translation_mat
+          |> Option.get
+          |> Transformations.point_of_hc)
+        [| figure.cuboid_min; figure.cuboid_max |]
+    in
+    complete_transform
+      { cuboid_min = translated_points.(0); cuboid_max = translated_points.(1) }
+  | Rotation (m, ax) ->
+    let rotated_points =
+      Array.map
+        (fun point ->
+          Transformations.hc_of_point point
+          |> Transformations.rotate m ax
+          |> Transformations.point_of_hc)
+        [| figure.cuboid_min; figure.cuboid_max |]
+    in
+    complete_transform
+      { cuboid_min = rotated_points.(0); cuboid_max = rotated_points.(1) }
+  | _ -> complete_transform figure
+;;
+
 (**************************)
 (* BOUNDING BOX FUNCTIONS *)
 (**************************)
@@ -532,7 +564,7 @@ let transform t fig =
   | Plane plane -> transform_plane t plane fig.fig_properties
   | Sphere sphere -> transform_sphere t sphere fig.fig_properties
   | Triangle triangle -> transform_triangle t triangle fig.fig_properties
-  | Cuboid _ -> Some fig
+  | Cuboid cuboid -> transform_cuboid t cuboid fig.fig_properties
 ;;
 
 (****************************)
@@ -655,4 +687,41 @@ let is_same_figure fig1 fig2 =
   | Sphere sphere1, Sphere sphere2 -> is_same_sphere sphere1 sphere2
   | Triangle triangle1, Triangle triangle2 -> is_same_triangle triangle1 triangle2
   | _, _ -> false
+;;
+
+let rotate_figure scene_fig rotation_matrix axis =
+  let translate_fig central fig =
+    transform
+      (Geometry.Translation (-.Point.x central, -.Point.y central, -.Point.z central))
+      fig
+    |> Option.get
+  in
+  let rec rotate_internal central root figs =
+    let rotated_figs = List.map (rotate_one central) figs in
+    BoundingBox
+      ( translate_fig central root
+        |> transform (Geometry.Rotation (rotation_matrix, axis))
+        |> Option.get
+      , rotated_figs )
+  and rotate_one center = function
+    | Figure fig ->
+      Figure
+        (transform (Geometry.Rotation (rotation_matrix, axis)) (translate_fig center fig)
+         |> Option.get)
+    | BoundingBox (box, next_figs) -> rotate_internal center box next_figs
+  in
+  match scene_fig with
+  | Figure fig ->
+    Figure (transform (Geometry.Rotation (rotation_matrix, axis)) fig |> Option.get)
+  | BoundingBox (({ fig_type = Cuboid cuboid; _ } as bounding_volume), figs) ->
+    rotate_internal (cuboid_barycenter cuboid) bounding_volume figs
+  | _ -> scene_fig
+;;
+
+let rec translate_figure x y z = function
+  | Figure fig -> Figure (transform (Geometry.Translation (x, y, z)) fig |> Option.get)
+  | BoundingBox (box, next_figs) ->
+    let translated_figs = List.map (translate_figure x y z) next_figs in
+    let translated_box = transform (Geometry.Translation (x, y, z)) box |> Option.get in
+    BoundingBox (translated_box, translated_figs)
 ;;

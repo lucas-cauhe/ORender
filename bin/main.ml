@@ -11,8 +11,7 @@ open Computer_gfx.Colorspace
 open Computer_gfx.Scene.Camera
 open Computer_gfx.Obj_parser
 open Computer_gfx.Photonmap
-
-(* open Computer_gfx.Bvh *)
+open Computer_gfx.Bvh
 open Computer_gfx.Scene.Light
 open Computer_gfx.Pathtracing
 module PpmDb = Computer_gfx.Db.Ppm
@@ -87,7 +86,7 @@ let my_scene : scene =
 ;;
 
 let light_sources : light_source list =
-  [ light_source (Point (Point.from_coords 0. 0.5 (-0.5))) (Rgb.rgb_of_values 1. 1. 1.)
+  [ light_source (Point (Point.from_coords 2. 2. 0.)) (Rgb.rgb_of_values 1. 1. 1.)
     (* [ light_source
       (Area
          (Figure
@@ -103,10 +102,10 @@ let light_sources : light_source list =
   ]
 ;;
 
-let left = ref (Direction.from_coords (-20.) 0. 0.)
-let up = ref (Direction.from_coords 0. 20. 0.)
-let forward = ref (Direction.from_coords 0. 0. 30.)
-let origin = ref (Point.from_coords 0. 0. (-30.5))
+let left = ref (Direction.from_coords (-40.) 0. 0.)
+let up = ref (Direction.from_coords 0. 40. 0.)
+let forward = ref (Direction.from_coords 0. 0. 60.)
+let origin = ref (Point.from_coords 0. 0. (-60.5))
 (* let origin = ref (Point.from_coords 0. 0. (-4.5)) *)
 (* let width, height = ref 1024, ref 576 *)
 
@@ -122,9 +121,14 @@ let load_camel obj_file =
   let vertices, _, faces = read_obj_file obj_file in
   (* List.iter (fun face -> Printf.printf "Face -> %d %d %d\n" face.v1 face.v2 face.v3) faces; *)
   let triangles = convert_to_scene (vertices, faces) in
-  (* let tri_scene = split_scene triangles LargestAxis in *)
-  triangles @ my_scene
+  let tri_scene = split_scene triangles LargestAxis in
+  let rotation_mat = Transformations.rotation_transformation_of_axis ~angle:10. Y in
+  let real_scene = rotate_figure (List.nth tri_scene 0) rotation_mat Y in
+  [ real_scene ] @ my_scene
 ;;
+
+(* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)
+(* [ real_scene ] @ my_scene *)
 
 let photonmap_pixel_color cam (row, col) ls scene photons pool =
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
@@ -174,10 +178,6 @@ let () =
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
-  (************************************************************************)
-  (*                   PARA LUZ DE AREA EN PHOTONMAPPING                  *)
-  (* SAMPLEAS X PUNTOS DE LA LUZ Y LO TRATAS COMO X LUCES PUNTUALES O QUÉ *)
-  (************************************************************************)
   let pool = Task.setup_pool ~num_domains:7 () in
   let photons = random_walk my_scene light_sources 100000 pool in
   let my_scene = load_camel "obj_files/camel.obj" in
