@@ -345,8 +345,8 @@ let transform_triangle (transform : transformation) (t : triangle_type)
           Transformations.hc_of_direction dir
           |> Transformations.scale scale_mat
           |> Transformations.direction_of_hc)
-        [| Direction.between_points t.vert_c t.vert_a
-         ; Direction.between_points t.vert_b t.vert_a
+        [| Direction.between_points t.vert_b t.vert_a
+         ; Direction.between_points t.vert_c t.vert_a
         |]
     in
     triangle
@@ -516,6 +516,24 @@ let transform_cuboid (transform : transformation) (figure : cuboid_type)
     in
     complete_transform
       { cuboid_min = rotated_points.(0); cuboid_max = rotated_points.(1) }
+  | Scale (sx, sy, sz) ->
+    let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
+    let scaled_dir =
+      Transformations.hc_of_direction
+        (Direction.between_points figure.cuboid_max figure.cuboid_min)
+      |> Transformations.scale scale_mat
+      |> Transformations.direction_of_hc
+    in
+    complete_transform
+      { cuboid_min = figure.cuboid_min
+      ; cuboid_max =
+          Point.sum
+            figure.cuboid_min
+            (Point.from_coords
+               (Direction.x scaled_dir)
+               (Direction.y scaled_dir)
+               (Direction.z scaled_dir))
+      }
   | _ -> complete_transform figure
 ;;
 
@@ -723,5 +741,13 @@ let rec translate_figure x y z = function
   | BoundingBox (box, next_figs) ->
     let translated_figs = List.map (translate_figure x y z) next_figs in
     let translated_box = transform (Geometry.Translation (x, y, z)) box |> Option.get in
+    BoundingBox (translated_box, translated_figs)
+;;
+
+let rec scale_figure sx sy sz = function
+  | Figure fig -> Figure (transform (Geometry.Scale (sx, sy, sz)) fig |> Option.get)
+  | BoundingBox (box, next_figs) ->
+    let translated_figs = List.map (scale_figure sx sy sz) next_figs in
+    let translated_box = transform (Geometry.Scale (sx, sy, sz)) box |> Option.get in
     BoundingBox (translated_box, translated_figs)
 ;;

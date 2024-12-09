@@ -64,8 +64,8 @@ let convert_to_scene (vertexs, faces) =
          (convert_vertex v1)
          (convert_vertex v2)
          (convert_vertex v3)
-         { emission = Rgb.rgb_of_values 0.8 0.4 0.05
-         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
+         { emission = Rgb.rgb_of_values 0.8 0.4 0.5
+         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.5
          }
        |> Option.get)

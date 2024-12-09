@@ -6,7 +6,7 @@ type bvh_algorithm =
   | LargestAxis
   | Sah
 
-let bvh_primitives_minimum = 3
+let bvh_primitives_minimum = 4
 
 (*********************************************)
 (* SPLIT SCENE ACROSS LARGEST AXIS ALGORITHM *)
