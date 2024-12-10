@@ -518,21 +518,32 @@ let transform_cuboid (transform : transformation) (figure : cuboid_type)
       { cuboid_min = rotated_points.(0); cuboid_max = rotated_points.(1) }
   | Scale (sx, sy, sz) ->
     let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
-    let scaled_dir =
-      Transformations.hc_of_direction
-        (Direction.between_points figure.cuboid_max figure.cuboid_min)
-      |> Transformations.scale scale_mat
-      |> Transformations.direction_of_hc
+    let ccenter = cuboid_barycenter figure in
+    let scaled_dirs =
+      Array.map
+        (fun dir ->
+          Transformations.hc_of_direction dir
+          |> Transformations.scale scale_mat
+          |> Transformations.direction_of_hc)
+        [| Direction.between_points figure.cuboid_min ccenter
+         ; Direction.between_points figure.cuboid_max ccenter
+        |]
     in
     complete_transform
-      { cuboid_min = figure.cuboid_min
+      { cuboid_min =
+          Point.sum
+            ccenter
+            (Point.from_coords
+               (Direction.x scaled_dirs.(0))
+               (Direction.y scaled_dirs.(0))
+               (Direction.z scaled_dirs.(0)))
       ; cuboid_max =
           Point.sum
-            figure.cuboid_min
+            ccenter
             (Point.from_coords
-               (Direction.x scaled_dir)
-               (Direction.y scaled_dir)
-               (Direction.z scaled_dir))
+               (Direction.x scaled_dirs.(1))
+               (Direction.y scaled_dirs.(1))
+               (Direction.z scaled_dirs.(1)))
       }
   | _ -> complete_transform figure
 ;;
@@ -744,10 +755,58 @@ let rec translate_figure x y z = function
     BoundingBox (translated_box, translated_figs)
 ;;
 
-let rec scale_figure sx sy sz = function
+let rec rec_scale (sx, sy, sz) trans parent = function
+  | Figure { fig_type = Triangle t; fig_properties = props } ->
+    let parent_center = cuboid_barycenter parent in
+    let triangle_to_parent =
+      let scaled_a = Direction.between_points t.vert_a parent_center |> trans in
+      let scaled_b = Direction.between_points t.vert_b parent_center |> trans in
+      let scaled_c = Direction.between_points t.vert_c parent_center |> trans in
+      let rescaled_a =
+        Point.sum
+          parent_center
+          (Point.from_coords
+             (Direction.x scaled_a)
+             (Direction.y scaled_a)
+             (Direction.z scaled_a))
+      in
+      let rescaled_b =
+        Point.sum
+          parent_center
+          (Point.from_coords
+             (Direction.x scaled_b)
+             (Direction.y scaled_b)
+             (Direction.z scaled_b))
+      in
+      let rescaled_c =
+        Point.sum
+          parent_center
+          (Point.from_coords
+             (Direction.x scaled_c)
+             (Direction.y scaled_c)
+             (Direction.z scaled_c))
+      in
+      triangle rescaled_a rescaled_b rescaled_c props |> Option.get
+    in
+    Figure triangle_to_parent
+  | BoundingBox (({ fig_type = Cuboid c; _ } as box), figs) ->
+    let scaled_figs = List.map (rec_scale (sx, sy, sz) trans c) figs in
+    let scaled_box = transform (Geometry.Scale (sx, sy, sz)) box |> Option.get in
+    BoundingBox (scaled_box, scaled_figs)
+  | scene_fig -> scene_fig
+;;
+
+let scale_figure sx sy sz = function
   | Figure fig -> Figure (transform (Geometry.Scale (sx, sy, sz)) fig |> Option.get)
-  | BoundingBox (box, next_figs) ->
-    let translated_figs = List.map (scale_figure sx sy sz) next_figs in
-    let translated_box = transform (Geometry.Scale (sx, sy, sz)) box |> Option.get in
-    BoundingBox (translated_box, translated_figs)
+  | BoundingBox (({ fig_type = Cuboid c; _ } as box), next_figs) ->
+    let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
+    let scale_trans dir =
+      Transformations.hc_of_direction dir
+      |> Transformations.scale scale_mat
+      |> Transformations.direction_of_hc
+    in
+    let scaled_figs = List.map (rec_scale (sx, sy, sz) scale_trans c) next_figs in
+    let scaled_box = transform (Geometry.Scale (sx, sy, sz)) box |> Option.get in
+    BoundingBox (scaled_box, scaled_figs)
+  | other -> other
 ;;

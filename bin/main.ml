@@ -121,10 +121,10 @@ let load_camel obj_file =
   let vertices, _, faces = read_obj_file obj_file in
   let triangles = convert_to_scene (vertices, faces) in
   let tri_scene = split_scene triangles LargestAxis in
-  let rotation_mat = Transformations.rotation_transformation_of_axis ~angle:5. Y in
-  let real_scene = rotate_figure (List.nth tri_scene 0) rotation_mat Y in
-  let real_scene = translate_figure 0. 0. (-50.) real_scene in
-  (* let real_scene = scale_figure 8. 8. 8. (List.nth tri_scene 0) in *)
+  (* let rotation_mat = Transformations.rotation_transformation_of_axis ~angle:5. Y in
+     let real_scene = rotate_figure (List.nth tri_scene 0) rotation_mat Y in *)
+  let real_scene = translate_figure 0. 0. (-50.) (List.nth tri_scene 0) in
+  let real_scene = scale_figure 0.5 0.5 0.5 real_scene in
   [ real_scene ] @ my_scene
 ;;
 
@@ -181,7 +181,7 @@ let () =
   PpmDb.write_header oc out_conf;
   let pool = Task.setup_pool ~num_domains:7 () in
   let photons = random_walk my_scene light_sources 100000 pool in
-  let my_scene = load_camel "obj_files/Cube.obj" in
+  let my_scene = load_camel "obj_files/camel.obj" in
   let rec color_image row col reporter =
     match row, col with
     | r, _ when r = !height -> close_out oc
