@@ -720,11 +720,17 @@ let rotate_figure scene_fig rotation_matrix axis =
       ( translate_fig central root
         |> transform (Geometry.Rotation (rotation_matrix, axis))
         |> Option.get
+        |> transform
+             (Geometry.Translation (Point.x central, Point.y central, Point.z central))
+        |> Option.get
       , rotated_figs )
   and rotate_one center = function
     | Figure fig ->
       Figure
         (transform (Geometry.Rotation (rotation_matrix, axis)) (translate_fig center fig)
+         |> Option.get
+         |> transform
+              (Geometry.Translation (Point.x center, Point.y center, Point.z center))
          |> Option.get)
     | BoundingBox (box, next_figs) -> rotate_internal center box next_figs
   in

@@ -21,7 +21,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 1. 0. 0.)
-         (Point.from_coords (-20.) 0. 0.)
+         (Point.from_coords (-5.) 0. 0.)
          { emission = Rgb.rgb_of_values 0.75 0. 0.
          ; coefficients = Rgb.rgb_of_values 0.8 0. 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -30,7 +30,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords (-1.) 0. 0.)
-         (Point.from_coords 20. 0. 0.)
+         (Point.from_coords 5. 0. 0.)
          { emission = Rgb.rgb_of_values 0. 1. 0.
          ; coefficients = Rgb.rgb_of_values 0. 0.8 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -39,7 +39,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 1. 0.)
-         (Point.from_coords 0. (-20.) 0.)
+         (Point.from_coords 0. (-5.) 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -48,7 +48,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. (-1.) 0.)
-         (Point.from_coords 0. 20. 0.)
+         (Point.from_coords 0. 5. 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -57,7 +57,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 0. (-1.))
-         (Point.from_coords 0. 0. 20.)
+         (Point.from_coords 0. 0. 5.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -86,7 +86,7 @@ let my_scene : scene =
 ;;
 
 let light_sources : light_source list =
-  [ light_source (Point (Point.from_coords 2. 2. (-55.))) (Rgb.rgb_of_values 1. 1. 1.)
+  [ light_source (Point (Point.from_coords 2. 2. (-5.))) (Rgb.rgb_of_values 1. 1. 1.)
     (* [ light_source
       (Area
          (Figure
@@ -102,10 +102,10 @@ let light_sources : light_source list =
   ]
 ;;
 
-let left = ref (Direction.from_coords (-40.) 0. 0.)
-let up = ref (Direction.from_coords 0. 40. 0.)
-let forward = ref (Direction.from_coords 0. 0. 60.)
-let origin = ref (Point.from_coords 0. 0. (-60.5))
+let left = ref (Direction.from_coords (-10.) 0. 0.)
+let up = ref (Direction.from_coords 0. 10. 0.)
+let forward = ref (Direction.from_coords 0. 0. 10.)
+let origin = ref (Point.from_coords 0. 0. (-5.))
 (* let origin = ref (Point.from_coords 0. 0. (-4.5)) *)
 (* let width, height = ref 1024, ref 576 *)
 
@@ -121,9 +121,10 @@ let load_camel obj_file =
   let vertices, _, faces = read_obj_file obj_file in
   let triangles = convert_to_scene (vertices, faces) in
   let tri_scene = split_scene triangles LargestAxis in
-  let rotation_mat = Transformations.rotation_transformation_of_axis ~angle:5. Y in
+  let rotation_mat =
+    Transformations.rotation_transformation_of_axis ~angle:(Float.pi /. 2.) Y
+  in
   let real_scene = rotate_figure (List.nth tri_scene 0) rotation_mat Y in
-  let real_scene = translate_figure 0. 0. (-50.) real_scene in
   (* let real_scene = scale_figure 8. 8. 8. (List.nth tri_scene 0) in *)
   [ real_scene ] @ my_scene
 ;;
