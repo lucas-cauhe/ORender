@@ -123,12 +123,15 @@ let bar ~total =
 let _load_camel obj_file =
   let vertices, _, faces = read_obj_file obj_file in
   let triangles = convert_to_scene (vertices, faces) in
-  let tri_scene = split_scene triangles LargestAxis in
-  (* let rotation_mat = Transformations.rotation_transformation_of_axis ~angle:5. Y in
-     let real_scene = rotate_figure (List.nth tri_scene 0) rotation_mat Y in *)
-  let real_scene = translate_figure 0. 0. (-50.) (List.nth tri_scene 0) in
-  let real_scene = scale_figure 0.5 0.5 0.5 real_scene in
-  [ real_scene ] @ my_scene
+  let rotation_mat =
+    Transformations.rotation_transformation_of_axis ~angle:(Float.pi /. 2.) Y
+  in
+  let triangles = rotate_mesh triangles rotation_mat Y in
+  let center = cuboid_center triangles in
+  let triangles = List.map (scale_figure 2. 2. 2. center) triangles in
+  let real_scene = split_scene triangles LargestAxis in
+  (* let real_scene = scale_figure 2. 2. 2. (List.nth real_scene 0) in *)
+  real_scene @ my_scene
 ;;
 
 (* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)

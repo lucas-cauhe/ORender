@@ -80,6 +80,20 @@ let split_scene_by_axis (scene : Figures.scene) (a : axis) (mid_point : float)
   loop_ [] [] scene
 ;;
 
+let cuboid_center (scene : Figures.scene) : Point.point_t =
+  let scene_min, scene_max = scene_limits scene in
+  let scene_bbox =
+    Figures.cuboid
+      scene_min
+      scene_max
+      { emission = Rgb.zero ()
+      ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.zero ()
+      ; refraction = 0.
+      }
+  in
+  Figures.barycenter scene_bbox
+;;
+
 let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
   let scene_min, scene_max = scene_limits scene in
   (* Printf.printf "SceneMin = %s | SceneMax = %s" (Point.string_of_point scene_min) (Point.string_of_point scene_max); *)

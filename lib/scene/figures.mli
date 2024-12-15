@@ -171,6 +171,7 @@ val refraction : figure -> float
 val is_sphere : scene_figure -> bool
 val is_plane : scene_figure -> bool
 val is_same_figure : figure -> figure -> bool
+val rotate_mesh : scene_figure list -> Geometry.Matrix.matrix_t -> Geometry.axis -> scene_figure list 
 val rotate_figure : scene_figure -> Geometry.Matrix.matrix_t -> Geometry.axis -> scene_figure 
 val translate_figure : float -> float -> float -> scene_figure -> scene_figure 
-val scale_figure : float -> float -> float -> scene_figure -> scene_figure 
+val scale_figure : float -> float -> float -> Geometry.Point.point_t -> scene_figure -> scene_figure 

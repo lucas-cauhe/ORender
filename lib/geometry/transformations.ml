@@ -45,6 +45,11 @@ let direction_of_hc = function
   | Point p -> Direction.of_point p
 ;;
 
+let string_of_hc = function
+  | Direction d -> Direction.string_of_direction d
+  | Point p -> Point.string_of_point p
+;;
+
 let translate mat = function
   | Point p ->
     let tx = Matrix.get_element mat 0 3 in
@@ -69,7 +74,10 @@ let scale mat homCoord =
   let sx = Matrix.get_element mat 0 0 in
   let sy = Matrix.get_element mat 1 1 in
   let sz = Matrix.get_element mat 2 2 in
-  prod homCoord [ sx; sy; sz ]
+  Printf.printf "homCoord before: %s\n" (string_of_hc homCoord);
+  let res = prod homCoord [ sx; sy; sz ] in
+  Printf.printf "homCoord after: %s\n" (string_of_hc res);
+  res
 ;;
 
 let scale_transformation_of_values tx ty tz =
@@ -110,7 +118,7 @@ let rotate mat axis homCoord =
   | X, Point p ->
     let rotatedY =
       Point.z p *. Matrix.get_element mat 1 2
-      |> ( -. ) (Point.y p *. Matrix.get_element mat 1 1)
+      |> ( +. ) (Point.y p *. Matrix.get_element mat 1 1)
     in
     let rotatedZ =
       Point.z p *. Matrix.get_element mat 2 2
@@ -119,20 +127,62 @@ let rotate mat axis homCoord =
     let rotatedPoint = Point.from_coords (Point.x p) rotatedY rotatedZ in
     Point rotatedPoint
   | Y, Point p ->
-    let rotatedX =
-      Point.x p *. Matrix.get_element mat 0 0
-      |> ( +. ) (Point.z p *. Matrix.get_element mat 0 2)
+    (* let rotatedX =
+       Point.x p *. Matrix.get_element mat 0 0
+       |> ( +. ) (Point.y p *. Matrix.get_element mat 0 1)
+       |> ( +. ) (Point.z p *. Matrix.get_element mat 0 2)
+       |> ( +. ) (1. *. Matrix.get_element mat 0 3)
+       in
+       Printf.printf
+       "rotatedX -> %f | Valores matrices 0 0 -> %f | Valores matrices 0 2 -> %f \n"
+       rotatedX
+       (Matrix.get_element mat 0 0)
+       (Matrix.get_element mat 0 2);
+       let rotatedZ =
+       Point.x p *. Matrix.get_element mat 2 0
+       |> ( +. ) (Point.y p *. Matrix.get_element mat 2 1)
+       |> ( +. ) (Point.z p *. Matrix.get_element mat 2 2)
+       |> ( +. ) (1. *. Matrix.get_element mat 2 3) *)
+    (* let point_to_matrix p =
+       Matrix.from_array_matrix [| [| Point.x p |]; [| Point.y p |]; [| Point.z p |]; [| 1.0 |] |] in
+       let res = Matrix.multiply mat point_to_matrix in
+       let point = Point.from_coords (Matrix.get_element res 0 0) (Matrix.get_element res 0 0) (Matrix.get_element res 0 0) in
+       Point point
+       in
+       Printf.printf
+       "rotatedZ -> %f | Valores matrices 2 0 -> %f | Valores matrices 2 2 -> %f \n"
+       rotatedZ
+       (Matrix.get_element mat 2 0)
+       (Matrix.get_element mat 2 2);
+       Printf.printf "Matrix of rotation:\n%s" (Matrix.string_of_matrix mat);
+       Printf.printf
+       "Before rotate x -> %f | y -> %f | z -> %f\n"
+       (Point.x p)
+       (Point.y p)
+       (Point.z p);
+       Printf.printf
+       "After rotate x -> %f | y -> %f | z -> %f\n"
+       rotatedX
+       (Point.y p)
+       rotatedZ;
+       let rotatedPoint = Point.from_coords rotatedX (Point.y p) rotatedZ in
+       Point rotatedPoint *)
+    let point_to_matrix p =
+      Matrix.from_array_matrix
+        [| [| Point.x p |]; [| Point.y p |]; [| Point.z p |]; [| 1.0 |] |]
     in
-    let rotatedZ =
-      Point.x p *. Matrix.get_element mat 2 0
-      |> ( -. ) (Point.z p *. Matrix.get_element mat 2 2)
+    let res = Matrix.multiply mat (point_to_matrix p) |> Option.get in
+    let point =
+      Point.from_coords
+        (Matrix.get_element res 0 0)
+        (Matrix.get_element res 1 0)
+        (Matrix.get_element res 2 0)
     in
-    let rotatedPoint = Point.from_coords rotatedX (Point.y p) rotatedZ in
-    Point rotatedPoint
+    Point point
   | Z, Point p ->
     let rotatedX =
       Point.y p *. Matrix.get_element mat 0 1
-      |> ( -. ) (Point.x p *. Matrix.get_element mat 0 0)
+      |> ( +. ) (Point.x p *. Matrix.get_element mat 0 0)
     in
     let rotatedY =
       Point.y p *. Matrix.get_element mat 1 1
