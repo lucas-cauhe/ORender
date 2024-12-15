@@ -77,4 +77,8 @@ module Rgb = struct
   ;;
 
   let sum_inside p = p.red +. p.green +. p.blue
+
+  let sub p1 p2 =
+    { red = p1.red -. p2.red; green = p1.green -. p2.green; blue = p1.blue -. p2.blue }
+  ;;
 end

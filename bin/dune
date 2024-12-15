@@ -1,4 +1,4 @@
 (executables
- (public_names render tonemapper)
- (names main tonemapper) 
+ (public_names render tonemapper noise)
+ (names main tonemapper noise) 
  (libraries computer_gfx iter progress))
