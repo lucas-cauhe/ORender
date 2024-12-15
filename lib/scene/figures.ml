@@ -287,6 +287,13 @@ let triangle a b c props =
   | None -> None
 ;;
 
+let triangle_centroid (t : triangle_type) =
+  let open Point in
+  let sum = sum (sum t.vert_a t.vert_b) t.vert_c in
+  Printf.printf "Centroid of triangle: %s\n" (prod sum (1. /. 3.) |> Point.string_of_point);
+  prod sum (1. /. 3.)
+;;
+
 let triangle_intersection (triangle : triangle_type) (ray : ray_type) =
   let open Direction in
   match
@@ -339,30 +346,41 @@ let transform_triangle (transform : transformation) (t : triangle_type)
     triangle translated_points.(0) translated_points.(1) translated_points.(2)
   | Scale (sx, sy, sz) ->
     let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
+    let center = triangle_centroid t in
     let scaled_dirs =
       Array.map
         (fun dir ->
           Transformations.hc_of_direction dir
           |> Transformations.scale scale_mat
           |> Transformations.direction_of_hc)
-        [| Direction.between_points t.vert_b t.vert_a
-         ; Direction.between_points t.vert_c t.vert_a
+        [| Direction.between_points t.vert_a center
+         ; Direction.between_points t.vert_b center
+         ; Direction.between_points t.vert_c center
         |]
     in
-    triangle
-      t.vert_a
-      (Point.sum
-         t.vert_a
-         (Point.from_coords
-            (Direction.x scaled_dirs.(0))
-            (Direction.y scaled_dirs.(0))
-            (Direction.z scaled_dirs.(0))))
-      (Point.sum
-         t.vert_a
-         (Point.from_coords
-            (Direction.x scaled_dirs.(1))
-            (Direction.y scaled_dirs.(1))
-            (Direction.z scaled_dirs.(1))))
+    let tri =
+      triangle
+        (Point.sum
+           center
+           (Point.from_coords
+              (Direction.x scaled_dirs.(0))
+              (Direction.y scaled_dirs.(0))
+              (Direction.z scaled_dirs.(0))))
+        (Point.sum
+           center
+           (Point.from_coords
+              (Direction.x scaled_dirs.(1))
+              (Direction.y scaled_dirs.(1))
+              (Direction.z scaled_dirs.(1))))
+        (Point.sum
+           center
+           (Point.from_coords
+              (Direction.x scaled_dirs.(2))
+              (Direction.y scaled_dirs.(2))
+              (Direction.z scaled_dirs.(2))))
+    in
+    show_triangle t;
+    tri
   | Rotation (m, ax) ->
     let rotated_points =
       Array.map
@@ -707,6 +725,15 @@ let is_same_figure fig1 fig2 =
   | _, _ -> false
 ;;
 
+let rotate_mesh scene_figs rotation_matrix axis =
+  let rotate_one = function
+    | Figure fig ->
+      Figure (transform (Geometry.Rotation (rotation_matrix, axis)) fig |> Option.get)
+    | BoundingBox (box, _) -> Figure box
+  in
+  List.map rotate_one scene_figs
+;;
+
 let rotate_figure scene_fig rotation_matrix axis =
   let translate_fig central fig =
     transform
@@ -751,7 +778,10 @@ let rec translate_figure x y z = function
 ;;
 
 let rec scale_figure sx sy sz = function
-  | Figure fig -> Figure (transform (Geometry.Scale (sx, sy, sz)) fig |> Option.get)
+  | Figure fig ->
+    let fig = Figure (transform (Geometry.Scale (sx, sy, sz)) fig |> Option.get) in
+    show_figure (get_figure fig);
+    fig
   | BoundingBox (box, next_figs) ->
     let translated_figs = List.map (scale_figure sx sy sz) next_figs in
     let translated_box = transform (Geometry.Scale (sx, sy, sz)) box |> Option.get in

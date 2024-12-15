@@ -45,6 +45,11 @@ let direction_of_hc = function
   | Point p -> Direction.of_point p
 ;;
 
+let string_of_hc = function
+  | Direction d -> Direction.string_of_direction d
+  | Point p -> Point.string_of_point p
+;;
+
 let translate mat = function
   | Point p ->
     let tx = Matrix.get_element mat 0 3 in
@@ -69,7 +74,10 @@ let scale mat homCoord =
   let sx = Matrix.get_element mat 0 0 in
   let sy = Matrix.get_element mat 1 1 in
   let sz = Matrix.get_element mat 2 2 in
-  prod homCoord [ sx; sy; sz ]
+  Printf.printf "homCoord before: %s\n" (string_of_hc homCoord);
+  let res = prod homCoord [ sx; sy; sz ] in
+  Printf.printf "homCoord after: %s\n" (string_of_hc res);
+  res
 ;;
 
 let scale_transformation_of_values tx ty tz =
@@ -164,7 +172,6 @@ let rotate mat axis homCoord =
         [| [| Point.x p |]; [| Point.y p |]; [| Point.z p |]; [| 1.0 |] |]
     in
     let res = Matrix.multiply mat (point_to_matrix p) |> Option.get in
-    Printf.printf "res:\n%s" (Matrix.string_of_matrix res);
     let point =
       Point.from_coords
         (Matrix.get_element res 0 0)

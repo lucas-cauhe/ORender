@@ -21,7 +21,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 1. 0. 0.)
-         (Point.from_coords (-5.) 0. 0.)
+         (Point.from_coords (-20.) 0. 0.)
          { emission = Rgb.rgb_of_values 0.75 0. 0.
          ; coefficients = Rgb.rgb_of_values 0.8 0. 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -30,7 +30,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords (-1.) 0. 0.)
-         (Point.from_coords 5. 0. 0.)
+         (Point.from_coords 20. 0. 0.)
          { emission = Rgb.rgb_of_values 0. 1. 0.
          ; coefficients = Rgb.rgb_of_values 0. 0.8 0., Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -39,7 +39,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 1. 0.)
-         (Point.from_coords 0. (-5.) 0.)
+         (Point.from_coords 0. (-20.) 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -48,7 +48,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. (-1.) 0.)
-         (Point.from_coords 0. 5. 0.)
+         (Point.from_coords 0. 20. 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -57,7 +57,7 @@ let my_scene : scene =
     Figure
       (plane
          (Direction.from_coords 0. 0. (-1.))
-         (Point.from_coords 0. 0. 5.)
+         (Point.from_coords 0. 0. 20.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
          ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
@@ -102,10 +102,10 @@ let light_sources : light_source list =
   ]
 ;;
 
-let left = ref (Direction.from_coords (-10.) 0. 0.)
-let up = ref (Direction.from_coords 0. 10. 0.)
-let forward = ref (Direction.from_coords 0. 0. 10.)
-let origin = ref (Point.from_coords 0. 0. (-5.))
+let left = ref (Direction.from_coords (-40.) 0. 0.)
+let up = ref (Direction.from_coords 0. 40. 0.)
+let forward = ref (Direction.from_coords 0. 0. 40.)
+let origin = ref (Point.from_coords 0. 0. (-30.))
 (* let origin = ref (Point.from_coords 0. 0. (-4.5)) *)
 (* let width, height = ref 1024, ref 576 *)
 
@@ -120,13 +120,15 @@ let bar ~total =
 let load_camel obj_file =
   let vertices, _, faces = read_obj_file obj_file in
   let triangles = convert_to_scene (vertices, faces) in
-  let tri_scene = split_scene triangles LargestAxis in
   let rotation_mat =
     Transformations.rotation_transformation_of_axis ~angle:(Float.pi /. 2.) Y
   in
-  let real_scene = rotate_figure (List.nth tri_scene 0) rotation_mat Y in
-  (* let real_scene = scale_figure 8. 8. 8. (List.nth tri_scene 0) in *)
-  [ real_scene ] @ my_scene
+  let triangles = rotate_mesh triangles rotation_mat Y in
+  let center = cuboid_center triangles in
+  let triangles = List.map (scale_figure 2. 2. 2. center) triangles in
+  let real_scene = split_scene triangles LargestAxis in
+  (* let real_scene = scale_figure 2. 2. 2. (List.nth real_scene 0) in *)
+  real_scene @ my_scene
 ;;
 
 (* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)
