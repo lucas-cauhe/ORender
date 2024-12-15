@@ -67,9 +67,11 @@ let my_scene : scene =
       (sphere
          (Point.from_coords (-0.5) (-0.7) 0.25)
          0.3
-         { emission = Rgb.rgb_of_values 0.3 0.9 0.95
+         { emission = Rgb.rgb_of_values 0.3 0.9 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
          ; coefficients =
-             Rgb.rgb_of_values 0.2 0.7 0.75, Rgb.rgb_of_values 0.6 0.2 0.15, Rgb.zero ()
+             (* Rgb.rgb_of_values 0.2 0.7 0.75, Rgb.rgb_of_values 0.6 0.2 0.15, Rgb.zero () *)
+             Rgb.rgb_of_values 0.2 0.7 0.75, Rgb.zero (), Rgb.zero ()
+             (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
          ; refraction = 1.
          })
   ; Figure
@@ -108,10 +110,10 @@ let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-4.5))
 
 (* let origin = ref (Point.from_coords 0. 0. (-4.5)) *)
-let width, height = ref 1024, ref 576
+let width, height = ref 256, ref 256
 
 (* let width, height = ref 256, ref 256 *)
-let num_points = ref 16
+let num_points = ref 512
 
 let bar ~total =
   let open Progress.Line in

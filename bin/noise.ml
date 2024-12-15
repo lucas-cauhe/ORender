@@ -25,13 +25,12 @@ let () =
     | None ->
       close_in noisy_ic;
       close_in ref_ic;
+      Printf.printf "num_items -> %d, noise -> %f\n" num_items noise;
       rmse noise (float_of_int num_items)
     | Some p ->
       (match PpmDb.read_pixel ref_ic ref_header with
        | Some ref_p ->
-         traverse_file
-           (noise +. Rgb.sum_inside (Rgb.sub p ref_p) |> square)
-           (num_items + 1)
+         traverse_file (noise +. (Rgb.abs_diff ref_p p |> square)) (num_items + 1)
        | None -> 0.)
   in
   let noise_result = traverse_file 0. 0 in

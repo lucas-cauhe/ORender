@@ -78,7 +78,9 @@ module Rgb = struct
 
   let sum_inside p = p.red +. p.green +. p.blue
 
-  let sub p1 p2 =
-    { red = p1.red -. p2.red; green = p1.green -. p2.green; blue = p1.blue -. p2.blue }
+  let abs_diff p1 p2 =
+    (abs_float @@ (p1.red -. p2.red))
+    +. (abs_float @@ (p1.green -. p2.green))
+    +. (abs_float @@ (p1.blue -. p2.blue))
   ;;
 end
