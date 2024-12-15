@@ -1,4 +1,6 @@
 module Bindings = Bindings
+
+(** Implements the path tracing algorithm *)
 val path_tracing : Scene.Figures.scene -> Scene.Light.light_source list -> Scene.Figures.ray_type -> Colorspace.Rgb.pixel
 
 (** Traces a ray [ray] accross the given [scene] to find which is the first figure that intersects with the ray, if any *)

@@ -166,11 +166,23 @@ val find_closest_figure :
 *)
 
 val emission : figure -> Colorspace.Rgb.pixel
+(** Get the emission (color) of a given [figure] *)
+
 val coefficients : figure -> coefficients
+(** Get the coefficients of the given [figure] *)
+
 val refraction : figure -> float
+(** Get the refraction factor of the given [figure] *)
+
 val is_sphere : scene_figure -> bool
+(** Check whether the given [scene_figure] is a sphere *)
+
 val is_plane : scene_figure -> bool
+(** Check whether the given [scene_figure] is a plane *)
+
 val is_same_figure : figure -> figure -> bool
+(** Test if two figures are structurally the same *)
+
 val rotate_mesh : scene_figure list -> Geometry.Matrix.matrix_t -> Geometry.axis -> scene_figure list 
 val rotate_figure : scene_figure -> Geometry.Matrix.matrix_t -> Geometry.axis -> scene_figure 
 val translate_figure : float -> float -> float -> scene_figure -> scene_figure 

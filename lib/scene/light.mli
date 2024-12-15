@@ -54,7 +54,10 @@ val sample_light : light_source list -> light_source list
 *)
 
 val sample_light_point : light_source -> Geometry.Point.point_t
+(** Samples a [point] from the given [light_source] *)
 
 val sample_light_source : light_source -> light_source
+(** Samples a point [ligh_source] from the given [light_source] *)
 
 val to_string : light_source -> string
+(** Prettify the given light_source *)
