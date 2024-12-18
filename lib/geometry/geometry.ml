@@ -14,7 +14,7 @@ let value_at_axis (a : axis) p =
 
 type transformation =
   | Rotation of Matrix.matrix_t * axis
-  | Scale of float * float * float * Point.point_t
+  | Scale of float * float * float
   | Translation of float * float * float
   | ChangeBase of Matrix.matrix_t
 

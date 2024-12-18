@@ -45,7 +45,7 @@ let direction_of_hc = function
   | Point p -> Direction.of_point p
 ;;
 
-let string_of_hc = function
+let _string_of_hc = function
   | Direction d -> Direction.string_of_direction d
   | Point p -> Point.string_of_point p
 ;;
@@ -74,9 +74,9 @@ let scale mat homCoord =
   let sx = Matrix.get_element mat 0 0 in
   let sy = Matrix.get_element mat 1 1 in
   let sz = Matrix.get_element mat 2 2 in
-  Printf.printf "homCoord before: %s\n" (string_of_hc homCoord);
+  (* Printf.printf "homCoord before: %s\n" (string_of_hc homCoord); *)
   let res = prod homCoord [ sx; sy; sz ] in
-  Printf.printf "homCoord after: %s\n" (string_of_hc res);
+  (* Printf.printf "homCoord after: %s\n" (string_of_hc res); *)
   res
 ;;
 
