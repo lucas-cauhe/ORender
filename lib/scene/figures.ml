@@ -34,11 +34,16 @@ type sphere_type =
   ; sphere_center : Point.point_t
   }
 
+type triangle_vertex_type =
+  { point : Point.point_t
+  ; normal : Direction.direction_t
+  ; material : float * float
+  }
+
 type triangle_type =
-  { vert_a : Point.point_t
-  ; vert_b : Point.point_t
-  ; vert_c : Point.point_t
-  ; triangle_normal : Direction.direction_t
+  { vert_a : triangle_vertex_type
+  ; vert_b : triangle_vertex_type
+  ; vert_c : triangle_vertex_type
   }
 
 type cuboid_type =
@@ -274,46 +279,62 @@ let point_belongs_to_sphere (p : Point.point_t) (fig : sphere_type) =
 (*********************************)
 
 let triangle a b c props =
-  match
-    Direction.cross_product (Direction.between_points b a) (Direction.between_points c a)
-    |> Direction.normalize
-  with
-  | Some normal ->
-    Some
-      { fig_type =
-          Triangle { vert_a = a; vert_b = b; vert_c = c; triangle_normal = normal }
-      ; fig_properties = props
-      }
-  | None -> None
+  { fig_type = Triangle { vert_a = a; vert_b = b; vert_c = c }; fig_properties = props }
 ;;
 
-let triangle_centroid (t : triangle_type) =
-  let open Point in
-  let sum = sum (sum t.vert_a t.vert_b) t.vert_c in
-  Printf.printf "Centroid of triangle: %s\n" (prod sum (1. /. 3.) |> Point.string_of_point);
-  prod sum (1. /. 3.)
+let triangle_area p1 p2 p3 =
+  let ab = Direction.between_points p1 p2 in
+  let ac = Direction.between_points p1 p3 in
+  0.5 *. (Direction.cross_product ab ac |> Direction.modulus)
+;;
+
+let interpolate_triangle_normal (point : Point.point_t) (triangle : triangle_type) =
+  let alpha, beta, gamma =
+    let total_area =
+      triangle_area triangle.vert_a.point triangle.vert_b.point triangle.vert_c.point
+    in
+    ( triangle_area point triangle.vert_b.point triangle.vert_c.point /. total_area
+    , triangle_area point triangle.vert_c.point triangle.vert_a.point /. total_area
+    , triangle_area point triangle.vert_a.point triangle.vert_b.point /. total_area )
+  in
+  Direction.sum
+    (Direction.prod triangle.vert_a.normal alpha)
+    (Direction.prod triangle.vert_b.normal beta)
+  |> Direction.sum (Direction.prod triangle.vert_c.normal gamma)
+  |> Direction.normalize
+  |> Option.get
+;;
+
+let triangle_normal (t : triangle_type) =
+  Direction.div
+    (Direction.sum t.vert_a.normal t.vert_b.normal |> Direction.sum t.vert_c.normal)
+    3.
+  |> Option.get
+  |> Direction.normalize
+  |> Option.get
 ;;
 
 let triangle_intersection (triangle : triangle_type) (ray : ray_type) =
   let open Direction in
   match
     plane_intersection
-      { plane_normal = triangle.triangle_normal; plane_origin = triangle.vert_a }
+      { plane_normal = triangle_normal triangle; plane_origin = triangle.vert_a.point }
       ray
   with
-  | Intersects [ { distance = d; _ } ] as il ->
+  | Intersects [ ({ distance = d; intersection_point = ip; _ } as inter) ] ->
     let p = point_of_ray ray d in
-    let v0 = between_points triangle.vert_b triangle.vert_a in
-    let v1 = between_points triangle.vert_c triangle.vert_b in
-    let v2 = between_points triangle.vert_a triangle.vert_c in
-    let pa = between_points p triangle.vert_a in
-    let pb = between_points p triangle.vert_b in
-    let pc = between_points p triangle.vert_c in
-    let left_a = cross_product v0 pa |> dot triangle.triangle_normal in
-    let left_b = cross_product v1 pb |> dot triangle.triangle_normal in
-    let left_c = cross_product v2 pc |> dot triangle.triangle_normal in
+    let v0 = between_points triangle.vert_b.point triangle.vert_a.point in
+    let v1 = between_points triangle.vert_c.point triangle.vert_b.point in
+    let v2 = between_points triangle.vert_a.point triangle.vert_c.point in
+    let pa = between_points p triangle.vert_a.point in
+    let pb = between_points p triangle.vert_b.point in
+    let pc = between_points p triangle.vert_c.point in
+    let left_a = cross_product v0 pa |> dot (triangle_normal triangle) in
+    let left_b = cross_product v1 pb |> dot (triangle_normal triangle) in
+    let left_c = cross_product v2 pc |> dot (triangle_normal triangle) in
     if left_a >= 0. && left_b >= 0. && left_c >= 0. then
-      il
+      Intersects
+        [ { inter with surface_normal = interpolate_triangle_normal ip triangle } ]
     else
       Zero
   | _ -> Zero
@@ -322,15 +343,32 @@ let triangle_intersection (triangle : triangle_type) (ray : ray_type) =
 let show_triangle (triangle : triangle_type) =
   Printf.printf
     "TRIANGLE {A: %s, B: %s, C: %s, Normal: %s}\n"
-    (Point.string_of_point triangle.vert_a)
-    (Point.string_of_point triangle.vert_b)
-    (Point.string_of_point triangle.vert_c)
-    (Direction.string_of_direction triangle.triangle_normal)
+    (Point.string_of_point triangle.vert_a.point)
+    (Point.string_of_point triangle.vert_b.point)
+    (Point.string_of_point triangle.vert_c.point)
+    (Direction.string_of_direction @@ triangle_normal triangle)
+;;
+
+let triangle_vertices (triangle : triangle_type) =
+  [ triangle.vert_a.point; triangle.vert_b.point; triangle.vert_c.point ]
+;;
+
+let triangle_barycenter (triangle : triangle_type) =
+  Point.mean [ triangle.vert_a.point; triangle.vert_b.point; triangle.vert_c.point ]
+  |> Option.get
 ;;
 
 let transform_triangle (transform : transformation) (t : triangle_type)
   : figure_properties -> figure option
   =
+  let complete_transform (point_a, point_b, point_c) props =
+    Some
+      (triangle
+         { t.vert_a with point = point_a }
+         { t.vert_b with point = point_b }
+         { t.vert_c with point = point_c }
+         props)
+  in
   match transform with
   | Translation (tx, ty, tz) ->
     let translation_mat = Transformations.translation_transformation_of_values tx ty tz in
@@ -341,46 +379,43 @@ let transform_triangle (transform : transformation) (t : triangle_type)
           |> Transformations.translate translation_mat
           |> Option.get
           |> Transformations.point_of_hc)
-        [| t.vert_a; t.vert_b; t.vert_c |]
+        [| t.vert_a.point; t.vert_b.point; t.vert_c.point |]
     in
-    triangle translated_points.(0) translated_points.(1) translated_points.(2)
+    complete_transform
+      (translated_points.(0), translated_points.(1), translated_points.(2))
   | Scale (sx, sy, sz) ->
+    let center = triangle_barycenter t in
     let scale_mat = Transformations.scale_transformation_of_values sx sy sz in
-    let center = triangle_centroid t in
     let scaled_dirs =
       Array.map
         (fun dir ->
           Transformations.hc_of_direction dir
           |> Transformations.scale scale_mat
           |> Transformations.direction_of_hc)
-        [| Direction.between_points t.vert_a center
-         ; Direction.between_points t.vert_b center
-         ; Direction.between_points t.vert_c center
+        [| Direction.between_points t.vert_a.point center
+         ; Direction.between_points t.vert_b.point center
+         ; Direction.between_points t.vert_c.point center
         |]
     in
-    let tri =
-      triangle
-        (Point.sum
-           center
-           (Point.from_coords
-              (Direction.x scaled_dirs.(0))
-              (Direction.y scaled_dirs.(0))
-              (Direction.z scaled_dirs.(0))))
-        (Point.sum
-           center
-           (Point.from_coords
-              (Direction.x scaled_dirs.(1))
-              (Direction.y scaled_dirs.(1))
-              (Direction.z scaled_dirs.(1))))
-        (Point.sum
-           center
-           (Point.from_coords
-              (Direction.x scaled_dirs.(2))
-              (Direction.y scaled_dirs.(2))
-              (Direction.z scaled_dirs.(2))))
-    in
-    show_triangle t;
-    tri
+    complete_transform
+      ( Point.sum
+          center
+          (Point.from_coords
+             (Direction.x scaled_dirs.(0))
+             (Direction.y scaled_dirs.(0))
+             (Direction.z scaled_dirs.(0)))
+      , Point.sum
+          center
+          (Point.from_coords
+             (Direction.x scaled_dirs.(1))
+             (Direction.y scaled_dirs.(1))
+             (Direction.z scaled_dirs.(1)))
+      , Point.sum
+          center
+          (Point.from_coords
+             (Direction.x scaled_dirs.(2))
+             (Direction.y scaled_dirs.(2))
+             (Direction.z scaled_dirs.(2))) )
   | Rotation (m, ax) ->
     let rotated_points =
       Array.map
@@ -388,18 +423,26 @@ let transform_triangle (transform : transformation) (t : triangle_type)
           Transformations.hc_of_point point
           |> Transformations.rotate m ax
           |> Transformations.point_of_hc)
-        [| t.vert_a; t.vert_b; t.vert_c |]
+        [| t.vert_a.point; t.vert_b.point; t.vert_c.point |]
     in
-    triangle rotated_points.(0) rotated_points.(1) rotated_points.(2)
-  | _ -> triangle t.vert_a t.vert_b t.vert_c
-;;
-
-let triangle_vertices (triangle : triangle_type) =
-  [ triangle.vert_a; triangle.vert_b; triangle.vert_c ]
-;;
-
-let triangle_barycenter (triangle : triangle_type) =
-  Point.mean [ triangle.vert_a; triangle.vert_b; triangle.vert_c ] |> Option.get
+    let rotated_normals =
+      Array.map
+        (fun dir ->
+          Transformations.hc_of_direction dir
+          |> Transformations.rotate m ax
+          |> Transformations.direction_of_hc)
+        [| t.vert_a.normal; t.vert_b.normal; t.vert_c.normal |]
+    in
+    let complete_rot props =
+      Some
+        (triangle
+           { t.vert_a with point = rotated_points.(0); normal = rotated_normals.(0) }
+           { t.vert_b with point = rotated_points.(1); normal = rotated_normals.(1) }
+           { t.vert_c with point = rotated_points.(2); normal = rotated_normals.(2) }
+           props)
+    in
+    complete_rot
+  | _ -> complete_transform (t.vert_a.point, t.vert_b.point, t.vert_c.point)
 ;;
 
 (*******************************)
@@ -724,7 +767,9 @@ let is_same_triangle
   { vert_a = va2; vert_b = vb2; vert_c = vc2; _ }
   =
   (* three vertices are the same & in the same order *)
-  Point.eq va1 va2 && Point.eq vb1 vb2 && Point.eq vc1 vc2
+  Point.eq va1.point va2.point
+  && Point.eq vb1.point vb2.point
+  && Point.eq vc1.point vc2.point
 ;;
 
 let is_same_figure fig1 fig2 =
@@ -791,9 +836,9 @@ let rec translate_figure x y z = function
 let rec rec_scale (sx, sy, sz) trans parent_center = function
   | Figure { fig_type = Triangle t; fig_properties = props } ->
     let triangle_to_parent =
-      let scaled_a = Direction.between_points t.vert_a parent_center |> trans in
-      let scaled_b = Direction.between_points t.vert_b parent_center |> trans in
-      let scaled_c = Direction.between_points t.vert_c parent_center |> trans in
+      let scaled_a = Direction.between_points t.vert_a.point parent_center |> trans in
+      let scaled_b = Direction.between_points t.vert_b.point parent_center |> trans in
+      let scaled_c = Direction.between_points t.vert_c.point parent_center |> trans in
       let rescaled_a =
         Point.sum
           parent_center
@@ -818,7 +863,11 @@ let rec rec_scale (sx, sy, sz) trans parent_center = function
              (Direction.y scaled_c)
              (Direction.z scaled_c))
       in
-      triangle rescaled_a rescaled_b rescaled_c props |> Option.get
+      triangle
+        { t.vert_a with point = rescaled_a }
+        { t.vert_b with point = rescaled_b }
+        { t.vert_c with point = rescaled_c }
+        props
     in
     Figure triangle_to_parent
   | BoundingBox (box, figs) ->

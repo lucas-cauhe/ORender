@@ -26,6 +26,13 @@ type figure_properties =
   ; refraction : float
   }
 
+type triangle_vertex_type =
+  { point : Geometry.Point.point_t
+  ; normal : Geometry.Direction.direction_t
+  ; material : float * float
+  }
+(** Type representing each vertex of a triangle *)
+
 type figure
 (**
   Every 3d figure that can be represented in a rendering scene
@@ -128,11 +135,11 @@ val sphere :
 *)
 
 val triangle :
-  Geometry.Point.point_t ->
-  Geometry.Point.point_t ->
-  Geometry.Point.point_t ->
+  triangle_vertex_type ->
+  triangle_vertex_type ->
+  triangle_vertex_type ->
     figure_properties ->
-  figure option
+  figure
 (**
   Returns [Some(t)] with the instance of a triangle given three points if a triangle can be formed out of them 
   Returns [None] otherwise
