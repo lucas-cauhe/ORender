@@ -306,10 +306,9 @@ let interpolate_triangle_normal (point : Point.point_t) (triangle : triangle_typ
 ;;
 
 let triangle_normal (t : triangle_type) =
-  Direction.div
-    (Direction.sum t.vert_a.normal t.vert_b.normal |> Direction.sum t.vert_c.normal)
-    3.
-  |> Option.get
+  Direction.cross_product
+    (Direction.between_points t.vert_b.point t.vert_a.point)
+    (Direction.between_points t.vert_c.point t.vert_a.point)
   |> Direction.normalize
   |> Option.get
 ;;
