@@ -172,7 +172,7 @@ val find_closest_figure :
   Returns [None] if no figure was intersected 
 *)
 
-val emission : figure -> Colorspace.Rgb.pixel
+val emission :  Geometry.Point.point_t -> Common.texture_map -> figure -> Colorspace.Rgb.pixel
 (** Get the emission (color) of a given [figure] *)
 
 val coefficients : figure -> coefficients

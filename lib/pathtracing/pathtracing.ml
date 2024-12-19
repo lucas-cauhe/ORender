@@ -38,7 +38,7 @@ let direct_light scene ls x =
   Rgb.rgb_prod (List.fold_left point_ligth_shadow_ray (Rgb.zero ()) ls)
 ;;
 
-let rec rec_path_tracing scene light_sources wi =
+let rec rec_path_tracing scene light_sources texture_map wi =
   let& fig, ir = trace_ray scene wi, List.hd light_sources in
   let* roulette_result, roulette_prob = russian_roulette (Figures.get_figure fig) in
   (* compute wi *)
@@ -68,15 +68,17 @@ let rec rec_path_tracing scene light_sources wi =
     (rec_path_tracing
        scene
        light_sources
+       texture_map
        (Figures.ray ir.intersection_point outgoing_direction))
   |> Rgb.sum direct_light_contribution
-  |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
+  |> Rgb.rgb_prod
+       (Figures.get_figure fig |> Figures.emission ir.intersection_point texture_map)
 ;;
 
 (** Path tracing algorithm implementation *)
-let path_tracing scene light_sources camera_ray =
+let path_tracing scene light_sources texture_map camera_ray =
   let ls_hd = List.hd light_sources in
   match Light.light_source_type_val ls_hd with
-  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources camera_ray
-  | Light.Point _ -> rec_path_tracing scene light_sources camera_ray
+  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources texture_map camera_ray
+  | Light.Point _ -> rec_path_tracing scene light_sources texture_map camera_ray
 ;;

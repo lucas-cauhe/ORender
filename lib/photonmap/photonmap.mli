@@ -12,14 +12,14 @@ module PhotonMap : module type of Kdtree.Make(Photon)
 
     [photonmap scene light_sources photons init_direction] computes the color of the resulting pixel for tracing the [init_direction] ray into the scene
 *)
-val photonmap : Scene.Figures.scene -> Scene.Light.light_source list -> PhotonMap.t -> Scene.Figures.ray_type -> Colorspace.Rgb.pixel
+val photonmap : Scene.Figures.scene -> Scene.Light.light_source list -> PhotonMap.t -> Common.texture_map -> Scene.Figures.ray_type -> Colorspace.Rgb.pixel
 
 (**
     Photonmap implementation using next-event estimation. Direct light is computed using next-event estimation and global light is obtained from the photonmap
 
     [nee_photonmap scene light_sources photons init_direction] computes the color of the resulting pixel for tracing the [init_direction] ray into the scene
 *)
-val nee_photonmap : Scene.Figures.scene -> Scene.Light.light_source list -> PhotonMap.t -> Scene.Figures.ray_type -> Colorspace.Rgb.pixel
+val nee_photonmap : Scene.Figures.scene -> Scene.Light.light_source list -> PhotonMap.t -> Common.texture_map -> Scene.Figures.ray_type -> Colorspace.Rgb.pixel
 
 (**
     Build the photonmap

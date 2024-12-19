@@ -2,3 +2,4 @@ _build
 .vscode/
 ppms/
 obj_files/
+textures/

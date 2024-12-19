@@ -37,14 +37,19 @@ let density_estimation (brdf : Photon.t -> Rgb.pixel) (kernel : Kernels.kernel_t
   List.fold_left photon_acc_sum (Rgb.rgb_of_values 0. 0. 0.)
 ;;
 
-let rec photonmap scene ls pmap wi =
+let rec photonmap scene ls pmap texture_map wi =
   let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
   let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
   if is_delta then (
     let outgoing_direction =
       Brdf.montecarlo_sample (Figures.get_figure fig) ir wi.ray_direction material
     in
-    photonmap scene ls pmap (Figures.ray ir.intersection_point outgoing_direction)
+    photonmap
+      scene
+      ls
+      pmap
+      texture_map
+      (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
     let knn, knn_radius =
       photon_search pmap ir.intersection_point 0.1 (Figures.get_figure fig)
@@ -62,11 +67,12 @@ let rec photonmap scene ls pmap wi =
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution
-    |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
+    |> Rgb.rgb_prod
+         (Figures.get_figure fig |> Figures.emission ir.intersection_point texture_map)
   )
 ;;
 
-let rec nee_photonmap scene ls photonmap wi =
+let rec nee_photonmap scene ls photonmap texture_map wi =
   let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
   let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
   if is_delta then (
@@ -77,6 +83,7 @@ let rec nee_photonmap scene ls photonmap wi =
       scene
       ls
       photonmap
+      texture_map
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
     let knn, knn_radius =
@@ -103,6 +110,7 @@ let rec nee_photonmap scene ls photonmap wi =
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution
-    |> Rgb.rgb_prod (Figures.get_figure fig |> Figures.emission)
+    |> Rgb.rgb_prod
+         (Figures.get_figure fig |> Figures.emission ir.intersection_point texture_map)
   )
 ;;

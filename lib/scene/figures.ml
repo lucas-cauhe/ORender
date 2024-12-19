@@ -103,7 +103,6 @@ let dist_to_point_of_ray ray point =
   Point.x point -. Point.x ray.ray_origin |> ( *. ) (1. /. Direction.x ray.ray_direction)
 ;;
 
-let emission fig = fig.fig_properties.emission
 let coefficients fig = fig.fig_properties.coefficients
 let refraction fig = fig.fig_properties.refraction
 
@@ -288,21 +287,61 @@ let triangle_area p1 p2 p3 =
   0.5 *. (Direction.cross_product ab ac |> Direction.modulus)
 ;;
 
-let interpolate_triangle_normal (point : Point.point_t) (triangle : triangle_type) =
-  let alpha, beta, gamma =
-    let total_area =
-      triangle_area triangle.vert_a.point triangle.vert_b.point triangle.vert_c.point
-    in
-    ( triangle_area point triangle.vert_b.point triangle.vert_c.point /. total_area
-    , triangle_area point triangle.vert_c.point triangle.vert_a.point /. total_area
-    , triangle_area point triangle.vert_a.point triangle.vert_b.point /. total_area )
+let interpolate_triangle_point (point : Point.point_t) (triangle : triangle_type)
+  : float * float * float
+  =
+  let total_area =
+    triangle_area triangle.vert_a.point triangle.vert_b.point triangle.vert_c.point
   in
+  ( triangle_area point triangle.vert_b.point triangle.vert_c.point /. total_area
+  , triangle_area point triangle.vert_c.point triangle.vert_a.point /. total_area
+  , triangle_area point triangle.vert_a.point triangle.vert_b.point /. total_area )
+;;
+
+let interpolate_triangle_normal (point : Point.point_t) (triangle : triangle_type) =
+  let alpha, beta, gamma = interpolate_triangle_point point triangle in
   Direction.sum
     (Direction.prod triangle.vert_a.normal alpha)
     (Direction.prod triangle.vert_b.normal beta)
   |> Direction.sum (Direction.prod triangle.vert_c.normal gamma)
   |> Direction.normalize
   |> Option.get
+;;
+
+let counter = ref 0
+
+let triangle_interpolate_color
+  (triangle : triangle_type)
+  (intersection_point : Point.point_t)
+  (texture_map : Common.texture_map)
+  =
+  let alpha, beta, gamma = interpolate_triangle_point intersection_point triangle in
+  let a, b, c =
+    triangle.vert_a.material, triangle.vert_b.material, triangle.vert_c.material
+  in
+  let u = (fst a *. alpha) +. (fst b *. beta) +. (fst c *. gamma) in
+  let v = (snd a *. alpha) +. (snd b *. beta) +. (snd c *. gamma) in
+  let x = int_of_float (u *. float_of_int texture_map.width) in
+  let y = int_of_float (v *. float_of_int texture_map.height) in
+  let color = texture_map.data.{y, x} in
+  let r = Int32.rem color (Int32.of_int 255) |> Int32.to_float in
+  let color = Int32.shift_right color 8 in
+  let g = Int32.rem color (Int32.of_int 255) |> Int32.to_float in
+  let color = Int32.shift_right color 8 in
+  let b = Int32.rem color (Int32.of_int 255) |> Int32.to_float in
+  if !counter < 10 then
+    Printf.printf
+      "u -> %f; v -> %f; x -> %d; y -> %d; color -> %s; r -> %f; g -> %f; b -> %f\n"
+      u
+      v
+      x
+      y
+      (Int32.to_string color)
+      r
+      g
+      b;
+  counter := !counter + 1;
+  Rgb.rgb_of_values r g b
 ;;
 
 let triangle_normal (t : triangle_type) =
@@ -898,4 +937,10 @@ let scale_figure sx sy sz center fig =
     let scaled_box = transform (Geometry.Scale (sx, sy, sz)) box |> Option.get in
     BoundingBox (scaled_box, scaled_figs)
   | other -> other
+;;
+
+let emission intersection_point texture_map fig =
+  match fig.fig_type with
+  | Triangle t -> triangle_interpolate_color t intersection_point texture_map
+  | _ -> fig.fig_properties.emission
 ;;

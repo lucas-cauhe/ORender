@@ -6,11 +6,9 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github lucas-cauhe/ORender))
 
-(authors "Author Name")
-
-(maintainers "Maintainer Name")
+(authors "Lucas Cauhé Viñao" "Andrei Dumbrava")
 
 (license LICENSE)
 
@@ -20,7 +18,7 @@
  (name computer_gfx)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune (alcotest :with-test)  (iter (= 1.8)))
+ (depends (ocaml (= 5.2.0)) dune (alcotest :with-test) )
  (tags
   (topics "to describe" your project)))
 
