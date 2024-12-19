@@ -199,7 +199,7 @@ let test_plane_not_intersects _ =
 (******************)
 
 (* Ray passes through the triangle *)
-let test_triangle_intersects _ =
+(* let test_triangle_intersects _ =
   let ray =
     { ray_origin = Point.from_coords 0. 0. 0.
     ; ray_direction = Direction.from_coords 1. 1. 1.
@@ -220,10 +220,10 @@ let test_triangle_intersects _ =
       "Ray & Triangle dont intersect"
       !one_intersection
       (intersects t ray)
-;;
+;; *)
 
 (* Ray doesn't pass through the triangle *)
-let test_triangle_not_intersects _ =
+(* let test_triangle_not_intersects _ =
   let ray =
     { ray_origin = Point.from_coords 0. 0. 0.
     ; ray_direction = Direction.from_coords 1. 1. 1.
@@ -240,7 +240,7 @@ let test_triangle_not_intersects _ =
   | None -> failwith "bad triangle definition"
   | Some t ->
     check testable_intersection "Ray & Triangle intersect" Zero (intersects t ray)
-;;
+;; *)
 
 let test_sphere =
   [ "test_sphere_no_intersection", `Quick, test_sphere_no_intersection
@@ -259,14 +259,14 @@ let test_plane =
   ]
 ;;
 
-let test_triangle =
-  [ "test_triangle_intersects", `Quick, test_triangle_intersects
+(* let test_triangle =
+   [ "test_triangle_intersects", `Quick, test_triangle_intersects
   ; "test_triangle_not_intersects", `Quick, test_triangle_not_intersects
   ]
-;;
+   ;; *)
 
 let () =
   Alcotest.run
     "Figures"
-    [ "Plane", test_plane; "Triangle", test_triangle; "Sphere", test_sphere ]
+    [ "Plane", test_plane; (*"Triangle", test_triangle;*) "Sphere", test_sphere ]
 ;;

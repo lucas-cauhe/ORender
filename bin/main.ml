@@ -121,8 +121,8 @@ let bar ~total =
 ;;
 
 let load_camel obj_file =
-  let vertices, _, faces = read_obj_file obj_file in
-  let triangles = convert_to_scene (vertices, faces) in
+  let vertices, normals, faces = read_obj_file obj_file in
+  let triangles = convert_to_scene (vertices, normals, faces) in
   let rotation_mat =
     Transformations.rotation_transformation_of_axis ~angle:(Float.pi /. 2.) Y
   in
