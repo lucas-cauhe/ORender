@@ -4,5 +4,6 @@ val square : float -> float
 type texture_map = {
     width : int;
     height : int;
+    stride : int;
     data : Cairo.Image.data32
 }

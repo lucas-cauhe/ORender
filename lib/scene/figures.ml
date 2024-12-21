@@ -321,22 +321,20 @@ let triangle_interpolate_color
   in
   let u = (fst a *. alpha) +. (fst b *. beta) +. (fst c *. gamma) in
   let v = (snd a *. alpha) +. (snd b *. beta) +. (snd c *. gamma) in
-  let x = int_of_float (u *. float_of_int texture_map.width) in
+  let x = int_of_float (u *. float_of_int texture_map.stride /. 4.) in
   let y = int_of_float (v *. float_of_int texture_map.height) in
-  let color = texture_map.data.{y, x} in
-  let r = Int32.rem color (Int32.of_int 255) |> Int32.to_float in
-  let color = Int32.shift_right color 8 in
-  let g = Int32.rem color (Int32.of_int 255) |> Int32.to_float in
-  let color = Int32.shift_right color 8 in
-  let b = Int32.rem color (Int32.of_int 255) |> Int32.to_float in
+  let color = texture_map.data.{y, x} |> Int32.to_int in
+  let r = (color lsr 16) land 0xFF |> float_of_int in
+  let g = (color lsr 8) land 0xFF |> float_of_int in
+  let b = color land 0xFF |> float_of_int in
   if !counter < 10 then
     Printf.printf
-      "u -> %f; v -> %f; x -> %d; y -> %d; color -> %s; r -> %f; g -> %f; b -> %f\n"
+      "u -> %f; v -> %f; x -> %d; y -> %d; color -> %d; r -> %f; g -> %f; b -> %f\n"
       u
       v
       x
       y
-      (Int32.to_string color)
+      color
       r
       g
       b;

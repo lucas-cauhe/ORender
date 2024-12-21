@@ -80,7 +80,7 @@ let convert_to_scene (vertexs, normals, faces, textures) =
          { point = convert_vertex v1; normal = convert_normal n1; material = t1 }
          { point = convert_vertex v2; normal = convert_normal n2; material = t2 }
          { point = convert_vertex v3; normal = convert_normal n3; material = t3 }
-         { emission = Rgb.zero () (* Rgb.rgb_of_values 1. 1. 1. *)
+         { emission = Rgb.zero ()
          ; coefficients =
              Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
              (* ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8 *)

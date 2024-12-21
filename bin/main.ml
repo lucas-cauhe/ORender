@@ -23,8 +23,8 @@ let my_scene : scene =
       (plane
          (Direction.from_coords 1. 0. 0.)
          (Point.from_coords (-1.) 0. 0.)
-         { emission = Rgb.rgb_of_values 0.75 0. 0.
-         ; coefficients = Rgb.rgb_of_values 0.8 0. 0., Rgb.zero (), Rgb.zero ()
+         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
   ; (* right *)
@@ -32,8 +32,8 @@ let my_scene : scene =
       (plane
          (Direction.from_coords (-1.) 0. 0.)
          (Point.from_coords 1. 0. 0.)
-         { emission = Rgb.rgb_of_values 0. 1. 0.
-         ; coefficients = Rgb.rgb_of_values 0. 0.8 0., Rgb.zero (), Rgb.zero ()
+         { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
   ; (* down *)
@@ -42,7 +42,7 @@ let my_scene : scene =
          (Direction.from_coords 0. 1. 0.)
          (Point.from_coords 0. (-1.) 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
-         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
+         ; coefficients = Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
   ; (* up *)
@@ -51,7 +51,7 @@ let my_scene : scene =
          (Direction.from_coords 0. (-1.) 0.)
          (Point.from_coords 0. 1. 0.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
-         ; coefficients = Rgb.rgb_of_values 0.75 0.75 0.75, Rgb.zero (), Rgb.zero ()
+         ; coefficients = Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
   ; (* back *)
@@ -60,7 +60,7 @@ let my_scene : scene =
          (Direction.from_coords 0. 0. (-1.))
          (Point.from_coords 0. 0. 1.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
-         ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+         ; coefficients = Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.zero (), Rgb.zero ()
          ; refraction = 1.
          })
     (* triangle_box; *)
@@ -118,7 +118,7 @@ let origin = ref (Point.from_coords 0. 0. (-3.5))
 (* let origin = ref (Point.from_coords 0. 0. (-60.5)) *)
 
 let width, height = ref 256, ref 256
-let num_points = ref 4
+let num_points = ref 32
 
 let bar ~total =
   let open Progress.Line in
@@ -130,7 +130,8 @@ let texture_map_from_file file =
   let data = Cairo.Image.get_data32 surface in
   let width = Cairo.Image.get_width surface in
   let height = Cairo.Image.get_height surface in
-  { data; width; height }
+  let stride = Cairo.Image.get_stride surface in
+  { data; width; height; stride }
 ;;
 
 let load_camel obj_file =
@@ -144,14 +145,14 @@ let load_camel obj_file =
   let scene_center = Point.mean [ scene_max; scene_min ] |> Option.get in
   let triangles = List.map (scale_figure 0.1 0.1 0.1 scene_center) triangles in
   let real_scene = split_scene triangles LargestAxis in
-  let real_scene = translate_figure (-2.5) (-4.5) 0. (List.nth real_scene 0) in
+  let real_scene = translate_figure (-2.5) (-4.5) (-0.5) (List.nth real_scene 0) in
   [ real_scene ] @ my_scene
 ;;
 
 (* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)
 (* [ real_scene ] @ my_scene *)
 
-let _photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
+let photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
   let compute_pixel_color ind =
     Direction.between_points pip_arr.(ind) (cam_origin cam)
@@ -172,7 +173,7 @@ let _photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
   Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)
 ;;
 
-let pathtracing_pixel_color cam (row, col) scene light_sources pool texture_map =
+let _pathtracing_pixel_color cam (row, col) scene light_sources pool texture_map =
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
   let compute_pixel_color ind =
     Direction.between_points pip_arr.(ind) (cam_origin cam)
@@ -200,26 +201,26 @@ let () =
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
   let pool = Task.setup_pool ~num_domains:7 () in
-  (* let photons = random_walk my_scene light_sources 100000 pool in *)
+  let photons = random_walk my_scene light_sources 100000 pool in
   let my_scene = load_camel "obj_files/camel.obj" in
   let texture_map = texture_map_from_file "textures/camel.png" in
   let rec color_image row col reporter =
     match row, col with
     | r, _ when r = !height -> close_out oc
     | _, _ ->
-      let color =
-        pathtracing_pixel_color camera (row, col) my_scene light_sources pool texture_map
-      in
       (* let color =
-         photonmap_pixel_color
-         camera
-         (row, col)
-         light_sources
-         my_scene
-         photons
-         pool
-         texture_map
+         pathtracing_pixel_color camera (row, col) my_scene light_sources pool texture_map
          in *)
+      let color =
+        photonmap_pixel_color
+          camera
+          (row, col)
+          light_sources
+          my_scene
+          photons
+          pool
+          texture_map
+      in
       reporter 1;
       PpmDb.write_pixel oc out_conf color;
       if col >= !width - 1 then (
