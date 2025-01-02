@@ -20,7 +20,7 @@ let photon_search
   =
   let knn, radius = PhotonMap.nearest_neighbors photonmap (Photon.point point) radius in
   (* BatList.take 1000 knn, radius *)
-  List.filter (Photon.in_surface surface) knn |> BatList.take 100, radius
+  List.filter (Photon.in_surface surface) knn |> BatList.take 1000, radius
 ;;
 
 (** Compute densitiy estimation for a list of photons

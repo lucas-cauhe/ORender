@@ -3,7 +3,7 @@
 (library
  (name computer_gfx)
  (public_name computer_gfx)
- (libraries batteries domainslib cairo2))
+ (libraries batteries domainslib cairo2 progress))
 
 
 
