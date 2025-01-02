@@ -322,11 +322,12 @@ let triangle_interpolate_color
   let u = (fst a *. alpha) +. (fst b *. beta) +. (fst c *. gamma) in
   let v = (snd a *. alpha) +. (snd b *. beta) +. (snd c *. gamma) in
   let x = int_of_float (u *. float_of_int texture_map.stride /. 4.) in
-  let y = int_of_float (v *. float_of_int texture_map.height) in
+  let y = int_of_float (v *. float_of_int texture_map.height) |> abs in
+  (* Printf.printf "u -> %f; v -> %f; x -> %d; y -> %d\n" u v x y; *)
   let color = texture_map.data.{y, x} |> Int32.to_int in
-  let r = (color lsr 16) land 0xFF |> float_of_int in
-  let g = (color lsr 8) land 0xFF |> float_of_int in
-  let b = color land 0xFF |> float_of_int in
+  let r = (color land 0xFF0000) lsr 16 |> float_of_int in
+  let g = (color land 0x00FF00) lsr 8 |> float_of_int in
+  let b = color land 0x0000FF |> float_of_int in
   if !counter < 10 then
     Printf.printf
       "u -> %f; v -> %f; x -> %d; y -> %d; color -> %d; r -> %f; g -> %f; b -> %f\n"
@@ -339,8 +340,8 @@ let triangle_interpolate_color
       g
       b;
   counter := !counter + 1;
-  let interpolated_color = Rgb.rgb_of_values r g b in
-  Rgb.normalize interpolated_color (Rgb.sum_inside interpolated_color)
+  let pixel = Rgb.rgb_of_values r g b in
+  Rgb.normalize pixel 256.
 ;;
 
 let triangle_normal (t : triangle_type) =

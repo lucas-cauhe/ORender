@@ -117,8 +117,8 @@ let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
 (* let origin = ref (Point.from_coords 0. 0. (-60.5)) *)
 
-let width, height = ref 256, ref 256
-let num_points = ref 16
+let width, height = ref 512, ref 512
+let num_points = ref 256
 
 let bar ~total =
   let open Progress.Line in
@@ -131,6 +131,7 @@ let texture_map_from_file file =
   let width = Cairo.Image.get_width surface in
   let height = Cairo.Image.get_height surface in
   let stride = Cairo.Image.get_stride surface in
+  Printf.printf "Texture map: width -> %d; height -> %d; stride -> %d" width height stride;
   { data; width; height; stride }
 ;;
 
@@ -152,7 +153,7 @@ let load_camel obj_file =
 (* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)
 (* [ real_scene ] @ my_scene *)
 
-let photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
+let _photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
   let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
   let compute_pixel_color ind =
     Direction.between_points pip_arr.(ind) (cam_origin cam)
@@ -212,7 +213,7 @@ let () =
          pathtracing_pixel_color camera (row, col) my_scene light_sources pool texture_map
          in *)
       let color =
-        photonmap_pixel_color
+        _photonmap_pixel_color
           camera
           (row, col)
           light_sources
