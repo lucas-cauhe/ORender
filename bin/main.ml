@@ -118,7 +118,7 @@ let origin = ref (Point.from_coords 0. 0. (-3.5))
 (* let origin = ref (Point.from_coords 0. 0. (-60.5)) *)
 
 let width, height = ref 256, ref 256
-let num_points = ref 32
+let num_points = ref 16
 
 let bar ~total =
   let open Progress.Line in

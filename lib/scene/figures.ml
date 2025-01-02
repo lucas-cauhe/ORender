@@ -339,7 +339,8 @@ let triangle_interpolate_color
       g
       b;
   counter := !counter + 1;
-  Rgb.rgb_of_values r g b
+  let interpolated_color = Rgb.rgb_of_values r g b in
+  Rgb.normalize interpolated_color (Rgb.sum_inside interpolated_color)
 ;;
 
 let triangle_normal (t : triangle_type) =

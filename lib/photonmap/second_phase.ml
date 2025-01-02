@@ -54,7 +54,6 @@ let rec photonmap scene ls pmap texture_map wi =
     let knn, knn_radius =
       photon_search pmap ir.intersection_point 0.1 (Figures.get_figure fig)
     in
-    let direct_light_contribution = Rgb.zero () in
     let global_light_contribution =
       density_estimation
         (Photon.brdf
@@ -66,9 +65,9 @@ let rec photonmap scene ls pmap texture_map wi =
         (Kernels.Box knn_radius)
         knn
     in
-    Rgb.sum direct_light_contribution global_light_contribution
-    |> Rgb.rgb_prod
-         (Figures.get_figure fig |> Figures.emission ir.intersection_point texture_map)
+    Rgb.rgb_prod
+      (Figures.get_figure fig |> Figures.emission ir.intersection_point texture_map)
+      global_light_contribution
   )
 ;;
 
@@ -87,7 +86,7 @@ let rec nee_photonmap scene ls photonmap texture_map wi =
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
     let knn, knn_radius =
-      photon_search photonmap ir.intersection_point 0.1 (Figures.get_figure fig)
+      photon_search photonmap ir.intersection_point 0.05 (Figures.get_figure fig)
     in
     let diffuse_brdf =
       Brdf.brdf
