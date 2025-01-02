@@ -27,8 +27,13 @@ let parse_vertex line = Scanf.sscanf line "v %f %f %f" (fun x y z -> { x; y; z }
 let parse_normal line = Scanf.sscanf line "vn %f %f %f" (fun nx ny nz -> { nx; ny; nz })
 
 let parse_face line =
-  Scanf.sscanf line "f %d/%d/%d %d/%d/%d %d/%d/%d" (fun p1 t1 n1 p2 t2 n2 p3 t3 n3 ->
-    { v1 = p1, t1, n1; v2 = p2, t2, n2; v3 = p3, t3, n3 })
+  try
+    Scanf.sscanf line "f %d/%d/%d %d/%d/%d %d/%d/%d" (fun p1 t1 n1 p2 t2 n2 p3 t3 n3 ->
+      { v1 = p1, t1, n1; v2 = p2, t2, n2; v3 = p3, t3, n3 })
+  with
+  | _ ->
+    Scanf.sscanf line "f %d/%d %d/%d %d/%d" (fun p1 t1 p2 t2 p3 t3 ->
+      { v1 = p1, t1, 1; v2 = p2, t2, 1; v3 = p3, t3, 1 })
 ;;
 
 let parse_texture line = Scanf.sscanf line "vt %f %f" (fun u v -> u, v)
@@ -48,6 +53,7 @@ let read_obj_file filename =
         | "vn" -> normals := !normals @ [ parse_normal line ]
         | "f " -> faces := !faces @ [ parse_face line ]
         | "vt" -> textures := !textures @ [ parse_texture line ]
+        | "us" -> ()
         | _ -> ()
       )
     done;
