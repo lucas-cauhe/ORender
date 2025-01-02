@@ -1,20 +1,12 @@
-(* let test_tonemap () =
-   (* Iter.(IO.chunks_of "forest_path.ppm" |> filter (fun l -> l <> "") |> IO.write_lines "forest_path_out.ppm") *)
-   let ppm_colors: rgb list = read_ppm "forest_path.ppm" in
-   List.map tone_map ppm_colors |> Iter.IO.write_lines "forest_path_out.ppm"
-
-   in *)
-open Domainslib
 open Computer_gfx.Scene.Figures
 open Computer_gfx.Geometry
 open Computer_gfx.Colorspace
 open Computer_gfx.Scene.Camera
-open Computer_gfx.Photonmap
 open Computer_gfx.Obj_parser
 open Computer_gfx.Bvh
 open Computer_gfx.Scene.Light
-open Computer_gfx.Pathtracing
 open Computer_gfx.Common
+open Computer_gfx.Algorithms
 module PpmDb = Computer_gfx.Db.Ppm
 
 let my_scene : scene =
@@ -118,12 +110,6 @@ let origin = ref (Point.from_coords 0. 0. (-3.5))
 (* let origin = ref (Point.from_coords 0. 0. (-60.5)) *)
 
 let width, height = ref 512, ref 512
-let num_points = ref 256
-
-let bar ~total =
-  let open Progress.Line in
-  list [ spinner (); bar total; count_to total ]
-;;
 
 let texture_map_from_file file =
   let surface = Cairo.PNG.create file in
@@ -136,8 +122,8 @@ let texture_map_from_file file =
 ;;
 
 let load_camel obj_file =
-  let vertices, normals, faces, textures = read_obj_file obj_file in
-  let triangles = convert_to_scene (vertices, normals, faces, textures) in
+  let vertices, normals, faces, textures, kd, ks, ka = read_obj_file obj_file in
+  let triangles = convert_to_scene (vertices, normals, faces, textures, kd, ks, ka) in
   let rotation_mat =
     Transformations.rotation_transformation_of_axis ~angle:(Float.pi /. 2.) Y
   in
@@ -153,83 +139,23 @@ let load_camel obj_file =
 (* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)
 (* [ real_scene ] @ my_scene *)
 
-let _photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
-  let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
-  let compute_pixel_color ind =
-    Direction.between_points pip_arr.(ind) (cam_origin cam)
-    |> Direction.normalize
-    |> Option.get
-    |> ray (cam_origin cam)
-    |> nee_photonmap scene ls photons texture_map
-  in
-  let color_sum () =
-    Task.parallel_for_reduce
-      ~start:0
-      ~finish:(BatArray.length pip_arr - 1)
-      ~body:compute_pixel_color
-      pool
-      (fun acc next_color -> Rgb.sum acc next_color)
-      (Rgb.zero ())
-  in
-  Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)
-;;
-
-let _pathtracing_pixel_color cam (row, col) scene light_sources pool texture_map =
-  let pip_arr = BatArray.of_list (points_in_pixel cam (row, col) !num_points) in
-  let compute_pixel_color ind =
-    Direction.between_points pip_arr.(ind) (cam_origin cam)
-    |> Direction.normalize
-    |> Option.get
-    |> ray (cam_origin cam)
-    |> path_tracing scene light_sources texture_map
-  in
-  let color_sum () =
-    Task.parallel_for_reduce
-      ~start:0
-      ~finish:(BatArray.length pip_arr - 1)
-      ~body:compute_pixel_color
-      pool
-      (fun acc next_color -> Rgb.sum acc next_color)
-      (Rgb.zero ())
-  in
-  Rgb.normalize (Task.run pool (fun _ -> color_sum ())) (float_of_int !num_points)
-;;
-
 let () =
   Random.self_init ();
   let camera = camera !up !left !forward !origin (!width, !height) in
   let oc = open_out "ppms/rendered/cornell.ppm" in
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
-  let pool = Task.setup_pool ~num_domains:7 () in
-  let photons = random_walk my_scene light_sources 100000 pool in
+  (* let _ = random_walk my_scene light_sources 100000 pool in *)
   let my_scene = load_camel "obj_files/camel.obj" in
   let texture_map = texture_map_from_file "textures/camel.png" in
-  let rec color_image row col reporter =
-    match row, col with
-    | r, _ when r = !height -> close_out oc
-    | _, _ ->
-      (* let color =
-         pathtracing_pixel_color camera (row, col) my_scene light_sources pool texture_map
-         in *)
-      let color =
-        _photonmap_pixel_color
-          camera
-          (row, col)
-          light_sources
-          my_scene
-          photons
-          pool
-          texture_map
-      in
-      reporter 1;
-      PpmDb.write_pixel oc out_conf color;
-      if col >= !width - 1 then (
-        let () = output_string oc "\n" in
-        color_image (row + 1) 0 reporter
-      ) else
-        color_image row (col + 1) reporter
-  in
-  Progress.with_reporter (bar ~total:(!width * !height)) (fun f -> color_image 0 0 f);
-  Task.teardown_pool pool
+  color_image
+    Pathtracing
+    camera
+    oc
+    out_conf
+    my_scene
+    texture_map
+    light_sources
+    !width
+    !height
 ;;
