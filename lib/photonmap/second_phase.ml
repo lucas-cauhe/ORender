@@ -105,7 +105,9 @@ let rec nee_photonmap scene ls photonmap texture_map wi =
            wi.ray_direction
            (Diffuse, prob))
         (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 }) *)
-        (Box knn_radius)
+        (* (Box knn_radius) *)
+        (Epanechnikov
+           { intersection_position = ir.intersection_point; scale_parameter = knn_radius })
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution
