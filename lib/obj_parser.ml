@@ -37,7 +37,7 @@ let parse_face line =
 ;;
 
 let parse_texture line =
-  Scanf.sscanf line "vt %f %f" (fun u v -> min 1. (max u 0.), 1. -. min 1. (max 0. v))
+  Scanf.sscanf line "vt %f %f" (fun u v -> min 1. (max u 0.), min 1. (max 0. v))
 ;;
 
 let parse_mtl_file line = Scanf.sscanf line "mtllib %s" (fun s -> s)

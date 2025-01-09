@@ -109,7 +109,7 @@ let forward = ref (Direction.from_coords 0. 0. 3.)
 let origin = ref (Point.from_coords 0. 0. (-3.5))
 (* let origin = ref (Point.from_coords 0. 0. (-60.5)) *)
 
-let width, height = ref 512, ref 512
+let width, height = ref 256, ref 256
 
 let texture_map_from_file file =
   let surface = Cairo.PNG.create file in
@@ -129,11 +129,11 @@ let load_camel obj_file =
   in
   let triangles = rotate_mesh triangles rotation_mat Y in
   let scene_min, scene_max = scene_limits triangles in
-  let scene_center = Point.mean [ scene_max; scene_min ] |> Option.get in
-  let triangles = List.map (scale_figure 0.1 0.1 0.1 scene_center) triangles in
+  let _ = Point.mean [ scene_max; scene_min ] |> Option.get in
+  (* let triangles = List.map (scale_figure 0.5 0.5 0.5 scene_center) triangles in *)
   let real_scene = split_scene triangles LargestAxis in
-  let real_scene = translate_figure (-2.5) (-4.5) (-0.5) (List.nth real_scene 0) in
-  [ real_scene ] @ my_scene
+  (* let real_scene = translate_figure (-2.5) (-4.5) (-0.5) (List.nth real_scene 0) in *)
+  real_scene @ my_scene
 ;;
 
 (* let real_scene = translate_figure (-10.) (-6.) (-15.) (List.nth tri_scene 0) in *)
@@ -146,7 +146,7 @@ let () =
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
   (* let _ = random_walk my_scene light_sources 100000 pool in *)
-  let my_scene = load_camel "obj_files/camel.obj" in
+  let my_scene = load_camel "obj_files/image.obj" in
   let texture_map = texture_map_from_file "textures/camel.png" in
   color_image
     Pathtracing
