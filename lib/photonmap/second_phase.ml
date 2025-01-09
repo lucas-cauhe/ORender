@@ -86,7 +86,7 @@ let rec nee_photonmap scene ls photonmap texture_map wi =
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
     let knn, knn_radius =
-      photon_search photonmap ir.intersection_point 0.05 (Figures.get_figure fig)
+      photon_search photonmap ir.intersection_point 0.1 (Figures.get_figure fig)
     in
     let diffuse_brdf =
       Brdf.brdf

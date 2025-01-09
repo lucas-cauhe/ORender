@@ -15,7 +15,7 @@ type algorithm_internal =
   | Photonmap of PhotonMap.t
   | Pathtracing
 
-let num_points = ref 128
+let num_points = ref 32
 
 let bar ~total =
   let open Progress.Line in
@@ -29,7 +29,7 @@ let photonmap_pixel_color cam (row, col) ls scene photons pool texture_map =
     |> Direction.normalize
     |> Option.get
     |> ray (cam_origin cam)
-    |> nee_photonmap scene ls photons texture_map
+    |> photonmap scene ls photons texture_map
   in
   let color_sum () =
     Task.parallel_for_reduce

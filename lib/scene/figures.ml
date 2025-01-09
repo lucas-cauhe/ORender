@@ -308,8 +308,6 @@ let interpolate_triangle_normal (point : Point.point_t) (triangle : triangle_typ
   |> Option.get
 ;;
 
-let counter = ref 0
-
 let triangle_interpolate_color
   (triangle : triangle_type)
   (intersection_point : Point.point_t)
@@ -321,27 +319,14 @@ let triangle_interpolate_color
   in
   let u = (fst a *. alpha) +. (fst b *. beta) +. (fst c *. gamma) in
   let v = (snd a *. alpha) +. (snd b *. beta) +. (snd c *. gamma) in
-  let x = int_of_float (u *. float_of_int texture_map.stride /. 4.) in
+  let x = int_of_float (u *. float_of_int texture_map.width) in
   let y = int_of_float (v *. float_of_int texture_map.height) |> abs in
-  (* Printf.printf "u -> %f; v -> %f; x -> %d; y -> %d\n" u v x y; *)
   let color = texture_map.data.{y, x} |> Int32.to_int in
   let r = (color land 0xFF0000) lsr 16 |> float_of_int in
   let g = (color land 0x00FF00) lsr 8 |> float_of_int in
   let b = color land 0x0000FF |> float_of_int in
-  if !counter < 10 then
-    Printf.printf
-      "u -> %f; v -> %f; x -> %d; y -> %d; color -> %d; r -> %f; g -> %f; b -> %f\n"
-      u
-      v
-      x
-      y
-      color
-      r
-      g
-      b;
-  counter := !counter + 1;
   let pixel = Rgb.rgb_of_values r g b in
-  Rgb.normalize pixel 256.
+  Rgb.normalize pixel 255.
 ;;
 
 let triangle_normal (t : triangle_type) =
@@ -463,7 +448,7 @@ let transform_triangle (transform : transformation) (t : triangle_type)
           |> Transformations.point_of_hc)
         [| t.vert_a.point; t.vert_b.point; t.vert_c.point |]
     in
-    let rotated_normals =
+    let _rotated_normals =
       Array.map
         (fun dir ->
           Transformations.hc_of_direction dir
@@ -474,9 +459,12 @@ let transform_triangle (transform : transformation) (t : triangle_type)
     let complete_rot props =
       Some
         (triangle
-           { t.vert_a with point = rotated_points.(0); normal = rotated_normals.(0) }
+           (* { t.vert_a with point = rotated_points.(0); normal = rotated_normals.(0) }
            { t.vert_b with point = rotated_points.(1); normal = rotated_normals.(1) }
-           { t.vert_c with point = rotated_points.(2); normal = rotated_normals.(2) }
+           { t.vert_c with point = rotated_points.(2); normal = rotated_normals.(2) } *)
+           { t.vert_a with point = rotated_points.(0) }
+           { t.vert_b with point = rotated_points.(1) }
+           { t.vert_c with point = rotated_points.(2) }
            props)
     in
     complete_rot

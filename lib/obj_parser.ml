@@ -36,7 +36,10 @@ let parse_face line =
       { v1 = p1, t1, 1; v2 = p2, t2, 1; v3 = p3, t3, 1 })
 ;;
 
-let parse_texture line = Scanf.sscanf line "vt %f %f" (fun u v -> u, v)
+let parse_texture line =
+  Scanf.sscanf line "vt %f %f" (fun u v -> min 1. (max u 0.), 1. -. min 1. (max 0. v))
+;;
+
 let parse_mtl_file line = Scanf.sscanf line "mtllib %s" (fun s -> s)
 
 let read_mtl_file filename =
@@ -140,6 +143,8 @@ let convert_to_scene (vertexs, normals, faces, textures, kd, ks, ka) =
     let t1 = List.nth textures (t1 - 1) in
     let t2 = List.nth textures (t2 - 1) in
     let t3 = List.nth textures (t3 - 1) in
+    (* if fst t1 > 1. || fst t2 > 1. || fst t3 > 1. then
+       Printf.printf "%f, %f, %f\n" (fst t1) (fst t2) (fst t3); *)
     Scene.Figures.Figure
       (Scene.Figures.triangle
          { point = convert_vertex v1; normal = convert_normal n1; material = t1 }
