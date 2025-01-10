@@ -47,15 +47,8 @@ let point_belongs_to_ls p ls =
 let sample_light ls =
   match (List.hd ls).ls_type with
   | Point _ -> ls
-  | Area _ ->
-    let _chosen_light = List.nth ls (Random.int (List.length ls)) in
-    (*todo*)
-    ls
+  | Area _ -> [ List.nth ls (Random.int (List.length ls)) ]
 ;;
-
-(* let rec produce_lights ls n () =
-   let
-   Seq.Cons (l, produce_lights ls (n + 1)) *)
 
 let sample_light_point ls =
   match ls.ls_type with

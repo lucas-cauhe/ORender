@@ -74,9 +74,7 @@ let scale mat homCoord =
   let sx = Matrix.get_element mat 0 0 in
   let sy = Matrix.get_element mat 1 1 in
   let sz = Matrix.get_element mat 2 2 in
-  (* Printf.printf "homCoord before: %s\n" (string_of_hc homCoord); *)
   let res = prod homCoord [ sx; sy; sz ] in
-  (* Printf.printf "homCoord after: %s\n" (string_of_hc res); *)
   res
 ;;
 

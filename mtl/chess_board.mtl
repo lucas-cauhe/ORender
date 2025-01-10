@@ -1,0 +1,13 @@
+# 
+# Wavefront material file
+# Created with Kaydara FBX
+# 
+
+newmtl CheckerBoard_diff
+map_Kd CheckerBoard_diff.png
+Ka 0.200000 0.200000 0.200000
+Kd 1.000000 1.000000 1.000000
+Ks 0.200000 0.200000 0.200000
+illum 2
+Ns 7.331688
+Tr 1.000000

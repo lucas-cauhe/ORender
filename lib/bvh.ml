@@ -71,7 +71,6 @@ let split_scene_by_axis (scene : Figures.scene) (a : axis) (mid_point : float)
     | [] -> scene_a, scene_b
     | fig :: rest ->
       let barycenter = Figures.barycenter (Figures.get_figure fig) in
-      (* Printf.printf "Barycenter: %s vs midpoint: %f" (Point.string_of_point barycenter) mid_point; *)
       if value_at_axis a barycenter <= mid_point then
         loop_ (fig :: scene_a) scene_b rest
       else
@@ -96,7 +95,6 @@ let cuboid_center (scene : Figures.scene) : Point.point_t =
 
 let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
   let scene_min, scene_max = scene_limits scene in
-  (* Printf.printf "SceneMin = %s | SceneMax = %s" (Point.string_of_point scene_min) (Point.string_of_point scene_max); *)
   let scene_bbox =
     Figures.cuboid
       scene_min
@@ -110,11 +108,8 @@ let rec split_largest_axis (scene : Figures.scene) : Figures.scene =
   | s when s <= bvh_primitives_minimum ->
     [ Figures.bounding_box scene_bbox scene |> Option.get ]
   | _ ->
-    (* Printf.printf "New scene size: %d" n; *)
     let l_axis, mid_point = largest_axis scene_min scene_max scene in
-    (* Printf.printf "MID_POINT: %f" mid_point; *)
     let scene_a, scene_b = split_scene_by_axis scene l_axis mid_point in
-    (* Printf.printf "SceneA size: %d | SceneB size: %d" (Figures.scene_size scene_a) (Figures.scene_size scene_b); *)
     [ Figures.bounding_box
         scene_bbox
         (split_largest_axis scene_a @ split_largest_axis scene_b)
