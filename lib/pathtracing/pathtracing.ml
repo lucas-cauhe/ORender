@@ -39,7 +39,7 @@ let direct_light scene ls x =
 ;;
 
 let rec rec_path_tracing scene light_sources texture_map wi =
-  let& fig, ir = trace_ray scene wi, List.hd light_sources in
+  let& fig, ir = trace_ray scene wi, light_sources in
   let* roulette_result, roulette_prob = russian_roulette (Figures.get_figure fig) in
   (* compute wi *)
   let outgoing_direction =
@@ -56,7 +56,7 @@ let rec rec_path_tracing scene light_sources texture_map wi =
   in
   let direct_light_contribution =
     if roulette_result = Diffuse then
-      direct_light scene (Light.sample_light light_sources) ir current_brdf
+      direct_light scene light_sources ir current_brdf
     else
       Rgb.zero ()
   in
@@ -77,8 +77,14 @@ let rec rec_path_tracing scene light_sources texture_map wi =
 
 (** Path tracing algorithm implementation *)
 let path_tracing scene light_sources texture_map camera_ray =
-  let ls_hd = List.hd light_sources in
-  match Light.light_source_type_val ls_hd with
-  | Light.Area fig -> rec_path_tracing (fig :: scene) light_sources texture_map camera_ray
-  | Light.Point _ -> rec_path_tracing scene light_sources texture_map camera_ray
+  let lights_to_figs =
+    List.fold_left
+      (fun acc fig ->
+        match Light.light_source_type_val fig with
+        | Light.Area l -> l :: acc
+        | _ -> acc)
+      []
+      light_sources
+  in
+  rec_path_tracing (lights_to_figs @ scene) light_sources texture_map camera_ray
 ;;

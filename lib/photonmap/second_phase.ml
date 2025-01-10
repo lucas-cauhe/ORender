@@ -38,7 +38,7 @@ let density_estimation (brdf : Photon.t -> Rgb.pixel) (kernel : Kernels.kernel_t
 ;;
 
 let rec photonmap scene ls pmap texture_map wi =
-  let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
+  let& fig, ir = Pathtracing.trace_ray scene wi, [ impossible_ls ] in
   let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
   if is_delta then (
     let outgoing_direction =
@@ -51,7 +51,7 @@ let rec photonmap scene ls pmap texture_map wi =
       texture_map
       (Figures.ray ir.intersection_point outgoing_direction)
   ) else (
-    let knn, knn_radius =
+    let knn, _knn_radius =
       photon_search pmap ir.intersection_point 0.1 (Figures.get_figure fig)
     in
     let global_light_contribution =
@@ -61,8 +61,13 @@ let rec photonmap scene ls pmap texture_map wi =
            ir.surface_normal
            wi.ray_direction
            (Diffuse, prob))
-        (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 }) *)
-        (Kernels.Box knn_radius)
+        (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.1 }) *)
+        (* (Kernels.Box knn_radius) *)
+        (* (Epanechnikov
+           { intersection_position = ir.intersection_point
+           ; scale_parameter = 5. *. sqrt knn_radius
+           }) *)
+        (Tricube { intersection_position = ir.intersection_point; bandwidth = 1. })
         knn
     in
     Rgb.rgb_prod
@@ -72,7 +77,7 @@ let rec photonmap scene ls pmap texture_map wi =
 ;;
 
 let rec nee_photonmap scene ls photonmap texture_map wi =
-  let& fig, ir = Pathtracing.trace_ray scene wi, impossible_ls in
+  let& fig, ir = Pathtracing.trace_ray scene wi, [ impossible_ls ] in
   let (material, prob), is_delta = Figures.get_figure fig |> Brdf.is_delta in
   if is_delta then (
     let outgoing_direction =
@@ -106,8 +111,12 @@ let rec nee_photonmap scene ls photonmap texture_map wi =
            (Diffuse, prob))
         (* (Gaussian { intersection_position = ir.intersection_point; smooth = 0.5 }) *)
         (* (Box knn_radius) *)
-        (Epanechnikov
-           { intersection_position = ir.intersection_point; scale_parameter = knn_radius })
+        (* (Epanechnikov
+           { intersection_position = ir.intersection_point; scale_parameter = knn_radius }) *)
+        (Tricube
+           { intersection_position = ir.intersection_point
+           ; bandwidth = knn_radius *. 1.1
+           })
         knn
     in
     Rgb.sum direct_light_contribution global_light_contribution

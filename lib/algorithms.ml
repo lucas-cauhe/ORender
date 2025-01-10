@@ -15,7 +15,7 @@ type algorithm_internal =
   | Photonmap of PhotonMap.t
   | Pathtracing
 
-let num_points = ref 32
+let num_points = ref 16
 
 let bar ~total =
   let open Progress.Line in
@@ -142,7 +142,7 @@ let color_image
   width
   height
   =
-  let pool = Task.setup_pool ~num_domains:7 () in
+  let pool = Task.setup_pool ~num_domains:15 () in
   let real_algo =
     match algorithm with
     | Pathtracing -> Pathtracing

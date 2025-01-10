@@ -265,9 +265,10 @@ let sphere_vertices (sphere : sphere_type) : Point.point_t list =
 ;;
 
 let point_belongs_to_sphere (p : Point.point_t) (fig : sphere_type) =
-  let xsquare = Point.x p |> Common.square in
-  let ysquare = Point.y p |> Common.square in
-  let zsquare = Point.z p |> Common.square in
+  let dir_to_center = Direction.between_points p fig.sphere_center in
+  let xsquare = Direction.x dir_to_center |> Common.square in
+  let ysquare = Direction.y dir_to_center |> Common.square in
+  let zsquare = Direction.z dir_to_center |> Common.square in
   xsquare +. ysquare +. zsquare -. (fig.sphere_radius |> Common.square)
   |> abs_float
   < !eps
