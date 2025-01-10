@@ -37,7 +37,7 @@ let build_tricube =
 ;;
 
 let kernel_fun (photon : Photon.t) = function
-  | Box radius -> 1. /. Float.pi /. radius
+  | Box radius -> 1. /. Float.pi /. Common.square radius
   | Gaussian { intersection_position; smooth } ->
     (Float.exp
      @@ -.Common.square
@@ -47,14 +47,11 @@ let kernel_fun (photon : Photon.t) = function
     /. Common.square smooth
   | Epanechnikov { intersection_position; scale_parameter } ->
     let r = Photon.direction_to_point intersection_position photon |> Direction.modulus in
-    3. /. (4. *. scale_parameter) *. max 0. (1. -. Common.square (r /. scale_parameter))
+    let u = r /. scale_parameter in
+    3. /. (4. *. Float.pi *. scale_parameter *. scale_parameter) *. (1. -. (u *. u))
   | Tricube { intersection_position; bandwidth } ->
     let r = Photon.direction_to_point intersection_position photon |> Direction.modulus in
-    if r > bandwidth then
-      0.
-    else (
-      let t = abs_float (r /. bandwidth) in
-      let cube = 1. -. (t *. t *. t) in
-      70. /. 81. *. cube *. cube *. cube
-    )
+    let t = abs_float (r /. bandwidth) in
+    let cube = 1. -. (t *. t *. t) in
+    70. *. cube *. cube *. cube /. (81. *. Float.pi *. bandwidth *. bandwidth)
 ;;

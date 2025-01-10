@@ -56,7 +56,7 @@ let my_scene : scene =
          ; refraction = 1.
          })
     (* triangle_box; *)
-    (* ; Figure
+  ; Figure
       (sphere
          (Point.from_coords (-0.5) (-0.7) 0.25)
          0.3
@@ -76,18 +76,18 @@ let my_scene : scene =
              (* Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 1. 1. 1. *)
              Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero ()
          ; refraction = 0.66
-         }) *)
+         })
   ]
 ;;
 
 let light_sources : light_source list =
-  [ light_source (Point (Point.from_coords 0. 0.5 (-1.))) (Rgb.rgb_of_values 1. 1. 1.)
+  [ light_source (Point (Point.from_coords 0. 0.9 (-1.))) (Rgb.rgb_of_values 1. 1. 1.)
     (* [ light_source
       (Area
          (Figure
             (plane
                (Direction.from_coords 0. (-1.) 0.)
-               (Point.from_coords 0. 10. 0.)
+               (Point.from_coords 0. 1. 0.)
                { emission = Rgb.rgb_of_values 0.75 0.75 0.75
                ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
                ; refraction = 1.
@@ -121,13 +121,11 @@ let texture_map_from_file file =
   { data; width; height; stride }
 ;;
 
-let load_camel obj_file =
+let _load_camel obj_file =
   let vertices, normals, faces, textures, kd, ks, ka = read_obj_file obj_file in
   let triangles = convert_to_scene (vertices, normals, faces, textures, kd, ks, ka) in
-  let rotation_mat =
-    Transformations.rotation_transformation_of_axis ~angle:(Float.pi /. 2.) Y
-  in
-  let triangles = rotate_mesh triangles rotation_mat Y in
+  (* let rotation_mat = Transformations.rotation_transformation_of_axis ~angle:Float.pi Y in
+     let triangles = rotate_mesh triangles rotation_mat Y in *)
   let scene_min, scene_max = scene_limits triangles in
   let _ = Point.mean [ scene_max; scene_min ] |> Option.get in
   (* let triangles = List.map (scale_figure 0.5 0.5 0.5 scene_center) triangles in *)
@@ -146,10 +144,10 @@ let () =
   let out_conf : PpmDb.config = PpmDb.config_of_values "P3" 1. 255 !width !height in
   PpmDb.write_header oc out_conf;
   (* let _ = random_walk my_scene light_sources 100000 pool in *)
-  let my_scene = load_camel "obj_files/image.obj" in
+  (* let my_scene = load_camel "obj_files/image.obj" in *)
   let texture_map = texture_map_from_file "textures/camel.png" in
   color_image
-    Pathtracing
+    Photonmap
     camera
     oc
     out_conf

@@ -941,6 +941,12 @@ let scale_figure sx sy sz center fig =
 
 let emission intersection_point texture_map fig =
   match fig.fig_type with
-  | Triangle t -> triangle_interpolate_color t intersection_point texture_map
+  | Triangle t ->
+    Printf.printf "tu puta madre";
+    let emission_r = Rgb.red fig.fig_properties.emission in
+    if emission_r < 0. then
+      triangle_interpolate_color t intersection_point texture_map
+    else
+      fig.fig_properties.emission
   | _ -> fig.fig_properties.emission
 ;;

@@ -148,12 +148,15 @@ let convert_to_scene (vertexs, normals, faces, textures, kd, ks, ka) =
          { point = convert_vertex v1; normal = convert_normal n1; material = t1 }
          { point = convert_vertex v2; normal = convert_normal n2; material = t2 }
          { point = convert_vertex v3; normal = convert_normal n3; material = t3 }
-         { emission = Rgb.zero ()
+         { emission = Rgb.rgb_of_values 0.75 0.25 0.25
          ; coefficients =
              kd, ks, ka
              (* ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8 *)
          ; refraction = 0.66
          })
   in
-  List.map convert_face faces
+  let result = List.map convert_face faces in
+  let print_figure fig = Scene.Figures.get_figure fig |> Scene.Figures.show_figure in
+  List.iter print_figure result;
+  result
 ;;
