@@ -15,7 +15,7 @@ type algorithm_internal =
   | Photonmap of PhotonMap.t
   | Pathtracing
 
-let num_points = ref 16
+let num_points = ref 1024
 
 let bar ~total =
   let open Progress.Line in

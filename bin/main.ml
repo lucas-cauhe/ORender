@@ -13,17 +13,16 @@ let basic_cuboid = cuboid (Point.from_coords 0. 0. 0.) (Point.from_coords 0.3 0.
 
 let diffuse_cuboid =
   basic_cuboid
-    { emission = Rgb.rgb_of_values 0.8 0.8 0.8
-    ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+    { emission = Rgb.rgb_of_values 0.8 0. 0.
+    ; coefficients = Rgb.rgb_of_values 0.8 0. 0., Rgb.zero (), Rgb.zero ()
     ; refraction = 1.
     }
 ;;
 
-let crystal_cuboid =
+let specular_cuboid =
   basic_cuboid
     { emission = Rgb.rgb_of_values 1. 1. 1.
-    ; coefficients =
-        Rgb.zero (), Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.rgb_of_values 0.8 0.8 0.8
+    ; coefficients = Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero ()
     ; refraction = 0.66
     }
 ;;
@@ -72,15 +71,14 @@ let my_scene : scene =
          (Direction.from_coords 0. 0. (-1.))
          (Point.from_coords 0. 0. 2.)
          { emission = Rgb.rgb_of_values 0.75 0.75 0.75
-         ; coefficients = Rgb.rgb_of_values 0.5 0.5 0.5, Rgb.zero (), Rgb.zero ()
+         ; coefficients = Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero ()
          ; refraction = 1.
          })
-  ; Figure (transform (Translation (-1., -2., -1.)) diffuse_cuboid |> Option.get)
-  ; Figure (transform (Translation (-1., -1.7, -1.)) crystal_cuboid |> Option.get)
-  ; Figure (transform (Translation (-1., -1.4, -1.)) diffuse_cuboid |> Option.get)
+  ; Figure (transform (Translation (-1.5, -1.7, -1.)) specular_cuboid |> Option.get)
+  ; Figure (transform (Translation (-1.5, -1.4, -1.)) diffuse_cuboid |> Option.get)
   ; Figure
       (sphere
-         (Point.from_coords (-1.) (-1.1) (-0.7))
+         (Point.from_coords (-1.35) (-0.9) (-0.9))
          0.2
          { emission = (*Rgb.rgb_of_values 0.3 0.6 0.95*) Rgb.rgb_of_values 1. 1. 1.
          ; coefficients =
@@ -89,33 +87,12 @@ let my_scene : scene =
              Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8
          ; refraction = 0.66
          })
-    (* ; Figure
-      (sphere
-         (Point.from_coords (-0.5) (-0.7) 0.25)
-         0.3
-         { emission = Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
-         ; coefficients =
-             Rgb.rgb_of_values 0.3 0.5 0.75, Rgb.rgb_of_values 0.2 0.2 0.2, Rgb.zero ()
-             (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
-             (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
-         ; refraction = 1.
-         })
-  ; Figure
-      (sphere
-         (Point.from_coords 0.5 (-0.7) (-0.25))
-         0.3
-         { emission = (*Rgb.rgb_of_values 0. 1. 0.5*) Rgb.rgb_of_values 1. 1. 1.
-         ; coefficients =
-             Rgb.zero (), Rgb.rgb_of_values 0.1 0.1 0.1, Rgb.rgb_of_values 1. 1. 1.
-             (* Rgb.rgb_of_values 0.5 0.8 0.6, Rgb.zero (), Rgb.zero () *)
-         ; refraction = 0.66
-         }) *)
   ]
 ;;
 
 let light_sources : light_source list =
   (* [ light_source (Point (Point.from_coords 0. 1. 0.)) (Rgb.rgb_of_values 1. 1. 1.) *)
-  (* [ light_source
+  [ light_source
       (Area
          (Figure
             (plane
@@ -125,8 +102,41 @@ let light_sources : light_source list =
                ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
                ; refraction = 1.
                })))
-      (Rgb.rgb_of_values 1. 1. 1.) *)
-  [ light_source
+      (Rgb.rgb_of_values 0.042 0.065 0.094)
+  ; light_source
+      (Area
+         (Figure
+            (plane
+               (Direction.from_coords 0. 0. 1.)
+               (Point.from_coords 0. 0. (-21.98))
+               { emission = Rgb.rgb_of_values 0.75 0.75 0.75
+               ; coefficients = Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.zero (), Rgb.zero ()
+               ; refraction = 1.
+               })))
+      (Rgb.rgb_of_values 1.042 1.065 1.094)
+  ; light_source
+      (Area
+         (Figure
+            (cuboid
+               (Point.from_coords (-2.) (-1.) (-4.5))
+               (Point.from_coords (-1.99) 0.5 0.)
+               { emission = Rgb.zero ()
+               ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.zero ()
+               ; refraction = 1.
+               })))
+      (Rgb.rgb_of_values 2. 2. 2.)
+  ; light_source
+      (Area
+         (Figure
+            (cuboid
+               (Point.from_coords 1.99 (-1.) (-4.5))
+               (Point.from_coords 2. 0.5 0.)
+               { emission = Rgb.zero ()
+               ; coefficients = Rgb.zero (), Rgb.zero (), Rgb.zero ()
+               ; refraction = 1.
+               })))
+      (Rgb.rgb_of_values 2. 2. 2.)
+  ; light_source
       (Area
          (Figure
             (sphere
@@ -141,87 +151,75 @@ let light_sources : light_source list =
                    (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
                ; refraction = 1.
                })))
-      (Rgb.rgb_of_values 0.98 0.72 0.01)
-  ; light_source
-      (Area
-         (Figure
-            (sphere
-               (Point.from_coords 0.8 0.8 0.8)
-               0.1
-               { emission = Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
-               ; coefficients =
-                   ( Rgb.rgb_of_values 0.3 0.5 0.75
-                   , Rgb.rgb_of_values 0.2 0.2 0.2
-                   , Rgb.zero () )
-                   (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
-                   (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
-               ; refraction = 1.
-               })))
-      (Rgb.rgb_of_values 0.83 0.25 0.89)
-  ; light_source
-      (Area
-         (Figure
-            (sphere
-               (Point.from_coords (-0.8) 0.8 0.8)
-               0.1
-               { emission = Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
-               ; coefficients =
-                   ( Rgb.rgb_of_values 0.3 0.5 0.75
-                   , Rgb.rgb_of_values 0.2 0.2 0.2
-                   , Rgb.zero () )
-                   (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
-                   (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
-               ; refraction = 1.
-               })))
-      (Rgb.rgb_of_values 0.83 0.25 0.89)
-  ; light_source
-      (Area
-         (Figure
-            (sphere
-               (Point.from_coords (-0.8) 0.8 (-0.8))
-               0.1
-               { emission = Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
-               ; coefficients =
-                   ( Rgb.rgb_of_values 0.3 0.5 0.75
-                   , Rgb.rgb_of_values 0.2 0.2 0.2
-                   , Rgb.zero () )
-                   (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
-                   (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
-               ; refraction = 1.
-               })))
-      (Rgb.rgb_of_values 0.83 0.25 0.89)
-  ; light_source
-      (Area
-         (Figure
-            (sphere
-               (Point.from_coords 0.8 0.8 (-0.8))
-               0.1
-               { emission = Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
-               ; coefficients =
-                   ( Rgb.rgb_of_values 0.3 0.5 0.75
-                   , Rgb.rgb_of_values 0.2 0.2 0.2
-                   , Rgb.zero () )
-                   (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
-                   (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
-               ; refraction = 1.
-               })))
-      (Rgb.rgb_of_values 0.83 0.25 0.89)
-    (* light_source (Point(Point.from_coords 0.9 (-0.9) (-0.5))) (Rgb.rgb_of_values 1. 1. 1.) *)
+      (Rgb.rgb_of_values 7.84 5.76 0.08)
   ]
+  (* @ List.map
+      (fun i ->
+        light_source
+          (Area
+             (Figure
+                (sphere
+                   (Point.from_coords 0. 2. (-4. *. i))
+                   0.4
+                   { emission =
+                       Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
+                   ; coefficients =
+                       ( Rgb.rgb_of_values 0.3 0.5 0.75
+                       , Rgb.rgb_of_values 0.2 0.2 0.2
+                       , Rgb.zero () )
+                       (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
+                       (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
+                   ; refraction = 1.
+                   })))
+          (Rgb.rgb_of_values 7.84 5.76 0.08))
+      [ 0.; 1.; 2.; 3.; 4.; 5. ] *)
+  @ List.map
+      (fun i ->
+        light_source
+          (Area
+             (Figure
+                (sphere
+                   (Point.from_coords 1.9 1.9 (1.9 -. (2. *. i *. 1.9)))
+                   0.1
+                   { emission =
+                       Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
+                   ; coefficients =
+                       ( Rgb.rgb_of_values 0.3 0.5 0.75
+                       , Rgb.rgb_of_values 0.2 0.2 0.2
+                       , Rgb.zero () )
+                       (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
+                       (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
+                   ; refraction = 1.
+                   })))
+          (Rgb.rgb_of_values 3.32 1. 3.56))
+      [ 0.; 1.; 2.; 3.; 4.; 5.; 6. ]
+  @ List.map
+      (fun i ->
+        light_source
+          (Area
+             (Figure
+                (sphere
+                   (Point.from_coords (-1.9) 1.9 (1.9 -. (2. *. i *. 1.9)))
+                   0.1
+                   { emission =
+                       Rgb.rgb_of_values 0.3 0.6 0.95 (*Rgb.rgb_of_values 1. 1. 1.*)
+                   ; coefficients =
+                       ( Rgb.rgb_of_values 0.3 0.5 0.75
+                       , Rgb.rgb_of_values 0.2 0.2 0.2
+                       , Rgb.zero () )
+                       (* Rgb.rgb_of_values 0.7 0.4 0.25, Rgb.zero (), Rgb.zero () *)
+                       (* Rgb.zero (), Rgb.rgb_of_values 0.8 0.8 0.8, Rgb.rgb_of_values 0.8 0.8 0.8 *)
+                   ; refraction = 1.
+                   })))
+          (Rgb.rgb_of_values 3.32 1. 3.56))
+      [ 0.; 1.; 2.; 3.; 4.; 5.; 6. ]
 ;;
 
-(* let left = ref (Direction.from_coords (-2.) 0. 0.) *)
 let left = ref (Direction.from_coords (-5.) 0. 0.)
-
-(* let up = ref (Direction.from_coords 0. 2. 0.) *)
 let up = ref (Direction.from_coords 0. 5. 0.)
-
-(* let forward = ref (Direction.from_coords 0. 0. 3.) *)
 let forward = ref (Direction.from_coords 0. 0. 15.)
-
-(* let origin = ref (Point.from_coords 0. 0. (-4.5)) *)
 let origin = ref (Point.from_coords 0. 0. (-15.5))
-let width, height = ref 256, ref 256
+let width, height = ref 1024, ref 576
 
 let texture_map_from_file file =
   let surface = Cairo.PNG.create file in
@@ -236,7 +234,7 @@ let load_camel obj_file =
   let vertices, normals, faces, textures, kd, ks, ka = read_obj_file obj_file in
   let triangles = convert_to_scene (vertices, normals, faces, textures, kd, ks, ka) in
   let rotation_mat =
-    Transformations.rotation_transformation_of_axis ~angle:(3. *. Float.pi /. 4.) Y
+    Transformations.rotation_transformation_of_axis ~angle:(5. *. Float.pi /. 4.) Y
   in
   let triangles = rotate_mesh triangles rotation_mat Y in
   (* let scene_min, scene_max = scene_limits triangles in *)
@@ -244,7 +242,7 @@ let load_camel obj_file =
   (* let triangles = List.map (scale_figure 0.5 0.5 0.5 scene_center) triangles in *)
   let real_scene = split_scene triangles LargestAxis in
   (* let real_scene = translate_figure (-2.5) (-4.5) (-0.5) (List.nth real_scene 0) in *)
-  let real_scene = translate_figure (-0.5) (-2.5) (-1.5) (List.nth real_scene 0) in
+  let real_scene = translate_figure 0.8 (-1.8) (-0.5) (List.nth real_scene 0) in
   [ real_scene ] @ my_scene
 ;;
 
